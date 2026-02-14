@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartB - Diagramas Live</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <link rel="stylesheet" href="annotations.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-preview: #f0f2f5;
+            --bg-panel: #1e1e2e;
+            --bg-editor: #181825;
+            --bg-topbar: rgba(30, 30, 46, 0.85);
+            --border: rgba(255,255,255,0.08);
+            --border-light: #d1d5db;
+            --text: #e6edf3;
+            --text-dark: #1f2937;
+            --text-dim: #8b949e;
+            --accent: #6366f1;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-purple: #a78bfa;
+            --glass: rgba(30, 30, 46, 0.72);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-preview);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── Glassmorphism Topbar ── */
+        .topbar {
+            height: 52px;
+            background: var(--bg-topbar);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 12px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .topbar .logo {
+            font-weight: 700;
+            font-size: 15px;
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .topbar .sep {
+            width: 1px;
+            height: 20px;
+            background: rgba(255,255,255,0.12);
+        }
+
+        .topbar .file-name {
+            font-size: 13px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .topbar .status {
+            margin-left: auto;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px rgba(34,197,94,0.6);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34,197,94,0.6); }
+            50% { opacity: 0.5; box-shadow: 0 0 4px rgba(34,197,94,0.3); }
+        }
+
+        .status-dot.paused {
+            background: var(--accent-red);
+            box-shadow: 0 0 8px rgba(239,68,68,0.5);
+            animation: none;
+        }
+
+        .btn {
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.06);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+        .btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 2px 12px rgba(99,102,241,0.4);
+        }
+
+        /* ── Main layout ── */
+        .main {
+            display: flex;
+            height: calc(100vh - 52px);
+        }
+
+        /* ── File sidebar ── */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+
+        .sidebar.hidden { display: none; }
+
+        .sidebar-header {
+            padding: 10px 12px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .sidebar-header .actions { display: flex; gap: 4px; }
+        .sidebar-header .actions button {
+            background: none; border: none; color: var(--text-dim);
+            cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px;
+        }
+        .sidebar-header .actions button:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+        /* Tree items */
+        .tree-folder {
+            cursor: pointer;
+            user-select: none;
+        }
+        .tree-folder-header {
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text);
+            transition: background 0.1s;
+        }
+        .tree-folder-header:hover { background: rgba(255,255,255,0.05); }
+        .tree-chevron {
+            font-size: 10px;
+            width: 16px;
+            text-align: center;
+            color: var(--text-dim);
+            transition: transform 0.15s;
+            flex-shrink: 0;
+        }
+        .tree-chevron.open { transform: rotate(90deg); }
+        .tree-folder-icon { font-size: 13px; flex-shrink: 0; }
+        .tree-folder-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tree-folder-count {
+            font-size: 10px; color: var(--text-dim); background: rgba(255,255,255,0.06);
+            padding: 1px 6px; border-radius: 8px; font-weight: 500;
+        }
+        .tree-children { overflow: hidden; }
+        .tree-children.collapsed { display: none; }
+
+        .tree-file {
+            padding: 3px 8px 3px 0;
+            font-size: 12px;
+            font-weight: 400;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.1s;
+            color: var(--text-dim);
+            border-left: 2px solid transparent;
+        }
+        .tree-file:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+        .tree-file.active {
+            background: rgba(99,102,241,0.15);
+            color: var(--accent-purple);
+            border-left-color: var(--accent);
+        }
+        .tree-file-icon { font-size: 11px; flex-shrink: 0; opacity: 0.5; }
+        .tree-file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tree-file-actions { opacity: 0; display: flex; gap: 2px; flex-shrink: 0; }
+        .tree-file:hover .tree-file-actions { opacity: 1; }
+        .tree-file-actions button {
+            background: none; border: none; cursor: pointer;
+            font-size: 10px; padding: 1px 3px; border-radius: 3px;
+        }
+        .tree-file-actions .rename-btn { color: var(--text-dim); }
+        .tree-file-actions .delete-btn { color: var(--accent-red); }
+        .tree-file-actions button:hover { background: rgba(255,255,255,0.08); }
+
+        /* ── Content area ── */
+        .content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Editor panel ── */
+        .editor-panel {
+            width: 40%;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            transition: width 0.3s ease;
+        }
+
+        .editor-panel.hidden { display: none; }
+        .editor-panel.hidden + .resize-handle { display: none; }
+
+        .panel-header {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            font-size: 12px;
+            color: var(--text-dim);
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            gap: 8px;
+        }
+
+        .panel-header .tab {
+            padding: 3px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .panel-header .tab.active { background: rgba(255,255,255,0.08); color: var(--text); }
+
+        #editor {
+            flex: 1;
+            resize: none;
+            border: none;
+            outline: none;
+            background: var(--bg-editor);
+            color: #cdd6f4;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            padding: 16px;
+            tab-size: 4;
+            overflow: auto;
+        }
+
+        /* ── Preview panel (LIGHT) ── */
+        .preview-panel {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-preview);
+            position: relative;
+            cursor: grab;
+        }
+        .preview-panel.grabbing { cursor: grabbing; }
+
+        #preview-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+            padding: 40px;
+            min-width: 100%;
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #preview svg {
+            max-width: none !important;
+            height: auto !important;
+        }
+
+        /* High-contrast mermaid overrides for light background */
+        #preview .node rect,
+        #preview .node circle,
+        #preview .node polygon,
+        #preview .node .label-container {
+            stroke-width: 2px !important;
+        }
+        #preview .nodeLabel,
+        #preview .label {
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+        }
+        #preview .edgeLabel {
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 500 !important;
+            font-size: 13px !important;
+        }
+        #preview .cluster-label .nodeLabel {
+            font-size: 17px !important;
+            font-weight: 700 !important;
+        }
+
+        /* ── Zoom controls (glass pill) ── */
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 2px;
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 4px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+        }
+
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            font-weight: 600;
+            transition: background 0.15s;
+        }
+        .zoom-btn:hover { background: rgba(255,255,255,0.12); }
+
+        .zoom-label {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            padding: 0 8px;
+            min-width: 50px;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* ── Resize handle ── */
+        .resize-handle {
+            width: 5px;
+            cursor: col-resize;
+            background: transparent;
+            transition: background 0.2s;
+            position: relative;
+            z-index: 5;
+        }
+        .resize-handle:hover, .resize-handle.active {
+            background: var(--accent);
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #fff;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 100;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* ── Kbd ── */
+        kbd {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+
+        /* ── Help overlay ── */
+        .help-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .help-overlay.show { display: flex; }
+
+        .help-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 36px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.3);
+        }
+
+        .help-box h2 { font-size: 16px; margin-bottom: 16px; font-weight: 700; }
+
+        .help-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            font-size: 13px;
+        }
+        .help-row span:last-child { color: var(--text-dim); }
+
+        /* ── Minimap hint ── */
+        .fit-hint {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 6px 14px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 500;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .fit-hint.show { opacity: 1; pointer-events: auto; }
+    </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+    <span class="logo">SMARTB DIAGRAMS</span>
+    <div class="sep"></div>
+    <span class="file-name" id="currentFileName">Plano Acao</span>
+    <div class="sep"></div>
+    <button class="btn" id="toggleSidebar" title="Toggle sidebar">Arquivos</button>
+    <button class="btn" id="toggleEditor" title="Toggle editor">Editor</button>
+    <button class="btn" id="toggleAutoSync">Auto-Sync</button>
+    <button class="btn" onclick="saveCurrentFile()">Salvar</button>
+    <button class="btn" onclick="exportSVG()">SVG</button>
+    <button class="btn" onclick="exportPNG()">PNG</button>
+    <div class="sep"></div>
+    <button class="btn btn-edit" id="btnAddNode" onclick="MmdEditor.toggleAddNode()">+ Nodo</button>
+    <button class="btn btn-edit" id="btnAddEdge" onclick="MmdEditor.toggleAddEdge()">+ Seta</button>
+    <button class="btn btn-flags" id="btnFlags" onclick="SmartBAnnotations.toggleFlagMode()">Flags <span class="flag-count-badge" id="flagCountBadge" data-count="0"></span></button>
+    <button class="btn" id="toggleFlagPanel" onclick="SmartBAnnotations.togglePanel()">Painel</button>
+    <button class="btn" onclick="showHelp()">?</button>
+    <div class="status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Watching...</span>
+    </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span>Explorer</span>
+            <div class="actions">
+                <button onclick="createNewFolder()" title="Nova pasta">+&#x1F4C1;</button>
+                <button onclick="createNewFile()" title="Novo diagrama">+&#x1F4C4;</button>
+                <button onclick="saveCurrentFile()" title="Salvar (Ctrl+S)">&#x1F4BE;</button>
+            </div>
+        </div>
+        <div id="fileTree" style="flex:1;overflow-y:auto;padding:4px 0"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Editor (hidden by default) -->
+        <div class="editor-panel hidden" id="editorPanel">
+            <div class="panel-header">
+                <span class="tab active">Mermaid</span>
+                <span style="margin-left:auto; font-size:11px; color:var(--text-dim)">
+                    <kbd>Ctrl</kbd>+<kbd>Enter</kbd> render
+                </span>
+            </div>
+            <textarea id="editor" spellcheck="false" placeholder="Cole ou escreva Mermaid aqui..."></textarea>
+        </div>
+
+        <!-- Resize handle (hidden when editor hidden) -->
+        <div class="resize-handle" id="resizeHandle" style="display:none"></div>
+
+        <!-- Preview (LIGHT background, full width) -->
+        <div class="preview-panel" id="previewPanel">
+            <div id="preview-container">
+                <div id="preview"></div>
+            </div>
+            <div class="fit-hint" id="fitHint">Scroll para zoom | Arraste para mover</div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomOut()">-</button>
+                <span class="zoom-label" id="zoomLabel">100%</span>
+                <button class="zoom-btn" onclick="zoomIn()">+</button>
+                <button class="zoom-btn" onclick="zoomFit()" style="font-size:12px">Fit</button>
+            </div>
+        </div>
+
+        <!-- Flag Panel (right side) -->
+        <div class="flag-panel hidden" id="flagPanel">
+            <div class="flag-panel-header">
+                <span>Flags</span>
+                <span class="flag-panel-count" id="flagPanelCount" style="display:none">0</span>
+            </div>
+            <div class="flag-panel-list" id="flagPanelList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Help -->
+<div class="help-overlay" id="helpOverlay" onclick="this.classList.remove('show')">
+    <div class="help-box" onclick="event.stopPropagation()">
+        <h2>Atalhos</h2>
+        <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span><span>Renderizar</span></div>
+        <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>E</kbd></span><span>Toggle editor</span></div>
+        <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>B</kbd></span><span>Toggle sidebar</span></div>
+        <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>-</kbd></span><span>Zoom in/out</span></div>
+        <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>0</kbd></span><span>Zoom fit</span></div>
+        <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>S</kbd></span><span>Salvar arquivo</span></div>
+        <div class="help-row"><span>Scroll</span><span>Zoom</span></div>
+        <div class="help-row"><span>Arrastar</span><span>Pan</span></div>
+        <div class="help-row"><span><kbd>N</kbd></span><span>Adicionar nodo</span></div>
+        <div class="help-row"><span><kbd>A</kbd></span><span>Adicionar seta</span></div>
+        <div class="help-row"><span><kbd>F</kbd></span><span>Toggle Flag Mode</span></div>
+        <div class="help-row"><span><kbd>?</kbd></span><span>Ajuda</span></div>
+        <br>
+        <h2>Como funciona</h2>
+        <p style="font-size:13px;color:var(--text-dim);line-height:1.6">
+            O Claude atualiza os arquivos <code>.mmd</code> na pasta <code>diagramas/</code>.
+            Com Auto-Sync ligado, esta pagina recarrega automaticamente a cada 2 segundos.
+            Clique em <strong>Editor</strong> para editar direto no navegador.
+        </p>
+    </div>
+</div>
+
+<script>
+    // ── State ──
+    let currentFile = 'plano-de-acao/plano-acao.mmd';
+    let zoom = 1;
+    let panX = 0, panY = 0;
+    let autoSync = true;
+    let lastContent = '';
+    let debounceTimer = null;
+    let isPanning = false;
+    let panStartX = 0, panStartY = 0;
+    let panStartPanX = 0, panStartPanY = 0;
+
+    // ── Mermaid init (LIGHT theme, high contrast) ──
+    mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        themeVariables: {
+            darkMode: false,
+            background: '#ffffff',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '16px',
+            primaryColor: '#6366f1',
+            primaryTextColor: '#1e1b4b',
+            primaryBorderColor: '#4f46e5',
+            secondaryColor: '#e0e7ff',
+            tertiaryColor: '#f0fdf4',
+            lineColor: '#6b7280',
+            mainBkg: '#eef2ff',
+            nodeBorder: '#4f46e5',
+            clusterBkg: '#f8fafc',
+            clusterBorder: '#cbd5e1',
+            titleColor: '#1e293b',
+            edgeLabelBackground: '#ffffff',
+        },
+        flowchart: {
+            curve: 'basis',
+            padding: 24,
+            nodeSpacing: 60,
+            rankSpacing: 80,
+            htmlLabels: true,
+        },
+        securityLevel: 'loose',
+    });
+
+    // ── Render ──
+    async function render(code) {
+        if (!code || !code.trim()) return;
+        // Strip annotations before rendering (Mermaid doesn't understand %% @flag)
+        const cleanCode = window.SmartBAnnotations
+            ? SmartBAnnotations.getCleanContent(code)
+            : code;
+        const preview = document.getElementById('preview');
+        try {
+            const { svg } = await mermaid.render('mermaid-' + Date.now(), cleanCode.trim());
+            preview.innerHTML = svg;
+            applyTransform();
+            // Apply flag indicators after SVG is in the DOM
+            if (window.SmartBAnnotations) SmartBAnnotations.applyFlagsToSVG();
+            // Auto-fit after first render
+            requestAnimationFrame(() => zoomFit());
+        } catch (e) {
+            preview.innerHTML = `<div style="color:#ef4444;font-size:14px;padding:40px;max-width:600px;font-family:Inter,sans-serif">
+                <strong style="font-size:16px">Erro de sintaxe Mermaid</strong>
+                <pre style="margin-top:12px;white-space:pre-wrap;color:#6b7280;background:#fff;padding:16px;border-radius:8px;border:1px solid #e5e7eb">${e.message || e}</pre></div>`;
+        }
+    }
+
+    function applyTransform() {
+        const preview = document.getElementById('preview');
+        preview.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    }
+
+    // ── Pan & Zoom ──
+    const previewPanel = document.getElementById('previewPanel');
+    const container = document.getElementById('preview-container');
+
+    // Mouse wheel zoom (trackpad-friendly: uses deltaY magnitude)
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        // Clamp deltaY so trackpad inertia doesn't over-zoom
+        const clamped = Math.max(-60, Math.min(60, e.deltaY));
+        const factor = 1 - clamped * 0.002; // ~0.12% per pixel of delta
+        const newZoom = Math.min(Math.max(zoom * factor, 0.1), 5);
+
+        // Zoom toward cursor
+        const rect = container.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        panX = mx - (mx - panX) * (newZoom / zoom);
+        panY = my - (my - panY) * (newZoom / zoom);
+        zoom = newZoom;
+
+        applyTransform();
+        document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+    }, { passive: false });
+
+    // Mouse drag pan (disabled in flag mode)
+    container.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        if (window.SmartBAnnotations && SmartBAnnotations.getState().flagMode) return;
+        if (window.MmdEditor && MmdEditor.getState().mode) return;
+        isPanning = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+        panStartPanX = panX;
+        panStartPanY = panY;
+        previewPanel.classList.add('grabbing');
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        panX = panStartPanX + (e.clientX - panStartX);
+        panY = panStartPanY + (e.clientY - panStartY);
+        applyTransform();
+    });
+
+    document.addEventListener('mouseup', () => {
+        isPanning = false;
+        previewPanel.classList.remove('grabbing');
+    });
+
+    // ── Zoom Fit ──
+    function zoomFit() {
+        const svg = document.querySelector('#preview svg');
+        if (!svg) return;
+        const rect = container.getBoundingClientRect();
+        const svgW = svg.viewBox?.baseVal?.width || svg.getBoundingClientRect().width / zoom;
+        const svgH = svg.viewBox?.baseVal?.height || svg.getBoundingClientRect().height / zoom;
+
+        if (svgW <= 0 || svgH <= 0) return;
+
+        const padFraction = 0.92;
+        const scaleX = (rect.width * padFraction) / svgW;
+        const scaleY = (rect.height * padFraction) / svgH;
+        zoom = Math.min(scaleX, scaleY, 2.5);
+
+        const scaledW = svgW * zoom;
+        const scaledH = svgH * zoom;
+        panX = (rect.width - scaledW) / 2;
+        panY = (rect.height - scaledH) / 2;
+
+        applyTransform();
+        document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+    }
+
+    // ── Zoom buttons ──
+    function zoomIn() { zoom = Math.min(zoom * 1.15, 5); panX = 0; panY = 0; applyTransform(); document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%'; }
+    function zoomOut() { zoom = Math.max(zoom * 0.85, 0.1); panX = 0; panY = 0; applyTransform(); document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%'; }
+
+    // ── Editor events ──
+    const editor = document.getElementById('editor');
+
+    editor.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => render(editor.value), 500);
+    });
+
+    editor.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = editor.selectionStart;
+            editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(editor.selectionEnd);
+            editor.selectionStart = editor.selectionEnd = start + 4;
+        }
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            render(editor.value);
+        }
+    });
+
+    // ── File sync via fetch ──
+    async function syncFile() {
+        if (!autoSync) return;
+        try {
+            const resp = await fetch(currentFile + '?t=' + Date.now());
+            if (!resp.ok) return;
+            let text = await resp.text();
+            if (text !== lastContent) {
+                // Merge: preserve user flags when Claude edits arrive
+                if (window.SmartBAnnotations && SmartBAnnotations.getState().flags.size > 0) {
+                    text = SmartBAnnotations.mergeIncomingContent(text);
+                } else if (window.SmartBAnnotations) {
+                    // No user flags — just load incoming flags
+                    const incoming = SmartBAnnotations.parseAnnotations(text);
+                    SmartBAnnotations.getState().flags = incoming;
+                    SmartBAnnotations.renderPanel();
+                    SmartBAnnotations.updateBadge();
+                }
+                lastContent = text;
+                editor.value = text;
+                await render(text);
+                toast('Atualizado');
+            }
+        } catch (e) {}
+    }
+
+    setInterval(syncFile, 2000);
+
+    // ── File tree ──
+    let treeData = [];
+    const collapsedFolders = new Set(JSON.parse(localStorage.getItem('smartb-collapsed') || '[]'));
+
+    function saveCollapsed() {
+        localStorage.setItem('smartb-collapsed', JSON.stringify([...collapsedFolders]));
+    }
+
+    function prettyName(fname) {
+        const base = fname.includes('/') ? fname.split('/').pop() : fname;
+        return base.replace('.mmd', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function prettyFolder(name) {
+        return name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function countFiles(node) {
+        if (node.type === 'file') return 1;
+        return (node.children || []).reduce((s, c) => s + countFiles(c), 0);
+    }
+
+    async function refreshFileList() {
+        try {
+            const resp = await fetch('tree.json?t=' + Date.now());
+            if (resp.ok) treeData = await resp.json();
+        } catch (e) {}
+        renderTree();
+    }
+
+    function renderTree() {
+        const container = document.getElementById('fileTree');
+        container.innerHTML = renderNodes(treeData, 0);
+    }
+
+    function renderNodes(nodes, depth) {
+        return nodes.map(n => {
+            if (n.type === 'folder') {
+                const isOpen = !collapsedFolders.has(n.name);
+                const count = countFiles(n);
+                const pad = 8 + depth * 16;
+                return `
+                    <div class="tree-folder">
+                        <div class="tree-folder-header" style="padding-left:${pad}px" onclick="toggleFolder('${n.name}')">
+                            <span class="tree-chevron ${isOpen ? 'open' : ''}">&#x25B6;</span>
+                            <span class="tree-folder-icon">${isOpen ? '&#x1F4C2;' : '&#x1F4C1;'}</span>
+                            <span class="tree-folder-name">${prettyFolder(n.name)}</span>
+                            <span class="tree-folder-count">${count}</span>
+                        </div>
+                        <div class="tree-children ${isOpen ? '' : 'collapsed'}">
+                            ${renderNodes(n.children || [], depth + 1)}
+                        </div>
+                    </div>`;
+            } else {
+                const pad = 8 + depth * 16;
+                const path = n.path;
+                const isActive = path === currentFile;
+                return `
+                    <div class="tree-file ${isActive ? 'active' : ''}" style="padding-left:${pad}px" onclick="loadFile('${path}')">
+                        <span class="tree-file-icon">&#x25C8;</span>
+                        <span class="tree-file-name" title="${path}">${prettyName(n.name)}</span>
+                        <span class="tree-file-actions" onclick="event.stopPropagation()">
+                            <button class="rename-btn" onclick="renameFile('${path}')" title="Renomear">&#x270E;</button>
+                            <button class="delete-btn" onclick="deleteFile('${path}')" title="Deletar">&#x2715;</button>
+                        </span>
+                    </div>`;
+            }
+        }).join('');
+    }
+
+    function toggleFolder(name) {
+        if (collapsedFolders.has(name)) collapsedFolders.delete(name);
+        else collapsedFolders.add(name);
+        saveCollapsed();
+        renderTree();
+    }
+
+    function loadFile(path) {
+        currentFile = path;
+        document.getElementById('currentFileName').textContent = prettyName(path);
+        lastContent = '';
+        syncFile();
+        renderTree();
+    }
+
+    function createNewFile() {
+        const name = prompt('Nome do diagrama (sem extensao).\nUse pasta/nome para criar dentro de pasta:');
+        if (!name) return;
+        const fname = name.replace(/[^a-z0-9-_/]/gi, '-').toLowerCase().replace(/^\/|\/$/g, '') + '.mmd';
+        editor.value = 'flowchart LR\n    A["Inicio"] --> B["Fim"]';
+        currentFile = fname;
+        lastContent = editor.value;
+        saveCurrentFile();
+        render(editor.value);
+        document.getElementById('currentFileName').textContent = prettyName(fname);
+    }
+
+    function createNewFolder() {
+        const name = prompt('Nome da pasta:');
+        if (!name) return;
+        const safe = name.replace(/[^a-z0-9-_/]/gi, '-').toLowerCase();
+        fetch('/mkdir', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folder: safe }),
+        }).then(() => {
+            toast('Pasta criada: ' + safe);
+            refreshFileList();
+        });
+    }
+
+    // ── Auto-sync toggle ──
+    const syncBtn = document.getElementById('toggleAutoSync');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+
+    function updateSyncUI() {
+        syncBtn.classList.toggle('active', autoSync);
+        syncBtn.textContent = autoSync ? 'Auto-Sync ON' : 'Auto-Sync OFF';
+        statusDot.classList.toggle('paused', !autoSync);
+        statusText.textContent = autoSync ? 'Watching...' : 'Paused';
+    }
+
+    syncBtn.addEventListener('click', () => {
+        autoSync = !autoSync;
+        updateSyncUI();
+    });
+    updateSyncUI();
+
+    // ── Toggle panels ──
+    document.getElementById('toggleEditor').addEventListener('click', () => {
+        const panel = document.getElementById('editorPanel');
+        const handle = document.getElementById('resizeHandle');
+        panel.classList.toggle('hidden');
+        handle.style.display = panel.classList.contains('hidden') ? 'none' : '';
+        // Re-fit after layout change
+        setTimeout(zoomFit, 100);
+    });
+
+    document.getElementById('toggleSidebar').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('hidden');
+        setTimeout(zoomFit, 100);
+    });
+
+    // ── Resize handle ──
+    const resizeHandle = document.getElementById('resizeHandle');
+    let isResizing = false;
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        resizeHandle.classList.add('active');
+        document.addEventListener('mousemove', onResize);
+        document.addEventListener('mouseup', () => {
+            isResizing = false;
+            resizeHandle.classList.remove('active');
+            document.removeEventListener('mousemove', onResize);
+        }, { once: true });
+    });
+
+    function onResize(e) {
+        if (!isResizing) return;
+        const sidebar = document.getElementById('sidebar');
+        const sidebarWidth = sidebar.classList.contains('hidden') ? 0 : sidebar.offsetWidth;
+        const newWidth = e.clientX - sidebarWidth;
+        document.getElementById('editorPanel').style.width = Math.max(200, Math.min(newWidth, window.innerWidth * 0.7)) + 'px';
+    }
+
+    // ── Export ──
+    function exportSVG() {
+        const svg = document.querySelector('#preview svg');
+        if (!svg) return toast('Nada para exportar');
+        const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+        download(blob, currentFile.replace('.mmd', '.svg'));
+    }
+
+    function exportPNG() {
+        const svg = document.querySelector('#preview svg');
+        if (!svg) return toast('Nada para exportar');
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const data = new XMLSerializer().serializeToString(svg);
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width * 2;
+            canvas.height = img.height * 2;
+            ctx.scale(2, 2);
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(blob => download(blob, currentFile.replace('.mmd', '.png')), 'image/png');
+        };
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data)));
+    }
+
+    function download(blob, name) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast('Exportado: ' + name);
+    }
+
+    // ── Toast ──
+    function toast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 2000);
+    }
+
+    // ── Keyboard shortcuts ──
+    document.addEventListener('keydown', (e) => {
+        if (e.target === editor) return;
+        // Flag popover textarea should not trigger shortcuts
+        if (e.target.closest('.flag-popover')) return;
+        if (e.key === 'f' && !e.ctrlKey && !e.metaKey) { SmartBAnnotations.toggleFlagMode(); return; }
+        if (e.key === 'n' && !e.ctrlKey && !e.metaKey) { MmdEditor.toggleAddNode(); return; }
+        if (e.key === 'a' && !e.ctrlKey && !e.metaKey) { MmdEditor.toggleAddEdge(); return; }
+        if (e.key === 'Escape') { SmartBAnnotations.closePopover(); MmdEditor.closeEditorPopover(); MmdEditor.setMode(null); }
+        if (e.key === '?' && !e.ctrlKey) showHelp();
+        if (e.key === 'e' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            document.getElementById('toggleEditor').click();
+        }
+        if (e.key === 'b' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            document.getElementById('toggleSidebar').click();
+        }
+        if ((e.key === '=' || e.key === '+') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); zoomIn(); }
+        if (e.key === '-' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); zoomOut(); }
+        if (e.key === '0' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); zoomFit(); }
+    });
+
+    // ── Save to server ──
+    async function saveCurrentFile() {
+        const content = editor.value;
+        if (!content.trim()) return toast('Nada para salvar');
+        try {
+            const resp = await fetch('/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: currentFile, content }),
+            });
+            if (resp.ok) {
+                toast('Salvo: ' + currentFile);
+                lastContent = content;
+                refreshFileList();
+            } else {
+                toast('Erro ao salvar');
+            }
+        } catch (e) {
+            toast('Erro: servidor offline?');
+        }
+    }
+
+    async function deleteFile(fpath) {
+        if (!confirm('Deletar ' + prettyName(fpath) + '?')) return;
+        try {
+            await fetch('/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: fpath }),
+            });
+            toast('Deletado');
+            if (currentFile === fpath) {
+                currentFile = '';
+                document.getElementById('currentFileName').textContent = '';
+                editor.value = '';
+                lastContent = '';
+            }
+            refreshFileList();
+        } catch (e) {
+            toast('Erro ao deletar');
+        }
+    }
+
+    function renameFile(oldPath) {
+        // Extract folder prefix and base name
+        const parts = oldPath.split('/');
+        const base = parts.pop().replace('.mmd', '');
+        const folder = parts.join('/');
+        const newBase = prompt('Novo nome:', base);
+        if (!newBase || newBase === base) return;
+        const safeName = newBase.replace(/[^a-z0-9-_]/gi, '-').toLowerCase() + '.mmd';
+        const newPath = folder ? folder + '/' + safeName : safeName;
+        // Move via server
+        fetch('/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from: oldPath, to: newPath }),
+        }).then(() => {
+            if (currentFile === oldPath) {
+                currentFile = newPath;
+                document.getElementById('currentFileName').textContent = prettyName(newPath);
+            }
+            refreshFileList();
+            toast('Renomeado');
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            saveCurrentFile();
+        }
+    });
+
+    function showHelp() {
+        document.getElementById('helpOverlay').classList.toggle('show');
+    }
+
+    // ── Init Annotations ──
+    // (loaded before main init so hooks are ready)
+
+    // ── Init ──
+    (async () => {
+        // Show hint briefly
+        const hint = document.getElementById('fitHint');
+        hint.classList.add('show');
+        setTimeout(() => hint.classList.remove('show'), 4000);
+
+        try {
+            const resp = await fetch(currentFile);
+            if (resp.ok) {
+                const text = await resp.text();
+                editor.value = text;
+                lastContent = text;
+                await render(text);
+                return;
+            }
+        } catch (e) {}
+
+        if (editor.value.trim()) {
+            await render(editor.value);
+        }
+    })();
+
+    refreshFileList();
+    setInterval(refreshFileList, 5000);
+
+    // Re-fit on window resize
+    window.addEventListener('resize', () => zoomFit());
+
+    // ── Drag & Drop .mmd files ──
+    document.addEventListener('dragover', e => e.preventDefault());
+    document.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.name.endsWith('.mmd')) return toast('Apenas arquivos .mmd');
+        const text = await file.text();
+        editor.value = text;
+        lastContent = text;
+        currentFile = file.name;
+        document.getElementById('currentFileName').textContent = file.name;
+        if (!knownFiles.includes(file.name)) knownFiles.push(file.name);
+        renderFileList();
+        render(text);
+    });
+</script>
+<script src="annotations.js"></script>
+<script src="diagram-editor.js"></script>
+<script>
+    // Initialize annotations + editor after all scripts loaded
+    const _initHooks = {
+        getEditor: () => document.getElementById('editor'),
+        getCurrentFile: () => currentFile,
+        getLastContent: () => lastContent,
+        setLastContent: (v) => { lastContent = v; },
+        saveFile: saveCurrentFile,
+        renderDiagram: render,
+    };
+    SmartBAnnotations.init(_initHooks);
+    MmdEditor.init(_initHooks);
+</script>
+</body>
+</html>
