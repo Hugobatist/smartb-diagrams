@@ -63,12 +63,12 @@ Plans:
   3. Disconnecting and reconnecting the network causes the WebSocket client to automatically reconnect with exponential backoff and resume receiving updates
   4. Adding or removing .mmd files updates the file listing in all connected clients without restart
   5. Multiple project directories can be monitored simultaneously with changes isolated to their namespace
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 03-01: WebSocket server attached to HTTP server, chokidar file watcher on .mmd files
-- [ ] 03-02: Client-side WebSocket connection with auto-reconnect and exponential backoff
-- [ ] 03-03: Multi-project namespacing and file tree change broadcasting
+- [ ] 03-01-PLAN.md — WebSocket server (ws) attached to HTTP server, chokidar file watcher on .mmd files, ServerInstance return type
+- [ ] 03-02-PLAN.md — Client-side WebSocket with auto-reconnect and exponential backoff, replace polling in live.html
+- [ ] 03-03-PLAN.md — Multi-project namespacing via noServer mode, per-project WebSocket isolation
 
 ### Phase 4: Interactive Browser UI
 **Goal**: Developers can interact with diagrams through pan/zoom, keyboard shortcuts, flag annotations, and export — a complete diagram workstation in the browser
@@ -163,7 +163,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Project Bootstrap + Diagram Core | 2/2 | ✓ Complete | 2026-02-14 |
 | 2. HTTP Server | 2/2 | ✓ Complete | 2026-02-14 |
-| 3. WebSocket + Real-Time Sync | 0/3 | Not started | - |
+| 3. WebSocket + Real-Time Sync | 0/3 | Planned | - |
 | 4. Interactive Browser UI | 0/3 | Not started | - |
 | 5. MCP Server | 0/3 | Not started | - |
 | 6. CLI + DX + AI Integration | 0/3 | Not started | - |
