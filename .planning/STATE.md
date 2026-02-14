@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can see what their AI is thinking and intervene surgically before it finishes
-**Current focus:** Phase 2 — HTTP Server (in progress)
+**Current focus:** Phase 2 — HTTP Server (complete)
 
 ## Current Position
 
-Phase: 2 of 8 (HTTP Server)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-02-14 — Completed 02-01 (HTTP Server and Routes)
+Phase: 2 of 8 (HTTP Server) -- COMPLETE
+Plan: 2 of 2 in current phase (all complete)
+Status: Phase Complete
+Last activity: 2026-02-14 — Completed 02-02 (Status Colors, Error Display, Integration Tests)
 
-Progress: [███░░░░░░░] 25%
+Progress: [████░░░░░░] 31%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 4min
-- Total execution time: 0.2 hours
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-project-bootstrap-diagram-core | 2 | 9min | 4.5min |
-| 02-http-server | 1 | 3min | 3min |
+| 02-http-server | 2 | 8min | 4min |
 
 **Recent Trend:**
-- Last 5 plans: 3min, 6min, 3min
+- Last 5 plans: 3min, 6min, 3min, 5min
 - Trend: stable
 
 *Updated after each plan completion*
@@ -56,6 +56,10 @@ Recent decisions affecting current work:
 - [02-01]: Route matching via RegExp array with named groups for URL parameters
 - [02-01]: Two separate file roots: getStaticDir() for static assets, project dir for .mmd files
 - [02-01]: Dynamic import of server module in CLI serve action for lazy loading
+- [02-02]: Status classDefs appended after clean content, before render -- classDef + class directives
+- [02-02]: Error panel built entirely with DOM methods (createElement + textContent) for XSS safety
+- [02-02]: Extracted createHttpServer() from startServer() for integration test reuse
+- [02-02]: getStaticDir() dev fallback with existsSync for dev/test compatibility
 
 ### Pending Todos
 
@@ -69,5 +73,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 02-01-PLAN.md (HTTP Server and Routes)
+Stopped at: Completed 02-02-PLAN.md (Status Colors, Error Display, Integration Tests) -- Phase 2 complete
 Resume file: None
