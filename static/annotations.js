@@ -1,7 +1,8 @@
 /**
- * SmartB Diagrams — Annotations / Flag System
+ * SmartB Diagrams — Annotations / Flag & Status System
  * Click-to-flag diagram nodes/edges/subgraphs.
  * Flags persisted as %% @flag comments in .mmd files.
+ * Status annotations persisted as %% @status comments in .mmd files.
  * Exposed as window.SmartBAnnotations
  */
 (function () {
@@ -10,10 +11,12 @@
     const ANNOTATION_START = '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---';
     const ANNOTATION_END = '%% --- END ANNOTATIONS ---';
     const FLAG_REGEX = /^%%\s*@flag\s+(\S+)\s+"([^"]*)"$/;
+    const STATUS_REGEX = /^%%\s*@status\s+(\S+)\s+(\S+)$/;
 
     const state = {
         flagMode: false,
-        flags: new Map(),   // nodeId -> { message, timestamp }
+        flags: new Map(),      // nodeId -> { message, timestamp }
+        statuses: new Map(),   // nodeId -> statusValue string (ok|problem|in-progress|discarded)
         panelOpen: false,
         popover: null,
     };
@@ -31,6 +34,7 @@
 
     function parseAnnotations(content) {
         const flags = new Map();
+        const statuses = new Map();
         const lines = content.split('\n');
         let inBlock = false;
         for (const line of lines) {
@@ -38,11 +42,13 @@
             if (trimmed === ANNOTATION_START) { inBlock = true; continue; }
             if (trimmed === ANNOTATION_END) { inBlock = false; continue; }
             if (inBlock) {
-                const m = trimmed.match(FLAG_REGEX);
-                if (m) flags.set(m[1], { message: m[2], timestamp: Date.now() });
+                const fm = trimmed.match(FLAG_REGEX);
+                if (fm) { flags.set(fm[1], { message: fm[2], timestamp: Date.now() }); continue; }
+                const sm = trimmed.match(STATUS_REGEX);
+                if (sm) { statuses.set(sm[1], sm[2]); }
             }
         }
-        return flags;
+        return { flags, statuses };
     }
 
     function stripAnnotations(content) {
@@ -59,12 +65,16 @@
         return result.join('\n');
     }
 
-    function injectAnnotations(content, flags) {
+    function injectAnnotations(content, flags, statuses) {
         const clean = stripAnnotations(content);
-        if (flags.size === 0) return clean;
+        const statusMap = statuses || state.statuses;
+        if (flags.size === 0 && statusMap.size === 0) return clean;
         const lines = ['', ANNOTATION_START];
         for (const [nodeId, { message }] of flags) {
             lines.push(`%% @flag ${nodeId} "${message.replace(/"/g, "''")}"`);
+        }
+        for (const [nodeId, statusValue] of statusMap) {
+            lines.push(`%% @status ${nodeId} ${statusValue}`);
         }
         lines.push(ANNOTATION_END);
         return clean + '\n' + lines.join('\n');
@@ -252,7 +262,7 @@
     async function onFlagsChanged() {
         const editor = hooks.getEditor();
         if (!editor) return;
-        const newContent = injectAnnotations(editor.value, state.flags);
+        const newContent = injectAnnotations(editor.value, state.flags, state.statuses);
         editor.value = newContent;
         hooks.setLastContent(newContent);
         if (hooks.saveFile) await hooks.saveFile();
@@ -318,12 +328,16 @@
     // ── Merge (auto-sync preserves user flags) ──
 
     function mergeIncomingContent(incomingContent) {
-        const incomingFlags = parseAnnotations(incomingContent);
-        const merged = new Map(incomingFlags);
-        for (const [id, flag] of state.flags) merged.set(id, flag);
-        state.flags = merged;
+        const incoming = parseAnnotations(incomingContent);
+        const mergedFlags = new Map(incoming.flags);
+        for (const [id, flag] of state.flags) mergedFlags.set(id, flag);
+        state.flags = mergedFlags;
+        // Merge statuses: incoming wins for new keys, preserve user-set statuses
+        const mergedStatuses = new Map(incoming.statuses);
+        for (const [id, status] of state.statuses) mergedStatuses.set(id, status);
+        state.statuses = mergedStatuses;
         const cleanIncoming = stripAnnotations(incomingContent);
-        return injectAnnotations(cleanIncoming, merged);
+        return injectAnnotations(cleanIncoming, mergedFlags, mergedStatuses);
     }
 
     // ── Click Handler (flag mode) ──
@@ -361,7 +375,11 @@
     function init(options) {
         if (options) Object.assign(hooks, options);
         const editor = hooks.getEditor();
-        if (editor && editor.value) state.flags = parseAnnotations(editor.value);
+        if (editor && editor.value) {
+            const parsed = parseAnnotations(editor.value);
+            state.flags = parsed.flags;
+            state.statuses = parsed.statuses;
+        }
         const container = document.getElementById('preview-container');
         if (container) container.addEventListener('click', handlePreviewClick);
         renderPanel();
@@ -374,6 +392,22 @@
         return div.innerHTML;
     }
 
+    // ── Status Operations ──
+
+    function getStatusMap() {
+        return state.statuses;
+    }
+
+    function setStatus(nodeId, statusValue) {
+        state.statuses.set(nodeId, statusValue);
+        onFlagsChanged();
+    }
+
+    function removeStatus(nodeId) {
+        state.statuses.delete(nodeId);
+        onFlagsChanged();
+    }
+
     // ── Public API ──
 
     window.SmartBAnnotations = {
@@ -382,5 +416,6 @@
         applyFlagsToSVG, mergeIncomingContent,
         toggleFlagMode, togglePanel, renderPanel, updateBadge,
         extractNodeId, closePopover,
+        getStatusMap, setStatus, removeStatus,
     };
 })();
