@@ -5,33 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can see what their AI is thinking and intervene surgically before it finishes
-**Current focus:** Phase 2 — HTTP Server (next)
+**Current focus:** Phase 2 — HTTP Server (in progress)
 
 ## Current Position
 
-Phase: 1 of 8 (Project Bootstrap + Diagram Core) -- COMPLETE
-Plan: 2 of 2 in current phase (all plans complete)
-Status: Phase Complete
-Last activity: 2026-02-14 — Completed 01-02 (Diagram Service)
+Phase: 2 of 8 (HTTP Server)
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-02-14 — Completed 02-01 (HTTP Server and Routes)
 
-Progress: [██░░░░░░░░] 13%
+Progress: [███░░░░░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 4.5min
-- Total execution time: 0.15 hours
+- Total plans completed: 3
+- Average duration: 4min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-project-bootstrap-diagram-core | 2 | 9min | 4.5min |
+| 02-http-server | 1 | 3min | 3min |
 
 **Recent Trend:**
-- Last 5 plans: 3min, 6min
-- Trend: baseline
+- Last 5 plans: 3min, 6min, 3min
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -51,6 +52,10 @@ Recent decisions affecting current work:
 - [01-02]: Node.js built-in fs.glob instead of fast-glob to avoid CJS-to-ESM bundling issues with tsup
 - [01-02]: Regex heuristic validator instead of @mermaid-js/parser since it lacks flowchart support
 - [01-02]: Annotation block format with %% --- ANNOTATIONS (auto-managed by SmartB Diagrams) --- markers
+- [02-01]: Node.js built-in http.createServer with thin router instead of framework -- 8 routes do not justify Fastify overhead
+- [02-01]: Route matching via RegExp array with named groups for URL parameters
+- [02-01]: Two separate file roots: getStaticDir() for static assets, project dir for .mmd files
+- [02-01]: Dynamic import of server module in CLI serve action for lazy loading
 
 ### Pending Todos
 
@@ -64,5 +69,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 01-02-PLAN.md (Diagram Service -- Phase 1 complete)
+Stopped at: Completed 02-01-PLAN.md (HTTP Server and Routes)
 Resume file: None
