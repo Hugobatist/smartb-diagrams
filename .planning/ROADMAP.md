@@ -12,7 +12,7 @@ SmartB Diagrams transforms from an internal Python prototype into a production T
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Project Bootstrap + Diagram Core** - TypeScript foundation, npm package structure, and diagram parsing/annotation service
+- [x] **Phase 1: Project Bootstrap + Diagram Core** - TypeScript foundation, npm package structure, and diagram parsing/annotation service
 - [ ] **Phase 2: HTTP Server** - Serve browser UI, REST endpoints for diagram content, static asset bundling
 - [ ] **Phase 3: WebSocket + Real-Time Sync** - File watcher, WebSocket broadcast, live updates replacing polling
 - [ ] **Phase 4: Interactive Browser UI** - Pan/zoom, keyboard shortcuts, flag interactions, export, file tree navigation
@@ -35,8 +35,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — TypeScript project scaffolding, build tooling, CLI entry point, core types, static asset bundling
-- [ ] 01-02-PLAN.md — Diagram service with .mmd parsing, flag annotation extraction/injection, validation, multi-file/multi-project support
+- [x] 01-01-PLAN.md — TypeScript project scaffolding, build tooling, CLI entry point, core types, static asset bundling
+- [x] 01-02-PLAN.md — Diagram service with .mmd parsing, flag annotation extraction/injection, validation, multi-file/multi-project support
 
 ### Phase 2: HTTP Server
 **Goal**: Developers can start a server that serves a browser-based diagram viewer showing Mermaid diagrams rendered from .mmd files
@@ -162,7 +162,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Project Bootstrap + Diagram Core | 0/2 | Not started | - |
+| 1. Project Bootstrap + Diagram Core | 2/2 | ✓ Complete | 2026-02-14 |
 | 2. HTTP Server | 0/3 | Not started | - |
 | 3. WebSocket + Real-Time Sync | 0/3 | Not started | - |
 | 4. Interactive Browser UI | 0/3 | Not started | - |

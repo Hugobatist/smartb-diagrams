@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can see what their AI is thinking and intervene surgically before it finishes
-**Current focus:** Phase 1 — Project Bootstrap + Diagram Core
+**Current focus:** Phase 2 — HTTP Server (next)
 
 ## Current Position
 
