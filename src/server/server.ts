@@ -129,12 +129,16 @@ export interface ServerInstance {
   httpServer: ReturnType<typeof createServer>;
   wsManager: WebSocketManager;
   fileWatcher: FileWatcher;
+  /** Add a new project directory with its own FileWatcher and WebSocket namespace */
+  addProject: (name: string, dir: string) => void;
 }
 
 /**
  * Create an http.Server instance for the given project directory.
  * Used for integration testing (port 0) and as the core of startServer.
- * Returns a ServerInstance with httpServer, wsManager, and fileWatcher.
+ * Returns a ServerInstance with httpServer, wsManager, fileWatcher, and addProject().
+ *
+ * The default project connects on /ws. Named projects connect on /ws/project-name.
  */
 export function createHttpServer(projectDir: string): ServerInstance {
   const resolvedDir = path.resolve(projectDir);
@@ -153,6 +157,10 @@ export function createHttpServer(projectDir: string): ServerInstance {
   });
 
   const wsManager = new WebSocketManager(httpServer);
+
+  // Track all watchers for cleanup
+  const watchers = new Map<string, FileWatcher>();
+
   const fileWatcher = new FileWatcher(
     resolvedDir,
     async (file) => {
@@ -160,24 +168,59 @@ export function createHttpServer(projectDir: string): ServerInstance {
         path.join(resolvedDir, file), 'utf-8',
       ).catch(() => null);
       if (content !== null) {
-        wsManager.broadcast({ type: 'file:changed', file, content });
+        wsManager.broadcast('default', { type: 'file:changed', file, content });
       }
     },
     (file) => {
-      wsManager.broadcast({ type: 'file:added', file });
+      wsManager.broadcast('default', { type: 'file:added', file });
       service.listFiles().then((files) => {
-        wsManager.broadcast({ type: 'tree:updated', files });
+        wsManager.broadcast('default', { type: 'tree:updated', files });
       });
     },
     (file) => {
-      wsManager.broadcast({ type: 'file:removed', file });
+      wsManager.broadcast('default', { type: 'file:removed', file });
       service.listFiles().then((files) => {
-        wsManager.broadcast({ type: 'tree:updated', files });
+        wsManager.broadcast('default', { type: 'tree:updated', files });
       });
     },
   );
 
-  return { httpServer, wsManager, fileWatcher };
+  watchers.set('default', fileWatcher);
+
+  /** Add a new project directory with its own FileWatcher and WebSocket namespace */
+  function addProject(name: string, dir: string): void {
+    const resolvedProjectDir = path.resolve(dir);
+    const projectService = new DiagramService(resolvedProjectDir);
+    wsManager.addProject(name);
+
+    const watcher = new FileWatcher(
+      resolvedProjectDir,
+      async (file) => {
+        const content = await readFile(
+          path.join(resolvedProjectDir, file), 'utf-8',
+        ).catch(() => null);
+        if (content !== null) {
+          wsManager.broadcast(name, { type: 'file:changed', file, content });
+        }
+      },
+      (file) => {
+        wsManager.broadcast(name, { type: 'file:added', file });
+        projectService.listFiles().then((files) => {
+          wsManager.broadcast(name, { type: 'tree:updated', files });
+        });
+      },
+      (file) => {
+        wsManager.broadcast(name, { type: 'file:removed', file });
+        projectService.listFiles().then((files) => {
+          wsManager.broadcast(name, { type: 'tree:updated', files });
+        });
+      },
+    );
+
+    watchers.set(name, watcher);
+  }
+
+  return { httpServer, wsManager, fileWatcher, addProject };
 }
 
 /**
