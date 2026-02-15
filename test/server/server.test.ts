@@ -42,6 +42,27 @@ function httpRequest(
   });
 }
 
+/** Wait for the next WebSocket message and return its string data */
+function waitForMessage(ws: WebSocket, timeoutMs = 5000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('WebSocket message timeout')), timeoutMs);
+    ws.once('message', (data) => {
+      clearTimeout(timer);
+      resolve(data.toString());
+    });
+  });
+}
+
+/** Wait for a WebSocket to reach OPEN state */
+function waitForOpen(ws: WebSocket, timeoutMs = 5000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (ws.readyState === WebSocket.OPEN) { resolve(); return; }
+    const timer = setTimeout(() => reject(new Error('WebSocket open timeout')), timeoutMs);
+    ws.once('open', () => { clearTimeout(timer); resolve(); });
+    ws.once('error', (err) => { clearTimeout(timer); reject(err); });
+  });
+}
+
 describe('HTTP Server Integration', { timeout: 10_000 }, () => {
   let instance: ServerInstance;
   let port: number;
@@ -119,22 +140,57 @@ describe('HTTP Server Integration', { timeout: 10_000 }, () => {
     expect(res.headers['access-control-allow-methods']).toContain('GET');
   });
 
-  it('WebSocket server accepts connections on /ws', async () => {
+  it('WebSocket server accepts connections on /ws (default project)', async () => {
     const ws = new WebSocket(`ws://localhost:${port}/ws`);
 
-    const message = await new Promise<string>((resolve, reject) => {
-      ws.on('message', (data) => resolve(data.toString()));
-      ws.on('error', reject);
-      setTimeout(() => reject(new Error('WebSocket timeout')), 5000);
-    });
-
+    const message = await waitForMessage(ws);
     const parsed = JSON.parse(message);
-    expect(parsed).toEqual({ type: 'connected' });
+    expect(parsed).toEqual({ type: 'connected', project: 'default' });
 
     ws.close();
-    // Wait for close to complete
     await new Promise<void>((resolve) => {
       ws.on('close', () => resolve());
     });
+  });
+
+  it('WebSocket namespace isolation', async () => {
+    const clientA = new WebSocket(`ws://localhost:${port}/ws/project-a`);
+    const clientB = new WebSocket(`ws://localhost:${port}/ws/project-b`);
+
+    // Wait for both to connect and receive 'connected' message
+    const [msgA, msgB] = await Promise.all([
+      waitForMessage(clientA),
+      waitForMessage(clientB),
+    ]);
+    expect(JSON.parse(msgA)).toEqual({ type: 'connected', project: 'project-a' });
+    expect(JSON.parse(msgB)).toEqual({ type: 'connected', project: 'project-b' });
+
+    // Set up a message listener on clientB that should NOT receive anything
+    let clientBReceived = false;
+    clientB.on('message', () => { clientBReceived = true; });
+
+    // Broadcast to project-a only
+    instance.wsManager.broadcast('project-a', {
+      type: 'file:changed',
+      file: 'test.mmd',
+      content: 'flowchart LR\n  A-->B',
+    });
+
+    // ClientA should receive the broadcast
+    const broadcastMsg = await waitForMessage(clientA, 2000);
+    const parsed = JSON.parse(broadcastMsg);
+    expect(parsed.type).toBe('file:changed');
+    expect(parsed.file).toBe('test.mmd');
+
+    // Give clientB a moment to receive any leaked messages
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(clientBReceived).toBe(false);
+
+    clientA.close();
+    clientB.close();
+    await Promise.all([
+      new Promise<void>((resolve) => clientA.on('close', () => resolve())),
+      new Promise<void>((resolve) => clientB.on('close', () => resolve())),
+    ]);
   });
 });

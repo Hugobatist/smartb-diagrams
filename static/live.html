@@ -1289,6 +1289,7 @@
         }
 
         // WebSocket real-time sync
+        // For multi-project: append project name, e.g., '/ws/my-project'
         const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = wsProtocol + '//' + location.host + '/ws';
 

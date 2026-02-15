@@ -1,10 +1,14 @@
 // ws-client.js -- Reconnecting WebSocket client with exponential backoff + jitter
 // Browser-native WebSocket API only -- no npm dependencies
+//
+// URL should be /ws for default project or /ws/project-name for named projects.
+// For multi-project: change the URL to include the project namespace, e.g.,
+//   createReconnectingWebSocket('ws://localhost:3333/ws/my-project', ...)
 
 /**
  * Creates a WebSocket connection that automatically reconnects with exponential backoff.
  *
- * @param {string} url - WebSocket URL (e.g., 'ws://localhost:3333/ws')
+ * @param {string} url - WebSocket URL (e.g., 'ws://localhost:3333/ws' or 'ws://localhost:3333/ws/project-name')
  * @param {function} onMessage - Called with parsed JSON message on each incoming message
  * @param {function} onStatusChange - Called with status string: 'connected' | 'disconnected' | 'reconnecting'
  * @returns {{ close: function }} - Object with close() method to teardown the connection
