@@ -1,0 +1,111 @@
+/* ═══════════════════════════════════════════════
+   SmartB Diagrams — Node Search (Ctrl+F)
+   ═══════════════════════════════════════════════ */
+
+/* ── Search Bar ── */
+.search-bar {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 6px 10px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    animation: search-slide-in 0.15s ease-out;
+}
+
+@keyframes search-slide-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.search-bar input {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    outline: none;
+    width: 220px;
+    transition: border-color 0.15s;
+}
+
+.search-bar input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+}
+
+.search-bar input::placeholder {
+    color: rgba(255,255,255,0.35);
+}
+
+/* ── Match Count ── */
+.search-bar .match-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    min-width: 50px;
+    text-align: center;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.search-bar .match-count.no-match {
+    color: var(--accent-red);
+}
+
+/* ── Navigation Buttons ── */
+.search-bar .search-nav-btn,
+.search-bar .search-close-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 12px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.search-bar .search-nav-btn:hover,
+.search-bar .search-close-btn:hover {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+}
+
+.search-bar .search-close-btn {
+    font-size: 14px;
+    margin-left: 2px;
+}
+
+/* ── Match Highlight (amber outline) ── */
+.search-match rect,
+.search-match circle,
+.search-match polygon {
+    stroke: #f59e0b !important;
+    stroke-width: 3px !important;
+}
+
+/* ── Active Match (accent purple glow) ── */
+.search-match-active rect,
+.search-match-active circle,
+.search-match-active polygon {
+    stroke: #6366f1 !important;
+    stroke-width: 4px !important;
+    filter: drop-shadow(0 0 6px rgba(99,102,241,0.5));
+}
