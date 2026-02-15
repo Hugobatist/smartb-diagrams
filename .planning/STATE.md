@@ -9,11 +9,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 09-foundation-refactoring
-Plan: 01-03 complete, 04 pending
-Status: Phase 9 in progress — live.html is now 144-line pure HTML shell
-Last activity: 2026-02-15 — Plan 09-03 completed (file-tree.js, editor-panel.js, app-init.js)
+Plan: 01-04 complete (Phase 9 COMPLETE)
+Status: Phase 9 complete — all modules migrated to DiagramDOM + EventBus
+Last activity: 2026-02-15 — Plan 09-04 completed (module migration to DiagramDOM + event bus)
 
-Progress: [██████████] v1.0 100% | Phase 9: [=======---] 3/4 plans
+Progress: [██████████] v1.0 100% | Phase 9: [==========] 4/4 plans COMPLETE
 
 ## v1.0 Performance Metrics
 
@@ -56,7 +56,14 @@ Progress: [██████████] v1.0 100% | Phase 9: [=======---] 3/4
 - Primary success criterion achieved: live.html is pure HTML shell (zero inline JS/CSS)
 - All 131 tests pass
 
-**09-04:** Pending (final cleanup/consolidation)
+**09-04 (Complete):** Module migration to DiagramDOM + event bus
+- 4 modules migrated: annotations.js, collapse-ui.js, search.js, diagram-editor.js
+- All Mermaid SVG patterns (`flowchart-*`, `subGraph*`) consolidated in diagram-dom.js only
+- Event bus subscriptions: all 4 modules subscribe to `diagram:rendered`
+- Event bus emissions: `flags:changed`, `diagram:edited`, `search:results`, `search:match-selected`
+- innerHTML replaced with DOM-safe createElement methods
+- All public APIs preserved, hooks pattern kept for backward compat
+- All 131 tests pass, all files under 500 lines
 
 ## Phase 8 Summary
 
@@ -91,6 +98,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - autoSync state centralized in SmartBEditorPanel with isAutoSync getter
 - _initHooks delegation to module APIs (SmartBFileTree, SmartBPanZoom, SmartBRenderer)
 - app-init.js loads last as bootstrap/orchestration module
+- Hooks pattern + event bus coexistence for backward compat during migration
+- DiagramDOM.extractNodeId delegates from SmartBAnnotations.extractNodeId public API
+- DOM-safe createElement for popover construction instead of innerHTML
 
 ### Pre-Release Todos Status
 
@@ -125,5 +135,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 09-03-PLAN.md (file-tree, editor-panel, app-init extraction)
-Next action: Execute 09-04-PLAN.md (final cleanup/consolidation)
+Stopped at: Completed 09-04-PLAN.md (module migration to DiagramDOM + event bus) -- Phase 9 COMPLETE
+Next action: Phase 9 complete. Ready for next phase planning.
