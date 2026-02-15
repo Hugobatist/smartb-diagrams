@@ -8,12 +8,12 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-Phase: 11-custom-renderer
-Plan: 04 of 04 complete
-Status: Phase 11 COMPLETE — Custom SVG renderer with dagre layout, API endpoint, and ?renderer=custom toggle
-Last activity: 2026-02-15 — All 4 plans executed (human visual verification pending)
+Phase: 12-server-browser-integration
+Plan: 03 of 03 complete
+Status: Phase 12 COMPLETE — Full graph pipeline: file change → server parse → WS graph:update → custom renderer
+Last activity: 2026-02-15 — All 3 plans executed, 225 tests passing
 
-Progress: [██████████] v1.0 100% | Phase 11: [==========] 4/4 plans complete
+Progress: [██████████] v1.0 100% | Phase 12: [==========] 3/3 plans complete
 
 ## v1.0 Performance Metrics
 
@@ -164,9 +164,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Test Coverage
 
-- 221 tests passing across 17 test files
-- Key coverage: collapser (42 tests), graph-parser (30), graph-roundtrip (25), annotations (22), graph-serializer (15), viewport-transform (11), service (11), dagre-layout (9), server (9), parser (9)
-- Gaps: no frontend tests, no WebSocket tests, no POST route tests
+- 225 tests passing across 17 test files
+- Key coverage: collapser (42 tests), graph-parser (30), graph-roundtrip (25), annotations (22), graph-serializer (15), server (13), viewport-transform (11), service (11), dagre-layout (9), parser (9)
+- Gaps: no frontend tests, no POST route tests
 
 ## Phase 11 Progress
 
@@ -189,8 +189,29 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - viewport-transform.test.ts (118 lines): 11 tests — inverse proofs at multiple zoom levels
 - dagre-layout.test.ts (164 lines): 9 tests — layout positioning, subgraphs, edge types
 
+## Phase 12 Progress
+
+**12-01 (Complete):** Server-side wiring
+- serializeGraphModel utility in graph-serializer.ts (converts Maps→plain objects)
+- graph:update WsMessage type in websocket.ts
+- Server broadcasts graph:update alongside file:changed on .mmd changes
+- Flags/statuses included in GET /api/graph/:file response
+- 4 new integration tests, 225 total passing
+
+**12-02 (Complete):** Auto-renderer selection + status colors
+- app-init.js (351 lines): effectiveRendererType, selectRendererType, graph:update WS handler
+- custom-renderer.js (142 lines): STATUS_COLORS map, applyStatusColors, lastGraphModel
+- Flowcharts auto-select custom renderer (no URL param needed)
+- ?renderer= override preserved for manual control
+
+**12-03 (Complete):** Interaction module compatibility
+- diagram-dom.js (213 lines): getAllNodeLabels, findEdgeElement, findMatchParent for custom SVG
+- collapse-ui.js (310 lines): dual selectors .node/.smartb-node, .cluster/.smartb-subgraph
+- annotations.js (491 lines): edge flags data-edge-id + L-* ID formats
+- export.js (145 lines): custom SVG PNG export via direct SVG clone
+
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Phase 11 complete — all 4 plans executed, 221 tests passing
-Next action: Phase 12 planning (Server + Browser Integration) — requires human visual verification of Phase 11 first
+Stopped at: Phase 12 COMPLETE, committed as 8eae06d
+Next action: Continue to Phase 13 (Canvas Interactions) — plan-phase 13

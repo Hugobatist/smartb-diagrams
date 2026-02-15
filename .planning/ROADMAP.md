@@ -15,7 +15,7 @@ v2.0 replaces Mermaid.js as a black-box renderer with a custom interactive SVG p
 - [ ] **Phase 9: Foundation Refactoring** - Extract live.html into modules, DOM abstraction layer, event bus
 - [x] **Phase 10: Graph Model + Parser** - Internal graph model types, .mmd parser, serializer, round-trip tests (completed 2026-02-15)
 - [x] **Phase 11: Custom Renderer** - dagre layout engine, SVG renderer, parallel rendering mode, feature parity gate (completed 2026-02-15)
-- [ ] **Phase 12: Server + Browser Integration** - Graph API endpoint, WebSocket graph:update, live.html integration, Mermaid fallback
+- [x] **Phase 12: Server + Browser Integration** - Graph API endpoint, WebSocket graph:update, live.html integration, Mermaid fallback (completed 2026-02-15)
 - [ ] **Phase 13: Canvas Interactions** - Node selection, context menu, inline edit, keyboard shortcuts
 - [ ] **Phase 14: Undo/Redo + Edit Actions** - Command pattern, copy/paste/duplicate, folder management
 - [ ] **Phase 15: AI Breakpoints + Ghost Paths** - Breakpoint annotations, ghost path rendering, MCP tools
@@ -84,12 +84,12 @@ Plans:
   3. live.html uses custom renderer for flowchart diagrams, Mermaid fallback for others
   4. All existing interactions (flags, search, collapse, export) work with the custom renderer via DiagramDOM abstraction
   5. Status colors, flag badges, and search highlights render correctly on custom SVG
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 12-01-PLAN.md — WebSocket graph:update message, serializeGraphModel helper, flags/statuses in API
-- [ ] 12-02-PLAN.md — Auto-renderer selection for flowcharts, graph:update browser handler, status colors
-- [ ] 12-03-PLAN.md — Interaction module compatibility (search, collapse, edge flags, export) for custom SVG
+- [x] 12-01-PLAN.md — WebSocket graph:update message, serializeGraphModel helper, flags/statuses in API
+- [x] 12-02-PLAN.md — Auto-renderer selection for flowcharts, graph:update browser handler, status colors
+- [x] 12-03-PLAN.md — Interaction module compatibility (search, collapse, edge flags, export) for custom SVG
 
 #### Phase 13: Canvas Interactions
 **Goal**: Developers can select nodes, right-click for context menu, double-click to edit labels inline, and use keyboard shortcuts for diagram manipulation
@@ -146,7 +146,7 @@ Plans:
 | 9. Foundation Refactoring | 4/4 | Complete | 2026-02-15 |
 | 10. Graph Model + Parser | 3/3 | Complete    | 2026-02-15 |
 | 11. Custom Renderer | 4/4 | Complete | 2026-02-15 |
-| 12. Server + Browser Integration | 0/? | Not Started | - |
+| 12. Server + Browser Integration | 3/3 | Complete | 2026-02-15 |
 | 13. Canvas Interactions | 0/? | Not Started | - |
 | 14. Undo/Redo + Edit Actions | 0/? | Not Started | - |
 | 15. AI Breakpoints + Ghost Paths | 0/? | Not Started | - |
