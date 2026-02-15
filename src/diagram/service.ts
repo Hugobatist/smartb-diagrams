@@ -1,9 +1,11 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import type { DiagramContent, Flag, NodeStatus, ValidationResult } from './types.js';
+import type { GraphModel } from './graph-types.js';
 import { parseDiagramContent } from './parser.js';
 import { injectAnnotations, parseFlags, parseStatuses } from './annotations.js';
 import { validateMermaidSyntax } from './validator.js';
+import { parseMermaidToGraph } from './graph-parser.js';
 import { resolveProjectPath } from '../utils/paths.js';
 import { discoverMmdFiles } from '../project/discovery.js';
 
@@ -52,6 +54,16 @@ export class DiagramService {
       validation,
       filePath,
     };
+  }
+
+  /**
+   * Read a .mmd file and parse it into a structured GraphModel.
+   * Combines readDiagram + parseMermaidToGraph in one call.
+   */
+  async readGraph(filePath: string): Promise<GraphModel> {
+    const resolved = this.resolvePath(filePath);
+    const raw = await readFile(resolved, 'utf-8');
+    return parseMermaidToGraph(raw, filePath);
   }
 
   /**
