@@ -3,11 +3,13 @@
  * Browser-side collapse/expand interaction handlers.
  * Handles click events on collapsed nodes and subgraph headers.
  * Exposed as window.SmartBCollapseUI
+ *
+ * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartBEventBus)
  */
 (function() {
   'use strict';
 
-  const SmartBCollapseUI = {
+  var SmartBCollapseUI = {
     state: { collapsed: new Set() },
     autoCollapsed: [],
     breadcrumbs: [],
@@ -18,36 +20,48 @@
 
     // ─── Initialization ──────────────────────────────────────────────────────
 
-    init(options = {}) {
-      this.onToggle = options.onToggle || (() => {});
+    init: function(options) {
+      options = options || {};
+      this.onToggle = options.onToggle || (function() {});
       this.attachClickHandlers();
+
+      // Subscribe to event bus: re-apply overlays after diagram render
+      if (window.SmartBEventBus) {
+        var self = this;
+        SmartBEventBus.on('diagram:rendered', function() {
+          if (typeof self.applyOverlays === 'function') {
+            self.applyOverlays();
+          }
+        });
+      }
     },
 
-    initFocusMode(options = {}) {
-      this.onFocusChange = options.onFocusChange || (() => {});
+    initFocusMode: function(options) {
+      options = options || {};
+      this.onFocusChange = options.onFocusChange || (function() {});
       this.attachFocusHandlers();
     },
 
     // ─── State Management ────────────────────────────────────────────────────
 
-    setCollapsed(ids) {
+    setCollapsed: function(ids) {
       this.state.collapsed = new Set(ids);
     },
 
-    getCollapsed() {
+    getCollapsed: function() {
       return Array.from(this.state.collapsed);
     },
 
-    setAutoCollapsed(ids) {
+    setAutoCollapsed: function(ids) {
       this.autoCollapsed = ids || [];
       this.renderAutoCollapseNotice();
     },
 
-    setConfig(config) {
-      this.config = { ...this.config, ...config };
+    setConfig: function(config) {
+      this.config = Object.assign({}, this.config, config);
     },
 
-    setBreadcrumbs(crumbs, focusedSubgraph) {
+    setBreadcrumbs: function(crumbs, focusedSubgraph) {
       this.breadcrumbs = crumbs || [];
       this.focusedSubgraph = focusedSubgraph;
       this.renderBreadcrumbs();
@@ -55,101 +69,105 @@
 
     // ─── Click Handlers ──────────────────────────────────────────────────────
 
-    attachClickHandlers() {
-      const diagram = document.getElementById('preview');
+    attachClickHandlers: function() {
+      var diagram = document.getElementById('preview');
       if (!diagram) return;
+      var self = this;
 
-      diagram.addEventListener('click', (e) => {
+      diagram.addEventListener('click', function(e) {
         // Don't interfere with zoom controls
         if (e.target.closest('.zoom-controls')) return;
         if (e.target.closest('.flag-popover')) return;
 
-        const target = e.target.closest('.node');
+        var target = e.target.closest('.node');
         if (target) {
-          const nodeId = this.extractNodeId(target);
+          var nodeId = self.extractNodeId(target);
           if (nodeId && nodeId.startsWith('__collapsed__')) {
             e.preventDefault();
             e.stopPropagation();
-            const subgraphId = nodeId.replace('__collapsed__', '');
-            this.expand(subgraphId);
+            var subgraphId = nodeId.replace('__collapsed__', '');
+            self.expand(subgraphId);
             return;
           }
         }
 
         // Click on cluster label to collapse
-        const clusterLabel = e.target.closest('.cluster-label');
+        var clusterLabel = e.target.closest('.cluster-label');
         if (clusterLabel) {
-          const cluster = clusterLabel.closest('.cluster');
+          var cluster = clusterLabel.closest('.cluster');
           if (cluster) {
-            const clusterId = this.extractClusterId(cluster);
+            var clusterId = self.extractClusterId(cluster);
             if (clusterId) {
               e.preventDefault();
               e.stopPropagation();
-              this.collapse(clusterId);
+              self.collapse(clusterId);
             }
           }
         }
       });
     },
 
-    attachFocusHandlers() {
-      const diagram = document.getElementById('preview');
+    attachFocusHandlers: function() {
+      var diagram = document.getElementById('preview');
       if (!diagram) return;
+      var self = this;
 
       // Double-click to enter focus mode
-      diagram.addEventListener('dblclick', (e) => {
-        const node = e.target.closest('.node');
+      diagram.addEventListener('dblclick', function(e) {
+        var node = e.target.closest('.node');
         if (!node) return;
 
-        const nodeId = this.extractNodeId(node);
+        var nodeId = self.extractNodeId(node);
         if (!nodeId) return;
 
         // Don't focus on collapsed summary nodes
         if (nodeId.startsWith('__collapsed__')) return;
 
         e.preventDefault();
-        this.enterFocusMode(nodeId);
+        self.enterFocusMode(nodeId);
       });
 
       // Escape to exit focus mode
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && this.focusedSubgraph) {
-          this.exitFocusMode();
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && self.focusedSubgraph) {
+          self.exitFocusMode();
         }
       });
     },
 
-    extractNodeId(nodeElement) {
-      const id = nodeElement.id || '';
-      const match = id.match(/flowchart-(.+?)-\d+/);
-      return match ? match[1] : null;
+    // Use DiagramDOM.extractNodeId for node identification
+    extractNodeId: function(nodeElement) {
+      var info = DiagramDOM.extractNodeId(nodeElement);
+      return info ? info.id : null;
     },
 
-    extractClusterId(clusterElement) {
-      const id = clusterElement.id || '';
-      // Clusters have id like "subGraph0" or contain the subgraph ID
-      const match = id.match(/subGraph\d*-?(.+)?/);
-      if (match && match[1]) return match[1];
-      return id.replace(/^subGraph\d*/, '') || null;
+    // Use DiagramDOM for cluster/subgraph identification
+    extractClusterId: function(clusterElement) {
+      var info = DiagramDOM.extractNodeId(clusterElement);
+      if (info && info.type === 'subgraph') return info.id;
+      // Fallback: try the element's own ID for plain cluster IDs
+      var id = clusterElement.id || '';
+      if (id) return id.replace(/^subGraph\d*-?/, '') || null;
+      return null;
     },
 
     // ─── Collapse/Expand Operations ──────────────────────────────────────────
 
-    expand(subgraphId) {
+    expand: function(subgraphId) {
       this.state.collapsed.delete(subgraphId);
       // Remove from auto-collapsed if present
-      const idx = this.autoCollapsed.indexOf(subgraphId);
+      var idx = this.autoCollapsed.indexOf(subgraphId);
       if (idx !== -1) this.autoCollapsed.splice(idx, 1);
       this.renderAutoCollapseNotice();
       this.onToggle(this.getCollapsed());
     },
 
-    collapse(subgraphId) {
+    collapse: function(subgraphId) {
       this.state.collapsed.add(subgraphId);
       this.onToggle(this.getCollapsed());
     },
 
-    toggle(subgraphId) {
+    toggle: function(subgraphId) {
       if (this.state.collapsed.has(subgraphId)) {
         this.expand(subgraphId);
       } else {
@@ -157,9 +175,9 @@
       }
     },
 
-    expandAll() {
-      for (const id of this.autoCollapsed) {
-        this.state.collapsed.delete(id);
+    expandAll: function() {
+      for (var i = 0; i < this.autoCollapsed.length; i++) {
+        this.state.collapsed.delete(this.autoCollapsed[i]);
       }
       this.autoCollapsed = [];
       this.renderAutoCollapseNotice();
@@ -168,13 +186,13 @@
 
     // ─── Focus Mode ──────────────────────────────────────────────────────────
 
-    enterFocusMode(nodeId) {
+    enterFocusMode: function(nodeId) {
       if (this.onFocusChange) {
-        this.onFocusChange({ action: 'focus', nodeId });
+        this.onFocusChange({ action: 'focus', nodeId: nodeId });
       }
     },
 
-    exitFocusMode() {
+    exitFocusMode: function() {
       this.focusedSubgraph = null;
       this.breadcrumbs = [];
       this.renderBreadcrumbs();
@@ -183,105 +201,107 @@
       }
     },
 
-    navigateTo(breadcrumbId) {
+    navigateTo: function(breadcrumbId) {
       if (this.onFocusChange) {
-        this.onFocusChange({ action: 'navigate', breadcrumbId });
+        this.onFocusChange({ action: 'navigate', breadcrumbId: breadcrumbId });
       }
     },
 
     // ─── UI Rendering ────────────────────────────────────────────────────────
 
-    renderAutoCollapseNotice() {
-      const existing = document.getElementById('auto-collapse-notice');
+    renderAutoCollapseNotice: function() {
+      var existing = document.getElementById('auto-collapse-notice');
       if (existing) existing.remove();
 
       if (this.autoCollapsed.length === 0) return;
 
-      const notice = document.createElement('div');
+      var notice = document.createElement('div');
       notice.id = 'auto-collapse-notice';
       notice.className = 'auto-collapse-notice';
 
-      const icon = document.createElement('span');
+      var icon = document.createElement('span');
       icon.className = 'notice-icon';
       icon.textContent = '\uD83D\uDCCA';
       notice.appendChild(icon);
 
-      const text = document.createElement('span');
+      var text = document.createElement('span');
       text.className = 'notice-text';
-      const count = this.autoCollapsed.length;
-      const limit = this.config.maxVisibleNodes || 50;
-      text.textContent = `${count} subgraph${count > 1 ? 's' : ''} auto-collapsed to fit ${limit} node limit`;
+      var count = this.autoCollapsed.length;
+      var limit = this.config.maxVisibleNodes || 50;
+      text.textContent = count + ' subgraph' + (count > 1 ? 's' : '') + ' auto-collapsed to fit ' + limit + ' node limit';
       notice.appendChild(text);
 
-      const expandBtn = document.createElement('button');
+      var self = this;
+      var expandBtn = document.createElement('button');
       expandBtn.className = 'notice-expand-all';
       expandBtn.title = 'Expand all';
       expandBtn.textContent = 'Expand All';
-      expandBtn.addEventListener('click', () => {
-        this.expandAll();
+      expandBtn.addEventListener('click', function() {
+        self.expandAll();
       });
       notice.appendChild(expandBtn);
 
-      const dismissBtn = document.createElement('button');
+      var dismissBtn = document.createElement('button');
       dismissBtn.className = 'notice-dismiss';
       dismissBtn.title = 'Dismiss';
       dismissBtn.textContent = '\u2715';
-      dismissBtn.addEventListener('click', () => {
+      dismissBtn.addEventListener('click', function() {
         notice.remove();
       });
       notice.appendChild(dismissBtn);
 
-      const container = document.getElementById('preview-container');
+      var container = document.getElementById('preview-container');
       if (container) container.insertBefore(notice, container.firstChild);
     },
 
-    renderBreadcrumbs() {
-      const existing = document.getElementById('breadcrumb-bar');
+    renderBreadcrumbs: function() {
+      var existing = document.getElementById('breadcrumb-bar');
       if (existing) existing.remove();
 
       // Don't render if no breadcrumbs or only "Overview" without focus
       if (this.breadcrumbs.length <= 1 && !this.focusedSubgraph) return;
 
-      const bar = document.createElement('div');
+      var bar = document.createElement('div');
       bar.id = 'breadcrumb-bar';
       bar.className = 'breadcrumb-bar';
 
-      for (let i = 0; i < this.breadcrumbs.length; i++) {
-        const crumb = this.breadcrumbs[i];
-        const isLast = i === this.breadcrumbs.length - 1;
+      var self = this;
+      for (var i = 0; i < this.breadcrumbs.length; i++) {
+        var crumb = this.breadcrumbs[i];
+        var isLast = i === this.breadcrumbs.length - 1;
 
-        const item = document.createElement('span');
+        var item = document.createElement('span');
         item.className = 'breadcrumb-item' + (isLast ? ' current' : '');
         item.textContent = crumb.label;
         item.dataset.id = crumb.id;
 
         if (!isLast) {
-          item.addEventListener('click', () => {
-            this.navigateTo(crumb.id);
-          });
+          item.addEventListener('click', (function(c) {
+            return function() { self.navigateTo(c.id); };
+          })(crumb));
         }
 
         bar.appendChild(item);
 
         if (!isLast) {
-          const sep = document.createElement('span');
+          var sep = document.createElement('span');
           sep.className = 'breadcrumb-separator';
-          sep.textContent = ' › ';
+          sep.textContent = ' \u203A ';
           bar.appendChild(sep);
         }
       }
 
       // Add exit button if in focus mode
       if (this.focusedSubgraph) {
-        const exitBtn = document.createElement('button');
+        var exitBtn = document.createElement('button');
         exitBtn.className = 'breadcrumb-exit';
-        exitBtn.textContent = '✕ Exit Focus';
+        exitBtn.textContent = '\u2715 Exit Focus';
         exitBtn.title = 'Exit focus mode (Esc)';
-        exitBtn.addEventListener('click', () => this.exitFocusMode());
+        exitBtn.addEventListener('click', function() { self.exitFocusMode(); });
         bar.appendChild(exitBtn);
       }
 
-      const container = document.getElementById('preview-container');
+      var container = document.getElementById('preview-container');
       if (container) container.insertBefore(bar, container.firstChild);
     }
   };
