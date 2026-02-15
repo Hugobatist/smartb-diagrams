@@ -9,11 +9,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 09-foundation-refactoring
-Plan: 01-02 complete, 03-04 pending
-Status: Phase 9 in progress — renderer, pan-zoom, export extracted
-Last activity: 2026-02-15 — Plan 09-02 completed (renderer.js, pan-zoom.js, export.js)
+Plan: 01-03 complete, 04 pending
+Status: Phase 9 in progress — live.html is now 144-line pure HTML shell
+Last activity: 2026-02-15 — Plan 09-03 completed (file-tree.js, editor-panel.js, app-init.js)
 
-Progress: [██████████] v1.0 100% | Phase 9: [=====-----] 2/4 plans
+Progress: [██████████] v1.0 100% | Phase 9: [=======---] 3/4 plans
 
 ## v1.0 Performance Metrics
 
@@ -48,7 +48,15 @@ Progress: [██████████] v1.0 100% | Phase 9: [=====-----] 2/4
 - EventBus integration: diagram:rendered and diagram:error events
 - All 131 tests pass
 
-**09-03 through 09-04:** Pending (file-tree, editor, app-init extraction)
+**09-03 (Complete):** File tree, editor panel, app init extraction
+- live.html reduced from 721 to 144 lines (80% reduction, 577 lines removed)
+- 3 new files: file-tree.js, editor-panel.js, app-init.js
+- State centralized: currentFile/lastContent in SmartBFileTree, autoSync in SmartBEditorPanel
+- _initHooks rewired to module APIs
+- Primary success criterion achieved: live.html is pure HTML shell (zero inline JS/CSS)
+- All 131 tests pass
+
+**09-04:** Pending (final cleanup/consolidation)
 
 ## Phase 8 Summary
 
@@ -79,6 +87,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - isInitialRender state in renderer.js (render-related, not pan-zoom)
 - SmartBRenderer.MERMAID_CONFIG shared to eliminate config duplication
 - window.currentFile kept in sync for cross-module access
+- currentFile/lastContent state centralized in SmartBFileTree with getters/setters
+- autoSync state centralized in SmartBEditorPanel with isAutoSync getter
+- _initHooks delegation to module APIs (SmartBFileTree, SmartBPanZoom, SmartBRenderer)
+- app-init.js loads last as bootstrap/orchestration module
 
 ### Pre-Release Todos Status
 
@@ -94,7 +106,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 7. Zero testes para frontend
 8. `KNOWN_DIAGRAM_TYPES` duplicado entre parser.ts e validator.ts
 9. Logica de parsing duplicada entre backend (annotations.ts) e frontend (annotations.js)
-10. `live.html` com 721 linhas (CSS + renderer/pan-zoom/export extracted, further extraction in 09-03/04)
+10. ~~`live.html` com 721 linhas~~ — Reduced to 144 lines (pure HTML shell, zero inline JS/CSS) in 09-03
 11. Watchers de projetos adicionais nunca fechados no shutdown
 12. Static file path traversal check menos rigorosa
 13. Sem testes para rotas POST, WebSocketManager, FileWatcher
@@ -113,5 +125,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 09-02-PLAN.md (renderer, pan-zoom, export extraction)
-Next action: Execute 09-03-PLAN.md (file-tree, editor extraction from live.html)
+Stopped at: Completed 09-03-PLAN.md (file-tree, editor-panel, app-init extraction)
+Next action: Execute 09-04-PLAN.md (final cleanup/consolidation)
