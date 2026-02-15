@@ -8,12 +8,12 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-Phase: All 8 phases complete — v1.0 milestone done
-Plan: —
-Status: v1.0 complete, ready for npm publish or v2.0 planning
-Last activity: 2026-02-15 — Phase 8 completed, all scalability features implemented
+Phase: 09-foundation-refactoring
+Plan: 01 complete, 02-04 pending
+Status: Phase 9 in progress — foundation modules extracted
+Last activity: 2026-02-15 — Plan 09-01 completed (EventBus, DiagramDOM, CSS extraction)
 
-Progress: [██████████] 100%
+Progress: [██████████] v1.0 100% | Phase 9: [==--------] 1/4 plans
 
 ## v1.0 Performance Metrics
 
@@ -33,6 +33,15 @@ Progress: [██████████] 100%
 | 06-cli-dx-ai-integration | 3/3 | Complete |
 | 07-vscode-extension | 4/4 | Complete |
 | 08-scalability-large-diagrams | 3/3 | Complete |
+
+## Phase 9 Progress
+
+**09-01 (Complete):** EventBus pub/sub, DiagramDOM SVG abstraction, CSS extraction
+- live.html reduced from 1757 to 1190 lines (32% reduction)
+- 3 new files: event-bus.js, diagram-dom.js, main.css
+- All 131 tests pass
+
+**09-02 through 09-04:** Pending (renderer, pan-zoom, file-tree, export, editor, app-init extraction)
 
 ## Phase 8 Summary
 
@@ -56,6 +65,11 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - tsup for build, vitest for tests
 - ESM-only project
 
+**Phase 9:**
+- EventBus via native EventTarget API (WeakMap for handler tracking)
+- DiagramDOM abstraction — always re-query SVG, never cache references
+- main.css as first stylesheet to preserve CSS cascade order
+
 ### Pre-Release Todos Status
 
 **RESOLVED (by Phase 8 agents):**
@@ -70,7 +84,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 7. Zero testes para frontend
 8. `KNOWN_DIAGRAM_TYPES` duplicado entre parser.ts e validator.ts
 9. Logica de parsing duplicada entre backend (annotations.ts) e frontend (annotations.js)
-10. `live.html` com 1757 linhas (excede regra de 500) — needs JS extraction
+10. `live.html` com 1190 linhas (CSS extracted, JS extraction in progress via Phase 9)
 11. Watchers de projetos adicionais nunca fechados no shutdown
 12. Static file path traversal check menos rigorosa
 13. Sem testes para rotas POST, WebSocketManager, FileWatcher
@@ -89,5 +103,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: v1.0 complete — all 8 phases done
-Next action: User decides — npm publish, v2.0 planning, or pre-release cleanup
+Stopped at: Completed 09-01-PLAN.md (foundation modules)
+Next action: Execute 09-02-PLAN.md (renderer, pan-zoom extraction from live.html)
