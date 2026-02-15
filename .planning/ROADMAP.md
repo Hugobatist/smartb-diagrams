@@ -13,7 +13,7 @@ v2.0 replaces Mermaid.js as a black-box renderer with a custom interactive SVG p
 ### Phases
 
 - [ ] **Phase 9: Foundation Refactoring** - Extract live.html into modules, DOM abstraction layer, event bus
-- [ ] **Phase 10: Graph Model + Parser** - Internal graph model types, .mmd parser, serializer, round-trip tests
+- [x] **Phase 10: Graph Model + Parser** - Internal graph model types, .mmd parser, serializer, round-trip tests (completed 2026-02-15)
 - [ ] **Phase 11: Custom Renderer** - dagre layout engine, SVG renderer, parallel rendering mode, feature parity gate
 - [ ] **Phase 12: Server + Browser Integration** - Graph API endpoint, WebSocket graph:update, live.html integration, Mermaid fallback
 - [ ] **Phase 13: Canvas Interactions** - Node selection, context menu, inline edit, keyboard shortcuts
@@ -50,7 +50,7 @@ Plans:
   3. serializeGraphToMermaid() produces semantically equivalent .mmd text (parse(serialize(parse(text))) === parse(text))
   4. Round-trip tests cover 20+ .mmd fixtures including nested subgraphs, special characters, and all edge types
   5. Existing .mmd files with flags and statuses parse correctly into the graph model
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 10-01-PLAN.md — Define GraphModel types and create 22 .mmd test fixtures
@@ -133,7 +133,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 9. Foundation Refactoring | 0/4 | Planned | - |
-| 10. Graph Model + Parser | 0/3 | Planned | - |
+| 10. Graph Model + Parser | 0/3 | Complete    | 2026-02-15 |
 | 11. Custom Renderer | 0/? | Not Started | - |
 | 12. Server + Browser Integration | 0/? | Not Started | - |
 | 13. Canvas Interactions | 0/? | Not Started | - |
