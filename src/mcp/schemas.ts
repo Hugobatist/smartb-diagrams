@@ -44,3 +44,12 @@ export const UpdateNodeStatusInput = {
     .enum(['ok', 'problem', 'in-progress', 'discarded'])
     .describe('Status to set on the node'),
 };
+
+export const GetCorrectionContextInput = {
+  filePath: z
+    .string()
+    .describe('Relative path to the .mmd file'),
+  nodeId: z
+    .string()
+    .describe('ID of the flagged node to get correction context for'),
+};

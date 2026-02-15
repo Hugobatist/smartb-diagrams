@@ -5,16 +5,18 @@ import {
   ReadFlagsInput,
   GetDiagramContextInput,
   UpdateNodeStatusInput,
+  GetCorrectionContextInput,
 } from './schemas.js';
 
 /**
- * Register all 4 MCP tools on the server, backed by DiagramService.
+ * Register all 5 MCP tools on the server, backed by DiagramService.
  *
  * Tools:
  * - update_diagram: Create or update a .mmd file
  * - read_flags: Read all active developer flags from a diagram
  * - get_diagram_context: Get full diagram state (content, flags, statuses, validation)
  * - update_node_status: Set node status (ok, problem, in-progress, discarded)
+ * - get_correction_context: Get structured correction context for a flagged node
  */
 export function registerTools(
   server: McpServer,
@@ -144,6 +146,67 @@ export function registerTools(
             {
               type: 'text' as const,
               text: `Node "${nodeId}" status set to "${status}" in ${filePath}`,
+            },
+          ],
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        return {
+          content: [{ type: 'text' as const, text: message }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // Tool 5: get_correction_context (AI-02, AI-03)
+  server.registerTool(
+    'get_correction_context',
+    {
+      description:
+        'Get structured correction context for a flagged diagram node. Returns the flag message, node context (statuses, other flags), the full diagram content, and a natural language instruction for making corrections. Use this when a developer has flagged a node for correction.',
+      inputSchema: GetCorrectionContextInput,
+    },
+    async ({ filePath, nodeId }) => {
+      try {
+        const diagram = await service.readDiagram(filePath);
+        const flag = diagram.flags.get(nodeId);
+
+        if (!flag) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `No flag found on node "${nodeId}" in ${filePath}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const context = {
+          correction: {
+            nodeId: flag.nodeId,
+            flagMessage: flag.message,
+          },
+          diagramState: {
+            filePath,
+            mermaidContent: diagram.mermaidContent,
+            allFlags: Array.from(diagram.flags.values()).map((f) => ({
+              nodeId: f.nodeId,
+              message: f.message,
+            })),
+            statuses: Object.fromEntries(diagram.statuses),
+          },
+          instruction: `The developer flagged node "${nodeId}" with the message: "${flag.message}". Review the diagram and update it to address this feedback. Use the update_diagram tool to write the corrected Mermaid content.`,
+        };
+
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify(context, null, 2),
             },
           ],
         };

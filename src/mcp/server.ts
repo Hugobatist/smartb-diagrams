@@ -25,7 +25,7 @@ export function createMcpServer(service: DiagramService): McpServer {
   registerTools(server, service);
   registerResources(server, service);
 
-  log.debug('MCP server created with 4 tools and 2 resources');
+  log.debug('MCP server created with 5 tools and 2 resources');
 
   return server;
 }
