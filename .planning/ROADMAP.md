@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: HTTP Server** - Serve browser UI, REST endpoints for diagram content, static asset bundling
 - [x] **Phase 3: WebSocket + Real-Time Sync** - File watcher, WebSocket broadcast, live updates replacing polling
 - [x] **Phase 4: Interactive Browser UI** - Pan/zoom, keyboard shortcuts, flag interactions, export, file tree navigation
-- [ ] **Phase 5: MCP Server** - AI tool integration via stdio transport with tools and resources
+- [x] **Phase 5: MCP Server** - AI tool integration via stdio transport with tools and resources
 - [ ] **Phase 6: CLI + Developer Experience + AI Integration** - CLI commands, zero-config MCP setup, AI diagram conventions, flag-to-prompt pipeline
 - [ ] **Phase 7: VS Code Extension** - Sidebar webview panel, WebSocket client, marketplace publication
 - [ ] **Phase 8: Scalability + Large Diagrams** - Hierarchical collapsing, rendering limits, breadcrumb navigation, focus mode
@@ -99,9 +99,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — MCP foundation: SDK install, Zod schemas, @status annotation support, MCP server skeleton, smartb mcp CLI command
-- [ ] 05-02-PLAN.md — MCP tools (update_diagram, read_flags, get_diagram_context, update_node_status) and resources (diagram list, diagram content)
-- [ ] 05-03-PLAN.md — Shared-process integration (--serve mode), graceful shutdown, end-to-end verification
+- [x] 05-01-PLAN.md — MCP foundation: SDK install, Zod schemas, @status annotation support, MCP server skeleton, smartb mcp CLI command
+- [x] 05-02-PLAN.md — MCP tools (update_diagram, read_flags, get_diagram_context, update_node_status) and resources (diagram list, diagram content)
+- [x] 05-03-PLAN.md — Shared-process integration (--serve mode), graceful shutdown, end-to-end verification
 
 ### Phase 6: CLI + Developer Experience + AI Integration
 **Goal**: Developers have a polished CLI workflow (init, serve, status), zero-config MCP setup, and AI agents have conventions and tools for generating useful diagrams and responding to flags
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. HTTP Server | 2/2 | ✓ Complete | 2026-02-14 |
 | 3. WebSocket + Real-Time Sync | 3/3 | ✓ Complete | 2026-02-15 |
 | 4. Interactive Browser UI | 2/2 | ✓ Complete | 2026-02-15 |
-| 5. MCP Server | 0/3 | Planned | - |
+| 5. MCP Server | 3/3 | ✓ Complete | 2026-02-15 |
 | 6. CLI + DX + AI Integration | 0/3 | Not started | - |
 | 7. VS Code Extension | 0/3 | Not started | - |
 | 8. Scalability + Large Diagrams | 0/3 | Not started | - |
