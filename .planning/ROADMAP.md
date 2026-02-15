@@ -112,12 +112,12 @@ Plans:
   2. Adding the SmartB MCP entry to claude_desktop_config.json (or equivalent) requires zero additional configuration — the AI tool connects and can immediately use all MCP tools
   3. An AI agent following the provided CLAUDE.md instructions and Mermaid conventions emits structured reasoning diagrams that render correctly in the browser
   4. When a developer flags a node, the `get_correction_context` MCP tool returns a structured prompt containing the flag message, node context, and surrounding diagram state that the AI can use to course-correct
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 06-01: CLI commands — init (project scaffolding), serve (with browser open), status (diagnostics)
-- [ ] 06-02: Error messages, zero-config MCP integration, README with quick start guide
-- [ ] 06-03: AI diagram conventions/schema, flag-to-prompt pipeline, get_correction_context tool, example CLAUDE.md
+- [ ] 06-01-PLAN.md — CLI commands: smartb init (project scaffolding) and smartb status (server diagnostics), /api/status endpoint, WebSocketManager.getClientCount()
+- [ ] 06-02-PLAN.md — get_correction_context MCP tool (flag-to-prompt pipeline), helpful error messages for no .mmd files and port conflicts
+- [ ] 06-03-PLAN.md — README with quick start guide, MCP setup instructions, AI diagram conventions, example CLAUDE.md for AI agents
 
 ### Phase 7: VS Code Extension
 **Goal**: Developers see live AI reasoning diagrams in a VS Code sidebar panel without leaving their editor, with full flag interaction capability
