@@ -130,268 +130,21 @@
 <script src="renderer.js"></script>
 <script src="pan-zoom.js"></script>
 <script src="export.js"></script>
+<script src="file-tree.js"></script>
+<script src="editor-panel.js"></script>
 
 <script>
-    // ── State ──
-    // Renderer: see renderer.js
-    // Pan/Zoom: see pan-zoom.js
-    // Export: see export.js
-    // currentFile exposed on window for export.js and other modules
-    var currentFile = window.currentFile = 'plano-de-acao/plano-acao.mmd';
-    let autoSync = true;
-    let lastContent = '';
-    let debounceTimer = null;
-
-    // ── Editor events ──
-    const editor = document.getElementById('editor');
-
-    editor.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => render(editor.value), 500);
-    });
-
-    editor.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            const start = editor.selectionStart;
-            editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(editor.selectionEnd);
-            editor.selectionStart = editor.selectionEnd = start + 4;
-        }
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault();
-            render(editor.value);
-        }
-    });
-
-    // ── File sync via fetch ──
-    async function syncFile() {
-        if (!autoSync) return;
-        try {
-            const resp = await fetch(currentFile + '?t=' + Date.now());
-            if (!resp.ok) return;
-            let text = await resp.text();
-            if (text !== lastContent) {
-                // Merge: preserve user flags when Claude edits arrive
-                if (window.SmartBAnnotations && SmartBAnnotations.getState().flags.size > 0) {
-                    text = SmartBAnnotations.mergeIncomingContent(text);
-                } else if (window.SmartBAnnotations) {
-                    // No user flags — just load incoming flags and statuses
-                    const incoming = SmartBAnnotations.parseAnnotations(text);
-                    SmartBAnnotations.getState().flags = incoming.flags;
-                    SmartBAnnotations.getState().statuses = incoming.statuses;
-                    SmartBAnnotations.renderPanel();
-                    SmartBAnnotations.updateBadge();
-                }
-                lastContent = text;
-                editor.value = text;
-                await render(text);
-                toast('Atualizado');
-            }
-        } catch (e) {}
-    }
-
-    // ── File tree ──
-    let treeData = [];
-    const collapsedFolders = new Set(JSON.parse(localStorage.getItem('smartb-collapsed') || '[]'));
-
-    function saveCollapsed() {
-        localStorage.setItem('smartb-collapsed', JSON.stringify([...collapsedFolders]));
-    }
-
-    function prettyName(fname) {
-        const base = fname.includes('/') ? fname.split('/').pop() : fname;
-        return base.replace('.mmd', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    }
-
-    function prettyFolder(name) {
-        return name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    }
-
-    function countFiles(node) {
-        if (node.type === 'file') return 1;
-        return (node.children || []).reduce((s, c) => s + countFiles(c), 0);
-    }
-
-    async function refreshFileList() {
-        try {
-            const resp = await fetch('tree.json?t=' + Date.now());
-            if (resp.ok) treeData = await resp.json();
-        } catch (e) {}
-        renderTree();
-    }
-
-    function renderTree() {
-        const container = document.getElementById('fileTree');
-        container.innerHTML = renderNodes(treeData, 0);
-    }
-
-    function renderNodes(nodes, depth) {
-        return nodes.map(n => {
-            if (n.type === 'folder') {
-                const isOpen = !collapsedFolders.has(n.name);
-                const count = countFiles(n);
-                const pad = 8 + depth * 16;
-                return `
-                    <div class="tree-folder">
-                        <div class="tree-folder-header" style="padding-left:${pad}px" data-action="toggle-folder" data-folder="${escapeHtml(n.name)}">
-                            <span class="tree-chevron ${isOpen ? 'open' : ''}">&#x25B6;</span>
-                            <span class="tree-folder-icon">${isOpen ? '&#x1F4C2;' : '&#x1F4C1;'}</span>
-                            <span class="tree-folder-name">${escapeHtml(prettyFolder(n.name))}</span>
-                            <span class="tree-folder-count">${count}</span>
-                        </div>
-                        <div class="tree-children ${isOpen ? '' : 'collapsed'}">
-                            ${renderNodes(n.children || [], depth + 1)}
-                        </div>
-                    </div>`;
-            } else {
-                const pad = 8 + depth * 16;
-                const filePath = n.path;
-                const isActive = filePath === currentFile;
-                return `
-                    <div class="tree-file ${isActive ? 'active' : ''}" style="padding-left:${pad}px" data-action="load-file" data-path="${escapeHtml(filePath)}">
-                        <span class="tree-file-icon">&#x25C8;</span>
-                        <span class="tree-file-name" title="${escapeHtml(filePath)}">${escapeHtml(prettyName(n.name))}</span>
-                        <span class="tree-file-actions">
-                            <button class="rename-btn" data-action="rename-file" data-path="${escapeHtml(filePath)}" title="Renomear">&#x270E;</button>
-                            <button class="delete-btn" data-action="delete-file" data-path="${escapeHtml(filePath)}" title="Deletar">&#x2715;</button>
-                        </span>
-                    </div>`;
-            }
-        }).join('');
-    }
-
-    // ── Event delegation for file tree (prevents injection via folder/file names) ──
-    document.getElementById('fileTree').addEventListener('click', (e) => {
-        const target = e.target.closest('[data-action]');
-        if (!target) return;
-        const action = target.dataset.action;
-        const actionPath = target.dataset.path;
-        const folder = target.dataset.folder;
-        switch (action) {
-            case 'toggle-folder':
-                toggleFolder(folder);
-                break;
-            case 'load-file':
-                loadFile(actionPath);
-                break;
-            case 'rename-file':
-                e.stopPropagation();
-                renameFile(actionPath);
-                break;
-            case 'delete-file':
-                e.stopPropagation();
-                deleteFile(actionPath);
-                break;
-        }
-    });
-
-    function toggleFolder(name) {
-        if (collapsedFolders.has(name)) collapsedFolders.delete(name);
-        else collapsedFolders.add(name);
-        saveCollapsed();
-        renderTree();
-    }
-
-    function loadFile(path) {
-        currentFile = window.currentFile = path;
-        document.getElementById('currentFileName').textContent = prettyName(path);
-        lastContent = '';
-        SmartBRenderer.setInitialRender(true); // Reset so zoomFit fires for new file
-        syncFile();
-        renderTree();
-    }
-
-    function createNewFile() {
-        const name = prompt('Nome do diagrama (sem extensao).\nUse pasta/nome para criar dentro de pasta:');
-        if (!name) return;
-        const fname = name.replace(/[^a-z0-9-_/]/gi, '-').toLowerCase().replace(/^\/|\/$/g, '') + '.mmd';
-        editor.value = 'flowchart LR\n    A["Inicio"] --> B["Fim"]';
-        currentFile = window.currentFile = fname;
-        lastContent = editor.value;
-        saveCurrentFile();
-        render(editor.value);
-        document.getElementById('currentFileName').textContent = prettyName(fname);
-    }
-
-    function createNewFolder() {
-        const name = prompt('Nome da pasta:');
-        if (!name) return;
-        const safe = name.replace(/[^a-z0-9-_/]/gi, '-').toLowerCase();
-        fetch('/mkdir', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ folder: safe }),
-        }).then(() => {
-            toast('Pasta criada: ' + safe);
-            refreshFileList();
-        });
-    }
-
-    // ── Auto-sync toggle ──
-    const syncBtn = document.getElementById('toggleAutoSync');
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
-
-    function updateSyncUI() {
-        syncBtn.classList.toggle('active', autoSync);
-        syncBtn.textContent = autoSync ? 'Auto-Sync ON' : 'Auto-Sync OFF';
-        // Status dot and text are now driven by WebSocket onStatusChange callback
-    }
-
-    syncBtn.addEventListener('click', () => {
-        autoSync = !autoSync;
-        updateSyncUI();
-    });
-    updateSyncUI();
-
-    // ── Toggle panels ──
-    document.getElementById('toggleEditor').addEventListener('click', () => {
-        const panel = document.getElementById('editorPanel');
-        const handle = document.getElementById('resizeHandle');
-        panel.classList.toggle('hidden');
-        handle.style.display = panel.classList.contains('hidden') ? 'none' : '';
-        // Re-fit after layout change
-        setTimeout(zoomFit, 100);
-    });
-
-    document.getElementById('toggleSidebar').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('hidden');
-        setTimeout(zoomFit, 100);
-    });
-
-    // ── Resize handle ──
-    const resizeHandle = document.getElementById('resizeHandle');
-    let isResizing = false;
-
-    resizeHandle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        resizeHandle.classList.add('active');
-        document.addEventListener('mousemove', onResize);
-        document.addEventListener('mouseup', () => {
-            isResizing = false;
-            resizeHandle.classList.remove('active');
-            document.removeEventListener('mousemove', onResize);
-        }, { once: true });
-    });
-
-    function onResize(e) {
-        if (!isResizing) return;
-        const sidebar = document.getElementById('sidebar');
-        const sidebarWidth = sidebar.classList.contains('hidden') ? 0 : sidebar.offsetWidth;
-        const newWidth = e.clientX - sidebarWidth;
-        document.getElementById('editorPanel').style.width = Math.max(200, Math.min(newWidth, window.innerWidth * 0.7)) + 'px';
-    }
-
     // ── Toast ──
     function toast(msg) {
-        const el = document.getElementById('toast');
+        var el = document.getElementById('toast');
         el.textContent = msg;
         el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), 2000);
+        setTimeout(function() { el.classList.remove('show'); }, 2000);
     }
 
     // ── Keyboard shortcuts ──
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', function(e) {
+        var editor = document.getElementById('editor');
         if (e.target === editor) return;
         // Flag popover textarea should not trigger shortcuts
         if (e.target.closest('.flag-popover')) return;
@@ -416,74 +169,7 @@
         if (e.key === '0' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); zoomFit(); }
     });
 
-    // ── Save to server ──
-    async function saveCurrentFile() {
-        const content = editor.value;
-        if (!content.trim()) return toast('Nada para salvar');
-        try {
-            const resp = await fetch('/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: currentFile, content }),
-            });
-            if (resp.ok) {
-                toast('Salvo: ' + currentFile);
-                lastContent = content;
-                refreshFileList();
-            } else {
-                toast('Erro ao salvar');
-            }
-        } catch (e) {
-            toast('Erro: servidor offline?');
-        }
-    }
-
-    async function deleteFile(fpath) {
-        if (!confirm('Deletar ' + prettyName(fpath) + '?')) return;
-        try {
-            await fetch('/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: fpath }),
-            });
-            toast('Deletado');
-            if (currentFile === fpath) {
-                currentFile = window.currentFile = '';
-                document.getElementById('currentFileName').textContent = '';
-                editor.value = '';
-                lastContent = '';
-            }
-            refreshFileList();
-        } catch (e) {
-            toast('Erro ao deletar');
-        }
-    }
-
-    function renameFile(oldPath) {
-        // Extract folder prefix and base name
-        const parts = oldPath.split('/');
-        const base = parts.pop().replace('.mmd', '');
-        const folder = parts.join('/');
-        const newBase = prompt('Novo nome:', base);
-        if (!newBase || newBase === base) return;
-        const safeName = newBase.replace(/[^a-z0-9-_]/gi, '-').toLowerCase() + '.mmd';
-        const newPath = folder ? folder + '/' + safeName : safeName;
-        // Move via server
-        fetch('/move', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ from: oldPath, to: newPath }),
-        }).then(() => {
-            if (currentFile === oldPath) {
-                currentFile = window.currentFile = newPath;
-                document.getElementById('currentFileName').textContent = prettyName(newPath);
-            }
-            refreshFileList();
-            toast('Renomeado');
-        });
-    }
-
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', function(e) {
         if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             saveCurrentFile();
@@ -494,41 +180,40 @@
         document.getElementById('helpOverlay').classList.toggle('show');
     }
 
-    // ── Init Annotations ──
-    // (loaded before main init so hooks are ready)
-
     // ── Init ──
-    (async () => {
+    (async function() {
         // Show hint briefly
-        const hint = document.getElementById('fitHint');
+        var hint = document.getElementById('fitHint');
         hint.classList.add('show');
-        setTimeout(() => hint.classList.remove('show'), 4000);
+        setTimeout(function() { hint.classList.remove('show'); }, 4000);
+
+        var currentFile = SmartBFileTree.getCurrentFile();
+        var editor = document.getElementById('editor');
 
         try {
-            const resp = await fetch(currentFile);
+            var resp = await fetch(currentFile);
             if (resp.ok) {
-                const text = await resp.text();
+                var text = await resp.text();
                 editor.value = text;
-                lastContent = text;
+                SmartBFileTree.setLastContent(text);
                 await render(text);
             }
         } catch (e) {}
 
-        if (!lastContent && editor.value.trim()) {
+        if (!SmartBFileTree.getLastContent() && editor.value.trim()) {
             await render(editor.value);
         }
 
         // Fetch collapse metadata for initial auto-collapse
         if (currentFile && window.SmartBCollapseUI) {
             try {
-                const apiResp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile));
+                var apiResp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile));
                 if (apiResp.ok) {
-                    const data = await apiResp.json();
+                    var data = await apiResp.json();
                     if (data.collapse) {
                         SmartBCollapseUI.setConfig(data.collapse.config);
                         if (data.collapse.autoCollapsed && data.collapse.autoCollapsed.length > 0) {
                             SmartBCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed);
-                            // Re-render with collapsed content
                             if (data.mermaidContent) await render(data.mermaidContent);
                         }
                     }
@@ -537,19 +222,16 @@
         }
 
         // WebSocket real-time sync
-        // For multi-project: append project name, e.g., '/ws/my-project'
-        const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = wsProtocol + '//' + location.host + '/ws';
+        var wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        var wsUrl = wsProtocol + '//' + location.host + '/ws';
 
-        const wsConnection = createReconnectingWebSocket(wsUrl, function (msg) {
+        createReconnectingWebSocket(wsUrl, function(msg) {
             switch (msg.type) {
                 case 'file:changed':
-                    if (!autoSync) return;
-                    // Only update if the changed file is the currently viewed file
-                    if (msg.file === currentFile) {
+                    if (!SmartBEditorPanel.isAutoSync()) return;
+                    if (msg.file === SmartBFileTree.getCurrentFile()) {
                         var text = msg.content;
-                        if (text !== lastContent) {
-                            // Merge flags if user has local flags
+                        if (text !== SmartBFileTree.getLastContent()) {
                             var finalText = text;
                             if (window.SmartBAnnotations && SmartBAnnotations.getState().flags.size > 0) {
                                 finalText = SmartBAnnotations.mergeIncomingContent(text);
@@ -560,8 +242,8 @@
                                 SmartBAnnotations.renderPanel();
                                 SmartBAnnotations.updateBadge();
                             }
-                            lastContent = finalText;
-                            editor.value = finalText;
+                            SmartBFileTree.setLastContent(finalText);
+                            document.getElementById('editor').value = finalText;
                             render(finalText);
                         }
                     }
@@ -569,49 +251,47 @@
                 case 'file:added':
                 case 'file:removed':
                 case 'tree:updated':
-                    // Refresh the file tree
-                    refreshFileList();
+                    SmartBFileTree.refreshFileList();
                     break;
             }
-        }, function (status) {
-            // Update connection status indicator
+        }, function(status) {
             var dot = document.getElementById('statusDot');
-            var text = document.getElementById('statusText');
+            var statusText = document.getElementById('statusText');
             switch (status) {
                 case 'connected':
                     dot.className = 'status-dot';
-                    text.textContent = 'Connected';
+                    statusText.textContent = 'Connected';
                     break;
                 case 'disconnected':
                     dot.className = 'status-dot paused';
-                    text.textContent = 'Disconnected';
+                    statusText.textContent = 'Disconnected';
                     break;
                 case 'reconnecting':
                     dot.className = 'status-dot paused';
-                    text.textContent = 'Reconnecting...';
+                    statusText.textContent = 'Reconnecting...';
                     break;
             }
         });
     })();
 
-    refreshFileList();
+    SmartBFileTree.refreshFileList();
 
     // Re-fit on window resize
-    window.addEventListener('resize', () => zoomFit());
+    window.addEventListener('resize', function() { zoomFit(); });
 
     // ── Drag & Drop .mmd files ──
-    document.addEventListener('dragover', e => e.preventDefault());
-    document.addEventListener('drop', async (e) => {
+    document.addEventListener('dragover', function(e) { e.preventDefault(); });
+    document.addEventListener('drop', async function(e) {
         e.preventDefault();
-        const file = e.dataTransfer.files[0];
-        if (!file || !file.name.endsWith('.mmd')) return toast('Apenas arquivos .mmd');
-        const text = await file.text();
+        var file = e.dataTransfer.files[0];
+        if (!file || !file.name.endsWith('.mmd')) { toast('Apenas arquivos .mmd'); return; }
+        var text = await file.text();
+        var editor = document.getElementById('editor');
         editor.value = text;
-        lastContent = text;
-        currentFile = window.currentFile = file.name;
+        SmartBFileTree.setLastContent(text);
+        SmartBFileTree.setCurrentFile(file.name);
         document.getElementById('currentFileName').textContent = file.name;
-        // Note: knownFiles/renderFileList were legacy -- drag & drop refreshes tree
-        refreshFileList();
+        SmartBFileTree.refreshFileList();
         render(text);
     });
 </script>
@@ -622,15 +302,15 @@
 <script src="search.js"></script>
 <script>
     // Initialize annotations + editor after all scripts loaded
-    const _initHooks = {
-        getEditor: () => document.getElementById('editor'),
-        getCurrentFile: () => currentFile,
-        getLastContent: () => lastContent,
-        setLastContent: (v) => { lastContent = v; },
-        saveFile: saveCurrentFile,
+    var _initHooks = {
+        getEditor: function() { return document.getElementById('editor'); },
+        getCurrentFile: function() { return SmartBFileTree.getCurrentFile(); },
+        getLastContent: function() { return SmartBFileTree.getLastContent(); },
+        setLastContent: function(v) { SmartBFileTree.setLastContent(v); },
+        saveFile: function() { SmartBFileTree.saveCurrentFile(); },
         renderDiagram: render,
-        getPan: () => SmartBPanZoom.getPan(),
-        setPan: (px, py) => SmartBPanZoom.setPan(px, py),
+        getPan: function() { return SmartBPanZoom.getPan(); },
+        setPan: function(px, py) { SmartBPanZoom.setPan(px, py); },
     };
     SmartBAnnotations.init(_initHooks);
     MmdEditor.init(_initHooks);
@@ -640,17 +320,16 @@
     if (window.SmartBCollapseUI) {
         SmartBCollapseUI.init({
             onToggle: async function(collapsedIds) {
-                // Send collapsed state to server and re-render
                 try {
-                    const params = new URLSearchParams();
+                    var params = new URLSearchParams();
                     if (collapsedIds.length > 0) {
                         params.set('collapsed', JSON.stringify(collapsedIds));
                     }
-                    const url = '/api/diagrams/' + encodeURIComponent(currentFile) + '?' + params.toString();
-                    const resp = await fetch(url);
+                    var currentFile = SmartBFileTree.getCurrentFile();
+                    var url = '/api/diagrams/' + encodeURIComponent(currentFile) + '?' + params.toString();
+                    var resp = await fetch(url);
                     if (!resp.ok) return;
-                    const data = await resp.json();
-                    // Update auto-collapse notice from server response
+                    var data = await resp.json();
                     if (data.collapse) {
                         SmartBCollapseUI.setConfig(data.collapse.config);
                         SmartBCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed || []);
@@ -658,24 +337,23 @@
                     if (data.mermaidContent) {
                         await render(data.mermaidContent);
                     }
-                } catch (e) {
-                    // Silently fail — diagram keeps current state
-                }
+                } catch (e) {}
             }
         });
 
         SmartBCollapseUI.initFocusMode({
             onFocusChange: async function(event) {
                 try {
+                    var currentFile = SmartBFileTree.getCurrentFile();
                     if (event.action === 'focus') {
-                        const params = new URLSearchParams({ focus: event.nodeId });
-                        const collapsed = SmartBCollapseUI.getCollapsed();
+                        var params = new URLSearchParams({ focus: event.nodeId });
+                        var collapsed = SmartBCollapseUI.getCollapsed();
                         if (collapsed.length > 0) {
                             params.set('collapsed', JSON.stringify(collapsed));
                         }
-                        const resp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + params.toString());
+                        var resp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + params.toString());
                         if (!resp.ok) return;
-                        const data = await resp.json();
+                        var data = await resp.json();
                         if (data.collapse) {
                             SmartBCollapseUI.setBreadcrumbs(data.collapse.breadcrumbs, data.collapse.focusedSubgraph);
                             SmartBCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed || []);
@@ -688,31 +366,29 @@
                             document.getElementById('preview').classList.add('diagram-focus-mode');
                         }
                     } else if (event.action === 'navigate') {
-                        const params = new URLSearchParams({ breadcrumb: event.breadcrumbId });
-                        const resp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + params.toString());
-                        if (!resp.ok) return;
-                        const data = await resp.json();
-                        if (data.collapse) {
-                            SmartBCollapseUI.setBreadcrumbs(data.collapse.breadcrumbs, data.collapse.focusedSubgraph);
-                            SmartBCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed || []);
+                        var navParams = new URLSearchParams({ breadcrumb: event.breadcrumbId });
+                        var navResp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + navParams.toString());
+                        if (!navResp.ok) return;
+                        var navData = await navResp.json();
+                        if (navData.collapse) {
+                            SmartBCollapseUI.setBreadcrumbs(navData.collapse.breadcrumbs, navData.collapse.focusedSubgraph);
+                            SmartBCollapseUI.setAutoCollapsed(navData.collapse.autoCollapsed || []);
                         }
-                        if (data.mermaidContent) {
-                            await render(data.mermaidContent);
+                        if (navData.mermaidContent) {
+                            await render(navData.mermaidContent);
                         }
                     } else if (event.action === 'exit') {
-                        const resp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile));
-                        if (!resp.ok) return;
-                        const data = await resp.json();
+                        var exitResp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile));
+                        if (!exitResp.ok) return;
+                        var exitData = await exitResp.json();
                         SmartBCollapseUI.setBreadcrumbs([], null);
-                        SmartBCollapseUI.setAutoCollapsed(data.collapse?.autoCollapsed || []);
-                        if (data.mermaidContent) {
-                            await render(data.mermaidContent);
+                        SmartBCollapseUI.setAutoCollapsed(exitData.collapse ? exitData.collapse.autoCollapsed || [] : []);
+                        if (exitData.mermaidContent) {
+                            await render(exitData.mermaidContent);
                             document.getElementById('preview').classList.remove('diagram-focus-mode');
                         }
                     }
-                } catch (e) {
-                    // Silently fail
-                }
+                } catch (e) {}
             }
         });
     }
