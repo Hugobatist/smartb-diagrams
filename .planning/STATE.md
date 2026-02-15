@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can see what their AI is thinking and intervene surgically before it finishes
-**Current focus:** Phase 5 complete — ready for Phase 6
+**Current focus:** Phase 6 in progress — CLI, DX, and AI integration
 
 ## Current Position
 
-Phase: 5 of 8 (MCP Server) -- COMPLETE
-Plan: 3 of 3 in current phase (05-03 complete)
-Status: Phase Complete
-Last activity: 2026-02-15 — Completed 05-03 (Shared Process and Graceful Shutdown)
+Phase: 6 of 8 (CLI, DX, AI Integration)
+Plan: 2 of 3 in current phase (06-02 complete)
+Status: In Progress
+Last activity: 2026-02-15 — Completed 06-02 (Correction Context Tool and Error Messages)
 
-Progress: [████████░░] 83%
+Progress: [████████░░] 88%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: 3.3min
+- Total plans completed: 14
+- Average duration: 3.1min
 - Total execution time: 0.7 hours
 
 **By Phase:**
@@ -32,9 +32,10 @@ Progress: [████████░░] 83%
 | 03-websocket-real-time-sync | 3 | 8min | 2.7min |
 | 04-interactive-browser-ui | 2 | 4min | 2min |
 | 05-mcp-server | 3 | 8min | 2.7min |
+| 06-cli-dx-ai-integration | 2 | 4min | 2min |
 
 **Recent Trend:**
-- Last 5 plans: 2min, 2min, 4min, 2min, 2min
+- Last 5 plans: 4min, 2min, 2min, 2min, 2min
 - Trend: stable
 
 *Updated after each plan completion*
@@ -89,6 +90,9 @@ Recent decisions affecting current work:
 - [05-03]: Optional existingService parameter on createHttpServer() for backward-compatible dependency injection between MCP and HTTP servers
 - [05-03]: Dynamic imports of createHttpServer and detect-port in --serve path for lazy loading
 - [05-03]: Ordered shutdown mirrors existing startServer() pattern: fileWatcher -> wsManager -> httpServer
+- [06-02]: CorrectionContext includes full mermaid content, all flags, all statuses, and natural language instruction for AI self-correction
+- [06-02]: get_correction_context returns isError:true with descriptive message when nodeId has no flag (not an exception)
+- [06-02]: No-mmd-files check uses a temporary DiagramService instance in startServer, server does not refuse to start
 
 ### Pending Todos
 
@@ -228,5 +232,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 05-03-PLAN.md (Shared Process and Graceful Shutdown) -- Phase 5 complete
+Stopped at: Completed 06-02-PLAN.md (Correction Context Tool and Error Messages)
 Resume file: None
