@@ -50,7 +50,12 @@ Plans:
   3. serializeGraphToMermaid() produces semantically equivalent .mmd text (parse(serialize(parse(text))) === parse(text))
   4. Round-trip tests cover 20+ .mmd fixtures including nested subgraphs, special characters, and all edge types
   5. Existing .mmd files with flags and statuses parse correctly into the graph model
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Define GraphModel types and create 22 .mmd test fixtures
+- [ ] 10-02-PLAN.md — TDD: parseMermaidToGraph() with multi-pass pipeline
+- [ ] 10-03-PLAN.md — TDD: serializeGraphToMermaid(), round-trip tests, DiagramService integration
 
 #### Phase 11: Custom Renderer
 **Goal**: The browser can render a flowchart diagram from a GraphModel using dagre layout and custom SVG, producing output visually similar to Mermaid
@@ -128,7 +133,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 9. Foundation Refactoring | 0/4 | Planned | - |
-| 10. Graph Model + Parser | 0/? | Not Started | - |
+| 10. Graph Model + Parser | 0/3 | Planned | - |
 | 11. Custom Renderer | 0/? | Not Started | - |
 | 12. Server + Browser Integration | 0/? | Not Started | - |
 | 13. Canvas Interactions | 0/? | Not Started | - |
