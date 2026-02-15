@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <link rel="stylesheet" href="annotations.css">
+    <link rel="stylesheet" href="search.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -575,6 +576,7 @@
         <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>-</kbd></span><span>Zoom in/out</span></div>
         <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>0</kbd></span><span>Zoom fit</span></div>
         <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>S</kbd></span><span>Salvar arquivo</span></div>
+        <div class="help-row"><span><kbd>Ctrl</kbd>+<kbd>F</kbd></span><span>Buscar nodo</span></div>
         <div class="help-row"><span>Scroll</span><span>Zoom</span></div>
         <div class="help-row"><span>Arrastar</span><span>Pan</span></div>
         <div class="help-row"><span><kbd>N</kbd></span><span>Adicionar nodo</span></div>
@@ -1304,10 +1306,13 @@
         if (e.target === editor) return;
         // Flag popover textarea should not trigger shortcuts
         if (e.target.closest('.flag-popover')) return;
+        // Search bar input should not trigger shortcuts
+        if (e.target.closest('.search-bar')) return;
+        if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); SmartBSearch.open(); return; }
         if (e.key === 'f' && !e.ctrlKey && !e.metaKey) { SmartBAnnotations.toggleFlagMode(); return; }
         if (e.key === 'n' && !e.ctrlKey && !e.metaKey) { MmdEditor.toggleAddNode(); return; }
         if (e.key === 'a' && !e.ctrlKey && !e.metaKey) { MmdEditor.toggleAddEdge(); return; }
-        if (e.key === 'Escape') { SmartBAnnotations.closePopover(); MmdEditor.closeEditorPopover(); MmdEditor.setMode(null); }
+        if (e.key === 'Escape') { SmartBAnnotations.closePopover(); MmdEditor.closeEditorPopover(); MmdEditor.setMode(null); SmartBSearch.close(); }
         if (e.key === '?' && !e.ctrlKey) showHelp();
         if (e.key === 'e' && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
@@ -1506,6 +1511,7 @@
 <script src="ws-client.js"></script>
 <script src="annotations.js"></script>
 <script src="diagram-editor.js"></script>
+<script src="search.js"></script>
 <script>
     // Initialize annotations + editor after all scripts loaded
     const _initHooks = {
@@ -1515,9 +1521,12 @@
         setLastContent: (v) => { lastContent = v; },
         saveFile: saveCurrentFile,
         renderDiagram: render,
+        getPan: () => ({ panX, panY, zoom }),
+        setPan: (px, py) => { panX = px; panY = py; applyTransform(); },
     };
     SmartBAnnotations.init(_initHooks);
     MmdEditor.init(_initHooks);
+    SmartBSearch.init(_initHooks);
 </script>
 </body>
 </html>
