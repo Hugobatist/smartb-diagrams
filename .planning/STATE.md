@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can see what their AI is thinking and intervene surgically before it finishes
-**Current focus:** Phase 3 — WebSocket + Real-Time Sync (in progress)
+**Current focus:** Phase 3 — WebSocket + Real-Time Sync (COMPLETE)
 
 ## Current Position
 
 Phase: 3 of 8 (WebSocket + Real-Time Sync)
-Plan: 2 of 3 in current phase (03-02 complete)
-Status: In Progress
-Last activity: 2026-02-15 — Completed 03-02 (Client-Side WebSocket + Reconnect)
+Plan: 3 of 3 in current phase (03-03 complete -- phase done)
+Status: Phase Complete
+Last activity: 2026-02-15 — Completed 03-03 (Multi-Project WebSocket Namespacing)
 
-Progress: [█████▓░░░░] 46%
+Progress: [██████░░░░] 54%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 4min
 - Total execution time: 0.4 hours
 
@@ -29,10 +29,10 @@ Progress: [█████▓░░░░] 46%
 |-------|-------|-------|----------|
 | 01-project-bootstrap-diagram-core | 2 | 9min | 4.5min |
 | 02-http-server | 2 | 8min | 4min |
-| 03-websocket-real-time-sync | 2 | 5min | 2.5min |
+| 03-websocket-real-time-sync | 3 | 8min | 2.7min |
 
 **Recent Trend:**
-- Last 5 plans: 6min, 3min, 5min, 3min, 2min
+- Last 5 plans: 3min, 5min, 3min, 2min, 3min
 - Trend: stable/improving
 
 *Updated after each plan completion*
@@ -67,6 +67,10 @@ Recent decisions affecting current work:
 - [03-02]: Status dot/text driven by WebSocket onStatusChange callback, not autoSync toggle
 - [03-02]: Auto-Sync toggle controls re-render only -- WS connection stays open regardless
 - [03-02]: var declarations in ws-client.js for broadest browser compatibility (no build step)
+- [03-03]: noServer mode with HTTP upgrade handler for multi-project URL routing
+- [03-03]: Map<string, WebSocketServer> keyed by project name for namespace isolation
+- [03-03]: WsMessage connected type gains project field for client namespace awareness
+- [03-03]: addProject() on ServerInstance for lazy project registration with per-project FileWatcher
 
 ### Pending Todos
 
@@ -80,5 +84,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 03-02-PLAN.md (Client-Side WebSocket + Reconnect)
+Stopped at: Completed 03-03-PLAN.md (Multi-Project WebSocket Namespacing) -- Phase 3 complete
 Resume file: None
