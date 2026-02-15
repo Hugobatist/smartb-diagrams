@@ -13,6 +13,9 @@ export class DiagramViewProvider implements vscode.WebviewViewProvider {
   /** Optional callback for messages received from the webview. */
   public onWebviewMessage?: (msg: unknown) => void;
 
+  /** Optional callback invoked when the webview becomes visible (resolveWebviewView). */
+  public onWebviewReady?: () => void;
+
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   resolveWebviewView(
@@ -38,11 +41,23 @@ export class DiagramViewProvider implements vscode.WebviewViewProvider {
     webviewView.onDidDispose(() => {
       this.view = undefined;
     });
+
+    // Notify extension host that the webview is ready for initial state
+    this.onWebviewReady?.();
   }
 
   /** Send a message to the webview. */
   postMessage(message: unknown): void {
     this.view?.webview.postMessage(message);
+  }
+
+  /** Send the current diagram state to the webview (e.g., on reconnect/reshow). */
+  sendCurrentState(file: string, content: string): void {
+    this.postMessage({
+      type: 'diagram:update',
+      file,
+      content,
+    });
   }
 
   /** Whether the webview is currently visible. */
