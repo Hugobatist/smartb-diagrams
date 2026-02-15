@@ -141,16 +141,21 @@
         },
 
         /**
-         * Returns all .nodeLabel elements from the SVG.
+         * Returns all node label elements from the SVG.
+         * Custom renderer: <text> children of .smartb-node
+         * Mermaid: .nodeLabel elements
          */
         getAllNodeLabels: function() {
             var svg = this.getSVG();
             if (!svg) return [];
+            if (this.getRendererType() === 'custom') {
+                return Array.from(svg.querySelectorAll('.smartb-node > text'));
+            }
             return Array.from(svg.querySelectorAll('.nodeLabel'));
         },
 
         /**
-         * Walks up to find .node or .cluster parent element.
+         * Walks up to find .node, .cluster, or .smartb-edge parent element.
          */
         findMatchParent: function(element) {
             var current = element;
@@ -159,12 +164,29 @@
                     (current.classList.contains('node') ||
                      current.classList.contains('cluster') ||
                      current.classList.contains('smartb-node') ||
-                     current.classList.contains('smartb-subgraph'))) {
+                     current.classList.contains('smartb-subgraph') ||
+                     current.classList.contains('smartb-edge'))) {
                     return current;
                 }
                 current = current.parentElement;
             }
             return null;
+        },
+
+        /**
+         * Finds the SVG element for a given edge ID.
+         * Custom: data-edge-id attribute
+         * Mermaid: id="L-{edgeId}"
+         */
+        findEdgeElement: function(edgeId) {
+            var svg = this.getSVG();
+            if (!svg) return null;
+            // Custom renderer: data-edge-id attribute
+            var custom = svg.querySelector('[data-edge-id="' + edgeId + '"]');
+            if (custom) return custom;
+            // Mermaid: id="L-{edgeId}"
+            var mermaid = svg.querySelector('[id="L-' + edgeId + '"]');
+            return mermaid || null;
         },
 
         /**

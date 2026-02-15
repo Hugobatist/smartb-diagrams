@@ -39,6 +39,30 @@
         var currentSvg = document.querySelector('#preview svg');
         if (!currentSvg) return window.toast && toast('Nada para exportar');
 
+        // Custom SVG: direct PNG export without mermaid re-render
+        if (window.DiagramDOM && DiagramDOM.getRendererType() === 'custom') {
+            var currentFile = (window.SmartBFileTree && SmartBFileTree.getCurrentFile()) || 'diagram.mmd';
+            var clone = currentSvg.cloneNode(true);
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var data = new XMLSerializer().serializeToString(clone);
+            var img = new Image();
+            img.onload = function() {
+                canvas.width = img.width * 2;
+                canvas.height = img.height * 2;
+                ctx.scale(2, 2);
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob(function(blob) {
+                    download(blob, currentFile.replace('.mmd', '.png'));
+                }, 'image/png');
+            };
+            img.onerror = function() {
+                if (window.toast) toast('Erro ao exportar PNG -- tente SVG');
+            };
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data)));
+            return;
+        }
+
         var baseConfig = window.SmartBRenderer && SmartBRenderer.MERMAID_CONFIG;
         if (!baseConfig) {
             if (window.toast) toast('Erro: renderer nao carregado');

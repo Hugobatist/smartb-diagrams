@@ -186,3 +186,26 @@ function serializeEdgeOperator(
 
   return baseSyntax;
 }
+
+// ─── JSON serializer (for WebSocket / REST) ─────────────────────────────────
+
+/**
+ * Serialize a GraphModel to a plain JSON-safe object.
+ * Converts all Map fields to plain objects for transmission over WebSocket or REST.
+ */
+export function serializeGraphModel(graph: GraphModel): Record<string, unknown> {
+  return {
+    diagramType: graph.diagramType,
+    direction: graph.direction,
+    nodes: Object.fromEntries(graph.nodes),
+    edges: graph.edges,
+    subgraphs: Object.fromEntries(graph.subgraphs),
+    classDefs: Object.fromEntries(graph.classDefs),
+    nodeStyles: Object.fromEntries(graph.nodeStyles),
+    linkStyles: Object.fromEntries(graph.linkStyles),
+    classAssignments: Object.fromEntries(graph.classAssignments),
+    filePath: graph.filePath,
+    flags: Object.fromEntries(graph.flags),
+    statuses: Object.fromEntries(graph.statuses),
+  };
+}

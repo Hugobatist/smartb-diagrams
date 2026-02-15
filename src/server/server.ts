@@ -10,6 +10,7 @@ import { serveStaticFile } from './static.js';
 import { registerRoutes } from './routes.js';
 import { WebSocketManager } from './websocket.js';
 import { FileWatcher } from '../watcher/file-watcher.js';
+import { serializeGraphModel } from '../diagram/graph-serializer.js';
 
 /** Options for starting the HTTP server */
 export interface ServerOptions {
@@ -193,6 +194,13 @@ export function createHttpServer(projectDir: string, existingService?: DiagramSe
       if (content !== null) {
         wsManager.broadcast('default', { type: 'file:changed', file, content });
       }
+      try {
+        const graph = await service.readGraph(file);
+        const graphJson = serializeGraphModel(graph);
+        wsManager.broadcast('default', { type: 'graph:update', file, graph: graphJson });
+      } catch {
+        // Parse failure -- file:changed already sent, browser falls back to Mermaid
+      }
     },
     (file) => {
       wsManager.broadcast('default', { type: 'file:added', file });
@@ -224,6 +232,13 @@ export function createHttpServer(projectDir: string, existingService?: DiagramSe
         ).catch(() => null);
         if (content !== null) {
           wsManager.broadcast(name, { type: 'file:changed', file, content });
+        }
+        try {
+          const graph = await projectService.readGraph(file);
+          const graphJson = serializeGraphModel(graph);
+          wsManager.broadcast(name, { type: 'graph:update', file, graph: graphJson });
+        } catch {
+          // Parse failure -- file:changed already sent, browser falls back to Mermaid
         }
       },
       (file) => {

@@ -15,6 +15,48 @@
 (function() {
     'use strict';
 
+    // ── Status color palette (matches Mermaid classDef in renderer.js) ──
+    var STATUS_COLORS = {
+        'ok':          { fill: '#22c55e', stroke: '#16a34a', text: '#fff' },
+        'problem':     { fill: '#ef4444', stroke: '#dc2626', text: '#fff' },
+        'in-progress': { fill: '#eab308', stroke: '#ca8a04', text: '#000' },
+        'discarded':   { fill: '#9ca3af', stroke: '#6b7280', text: '#fff' },
+    };
+
+    // ── Last rendered graph model (for re-application) ──
+    var lastGraphModel = null;
+
+    /**
+     * Apply status colors to SVG nodes based on the graph model's statuses map.
+     * @param {Object} graphModel - Graph model containing a .statuses map.
+     */
+    function applyStatusColors(graphModel) {
+        if (!graphModel || !graphModel.statuses) return;
+        var svg = document.querySelector('#preview svg');
+        if (!svg) return;
+        var statuses = graphModel.statuses;
+        for (var nodeId in statuses) {
+            if (!statuses.hasOwnProperty(nodeId)) continue;
+            var status = statuses[nodeId];
+            var colors = STATUS_COLORS[status];
+            if (!colors) continue;
+            var nodeEl = svg.querySelector('[data-node-id="' + nodeId + '"]');
+            if (!nodeEl) continue;
+            // Find shape element (rect, circle, polygon, etc.)
+            var shape = nodeEl.querySelector('rect, circle, polygon, path, ellipse');
+            if (!shape) {
+                var childG = nodeEl.querySelector('g');
+                if (childG) shape = childG.querySelector('rect, circle, polygon, path, ellipse');
+            }
+            if (shape) {
+                shape.setAttribute('fill', colors.fill);
+                shape.setAttribute('stroke', colors.stroke);
+            }
+            var textEl = nodeEl.querySelector('text');
+            if (textEl) textEl.setAttribute('fill', colors.text);
+        }
+    }
+
     /**
      * Render a graph model into the preview container.
      * Runs dagre layout, builds SVG, inserts into DOM, applies pan-zoom.
@@ -22,6 +64,9 @@
      */
     async function render(graphModel) {
         if (!graphModel || !graphModel.nodes) return;
+
+        // Store for re-application
+        lastGraphModel = graphModel;
 
         // Wait for fonts so text measurement is accurate
         await document.fonts.ready;
@@ -52,6 +97,9 @@
 
         // Apply flag indicators after SVG is in the DOM
         if (window.SmartBAnnotations) SmartBAnnotations.applyFlagsToSVG();
+
+        // Apply status colors from graph model
+        applyStatusColors(graphModel);
 
         // Apply collapse overlays if available
         if (window.SmartBCollapseUI && SmartBCollapseUI.applyOverlays) {
@@ -86,7 +134,8 @@
     // ── Public API ──
     window.SmartBCustomRenderer = {
         render: render,
-        fetchAndRender: fetchAndRender
+        fetchAndRender: fetchAndRender,
+        getLastGraphModel: function() { return lastGraphModel; },
     };
 
 })();

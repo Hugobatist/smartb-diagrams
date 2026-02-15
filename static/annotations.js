@@ -109,10 +109,23 @@
                 addBadge(svg, subEl);
                 continue;
             }
-            // Edge flags: check if ID starts with L-
+            // Edge flags: check if ID starts with L- (Mermaid) or direct data-edge-id (custom)
             if (nodeId.startsWith('L-')) {
                 var edgeEl = svg.querySelector('[id="' + nodeId + '"]');
-                if (edgeEl) edgeEl.classList.add('flagged-edge');
+                if (!edgeEl) {
+                    var bareEdgeId = nodeId.substring(2);
+                    edgeEl = svg.querySelector('[data-edge-id="' + bareEdgeId + '"]');
+                }
+                if (edgeEl) {
+                    edgeEl.classList.add('flagged-edge');
+                    addBadge(svg, edgeEl);
+                }
+            } else {
+                var directEdge = svg.querySelector('[data-edge-id="' + nodeId + '"]');
+                if (directEdge) {
+                    directEdge.classList.add('flagged-edge');
+                    addBadge(svg, directEdge);
+                }
             }
         }
     }

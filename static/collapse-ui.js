@@ -79,7 +79,7 @@
         if (e.target.closest('.zoom-controls')) return;
         if (e.target.closest('.flag-popover')) return;
 
-        var target = e.target.closest('.node');
+        var target = e.target.closest('.node') || e.target.closest('.smartb-node');
         if (target) {
           var nodeId = self.extractNodeId(target);
           if (nodeId && nodeId.startsWith('__collapsed__')) {
@@ -91,10 +91,10 @@
           }
         }
 
-        // Click on cluster label to collapse
+        // Click on cluster label to collapse (Mermaid .cluster or custom .smartb-subgraph)
         var clusterLabel = e.target.closest('.cluster-label');
         if (clusterLabel) {
-          var cluster = clusterLabel.closest('.cluster');
+          var cluster = clusterLabel.closest('.cluster') || clusterLabel.closest('.smartb-subgraph');
           if (cluster) {
             var clusterId = self.extractClusterId(cluster);
             if (clusterId) {
@@ -114,7 +114,7 @@
 
       // Double-click to enter focus mode
       diagram.addEventListener('dblclick', function(e) {
-        var node = e.target.closest('.node');
+        var node = e.target.closest('.node') || e.target.closest('.smartb-node');
         if (!node) return;
 
         var nodeId = self.extractNodeId(node);

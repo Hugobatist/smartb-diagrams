@@ -9,7 +9,8 @@ export type WsMessage =
   | { type: 'file:added'; file: string }
   | { type: 'file:removed'; file: string }
   | { type: 'tree:updated'; files: string[] }
-  | { type: 'connected'; project: string };
+  | { type: 'connected'; project: string }
+  | { type: 'graph:update'; file: string; graph: Record<string, unknown> };
 
 /**
  * Manages WebSocket servers using noServer mode for multi-project namespacing.

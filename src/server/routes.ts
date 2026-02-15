@@ -16,6 +16,7 @@ import {
   type CollapseConfig,
   type CollapseState,
 } from '../diagram/collapser.js';
+import { serializeGraphModel } from '../diagram/graph-serializer.js';
 
 /**
  * A node in the file tree returned by /tree.json.
@@ -342,18 +343,7 @@ export function registerRoutes(service: DiagramService, projectDir: string, wsMa
       try {
         const file = decodeURIComponent(params['file']!);
         const graph = await service.readGraph(file);
-        const json = {
-          diagramType: graph.diagramType,
-          direction: graph.direction,
-          nodes: Object.fromEntries(graph.nodes),
-          edges: graph.edges,
-          subgraphs: Object.fromEntries(graph.subgraphs),
-          classDefs: Object.fromEntries(graph.classDefs),
-          nodeStyles: Object.fromEntries(graph.nodeStyles),
-          linkStyles: Object.fromEntries(graph.linkStyles),
-          classAssignments: Object.fromEntries(graph.classAssignments),
-          filePath: graph.filePath,
-        };
+        const json = serializeGraphModel(graph);
         sendJson(res, json);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';

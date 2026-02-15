@@ -15,11 +15,35 @@
 
     // ── Renderer type from query params ──
     var params = new URLSearchParams(window.location.search);
-    var rendererType = params.get('renderer') || 'mermaid';
+    var paramRenderer = params.get('renderer'); // null if not set
+    var effectiveRendererType = paramRenderer || 'mermaid'; // updated dynamically
+
+    // ── Auto-select renderer based on diagram type ──
+    function selectRendererType(diagramType) {
+        // User override via ?renderer= always wins
+        if (paramRenderer) return paramRenderer;
+        // Auto-select: custom for flowchart/graph, mermaid for everything else
+        if (diagramType === 'flowchart' || diagramType === 'graph') return 'custom';
+        return 'mermaid';
+    }
+
+    // ── Dynamic renderer indicator in status bar ──
+    function updateRendererIndicator() {
+        var existing = document.querySelector('.renderer-indicator');
+        if (existing) existing.remove();
+        if (effectiveRendererType === 'custom') {
+            var indicator = document.createElement('span');
+            indicator.className = 'renderer-indicator';
+            indicator.style.cssText = 'font-size:10px;color:#6366f1;margin-left:8px;font-weight:600;';
+            indicator.textContent = 'CUSTOM';
+            var statusEl = document.querySelector('.topbar .status');
+            if (statusEl) statusEl.appendChild(indicator);
+        }
+    }
 
     // ── Render with type (custom or mermaid) ──
     async function renderWithType(text) {
-        if (rendererType === 'custom') {
+        if (effectiveRendererType === 'custom') {
             try {
                 var currentFile = SmartBFileTree.getCurrentFile();
                 await SmartBCustomRenderer.fetchAndRender(currentFile);
@@ -194,13 +218,24 @@
             await renderWithType(editor.value);
         }
 
-        // Fetch collapse metadata for initial auto-collapse
-        if (currentFile && window.SmartBCollapseUI) {
+        // Fetch diagram metadata for auto-renderer selection and collapse
+        if (currentFile) {
             try {
                 var apiResp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile));
                 if (apiResp.ok) {
                     var data = await apiResp.json();
-                    if (data.collapse) {
+
+                    // Auto-detect renderer type on initial load
+                    if (data.validation && data.validation.diagramType) {
+                        effectiveRendererType = selectRendererType(data.validation.diagramType);
+                        if (effectiveRendererType === 'custom') {
+                            await SmartBCustomRenderer.fetchAndRender(currentFile);
+                        }
+                        updateRendererIndicator();
+                    }
+
+                    // Collapse metadata for initial auto-collapse
+                    if (window.SmartBCollapseUI && data.collapse) {
                         SmartBCollapseUI.setConfig(data.collapse.config);
                         if (data.collapse.autoCollapsed && data.collapse.autoCollapsed.length > 0) {
                             SmartBCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed);
@@ -208,7 +243,7 @@
                         }
                     }
                 }
-            } catch (e) {}
+            } catch (e) { /* keep Mermaid as fallback */ }
         }
 
         // WebSocket real-time sync
@@ -217,6 +252,17 @@
 
         createReconnectingWebSocket(wsUrl, function(msg) {
             switch (msg.type) {
+                case 'graph:update':
+                    if (msg.file === SmartBFileTree.getCurrentFile()) {
+                        // Update effective renderer type based on diagram type from server
+                        effectiveRendererType = selectRendererType(msg.graph.diagramType);
+                        if (effectiveRendererType === 'custom') {
+                            SmartBCustomRenderer.render(msg.graph);
+                        }
+                        // If using Mermaid, ignore graph:update (file:changed handles it)
+                        updateRendererIndicator();
+                    }
+                    break;
                 case 'file:changed':
                     if (!SmartBEditorPanel.isAutoSync()) return;
                     if (msg.file === SmartBFileTree.getCurrentFile()) {
@@ -234,7 +280,11 @@
                             }
                             SmartBFileTree.setLastContent(finalText);
                             document.getElementById('editor').value = finalText;
-                            renderWithType(finalText);
+                            // Only render via file:changed if NOT using custom renderer
+                            // (custom renderer gets data from graph:update instead)
+                            if (effectiveRendererType !== 'custom') {
+                                renderWithType(finalText);
+                            }
                         }
                     }
                     break;
@@ -263,13 +313,8 @@
             }
         });
 
-        // Show CUSTOM indicator in status bar when using custom renderer
-        if (rendererType === 'custom') {
-            var indicator = document.createElement('span');
-            indicator.style.cssText = 'font-size:10px;color:#6366f1;margin-left:8px;font-weight:600;';
-            indicator.textContent = 'CUSTOM';
-            document.querySelector('.topbar .status').appendChild(indicator);
-        }
+        // Show CUSTOM indicator in status bar (dynamic, based on effectiveRendererType)
+        updateRendererIndicator();
     })();
 
     SmartBFileTree.refreshFileList();
@@ -297,7 +342,8 @@
     window.SmartBApp = {
         toast: toast,
         showHelp: showHelp,
-        rendererType: rendererType,
+        rendererType: effectiveRendererType, // backward compat
+        getRendererType: function() { return effectiveRendererType; },
     };
     window.toast = toast;
     window.showHelp = showHelp;

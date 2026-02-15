@@ -39,7 +39,7 @@ export type {
 
 // Graph parser and serializer
 export { parseMermaidToGraph } from './diagram/graph-parser.js';
-export { serializeGraphToMermaid } from './diagram/graph-serializer.js';
+export { serializeGraphToMermaid, serializeGraphModel } from './diagram/graph-serializer.js';
 
 // Project management
 export { ProjectManager } from './project/manager.js';
