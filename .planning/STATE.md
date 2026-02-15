@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can see what their AI is thinking and intervene surgically before it finishes
-**Current focus:** Phase 6 complete — CLI, DX, and AI integration done
+**Current focus:** Phase 7 in progress — VS Code Extension
 
 ## Current Position
 
-Phase: 6 of 8 (CLI, DX, AI Integration) -- COMPLETE
-Plan: 3 of 3 in current phase (06-03 complete)
-Status: Phase Complete
-Last activity: 2026-02-15 — Completed 06-03 (README and AI Conventions Documentation)
+Phase: 7 of 8 (VS Code Extension)
+Plan: 1 of 3 in current phase (07-01 complete)
+Status: Executing
+Last activity: 2026-02-15 — Completed 07-01 (Extension Scaffolding)
 
-Progress: [█████████░] 94%
+Progress: [█████████░] 95%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 16
 - Average duration: 3.0min
-- Total execution time: 0.75 hours
+- Total execution time: 0.80 hours
 
 **By Phase:**
 
@@ -35,11 +35,11 @@ Progress: [█████████░] 94%
 | 06-cli-dx-ai-integration | 3 | 6min | 2min |
 
 **Recent Trend:**
-- Last 5 plans: 2min, 2min, 2min, 2min, 2min
+- Last 5 plans: 2min, 2min, 2min, 2min, 3min
 - Trend: stable
 
 *Updated after each plan completion*
-| Phase 06 P03 | 2min | 2 tasks | 1 files |
+| Phase 07 P01 | 3min | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -97,6 +97,9 @@ Recent decisions affecting current work:
 - [Phase 06-01]: node:http built-in request() for status CLI instead of fetch -- avoids experimental warnings and gives timeout control
 - [Phase 06-01]: CLI module pattern: src/cli/*.ts with dynamic import from commander actions for lazy loading
 - [Phase 06-01]: wsManager created before registerRoutes for dependency injection of client count into /api/status
+- [07-01]: Separate tsconfig.webview.json with DOM lib for browser-context webview code, main tsconfig excludes src/webview/
+- [07-01]: SmartBWsClient.updateUrl() method for handling config changes without manual disconnect/reconnect
+- [07-01]: @types/ws added as devDependency for proper Node.js WebSocket typing in extension host
 
 ### Pending Todos
 
@@ -236,5 +239,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 06-03-PLAN.md (README and AI Conventions Documentation) -- Phase 6 complete
+Stopped at: Completed 07-01-PLAN.md (Extension Scaffolding)
 Resume file: None
