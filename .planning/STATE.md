@@ -81,7 +81,49 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+#### v2 Feature Ideas (post-milestone completion)
+
+1. **Breakpoints no raciocínio da IA**
+   - **O que:** O dev marca um nó do fluxograma como "breakpoint". Quando a IA chega naquele passo do plano, a execução pausa e espera aprovação do dev antes de continuar.
+   - **Por que:** Flags são reativos (dev corrige depois). Breakpoints são preventivos (dev intercepta antes). Dá controle cirúrgico sobre decisões críticas da IA.
+   - **Como se conecta:** Estende o sistema de flags existente (`%% @flag`) com uma nova semântica `%% @breakpoint nodeId`. O MCP server (Phase 5) precisaria de um tool `check_breakpoints` que a IA chama antes de executar cada passo. O WebSocket (Phase 3) notifica o browser quando a IA está pausada num breakpoint.
+   - **Complexidade estimada:** Média — reutiliza flag infrastructure, precisa de novo MCP tool e UI de aprovação.
+   - **Diferencial competitivo:** Nenhuma ferramenta de IA oferece breakpoints no raciocínio. É o conceito de debugger aplicado a agentes de IA.
+
+2. **Ghost Paths — caminhos descartados pela IA**
+   - **O que:** Quando a IA toma uma decisão entre múltiplos caminhos, os caminhos não escolhidos aparecem no diagrama como nós semitransparentes ("fantasmas") com a razão do descarte. O dev pode clicar num ghost path e dizer "vai por aqui".
+   - **Por que:** Hoje o dev só vê o resultado final. Não sabe o que a IA considerou e rejeitou. Às vezes o caminho descartado era o certo. Mostrar alternativas dá contexto completo do raciocínio.
+   - **Como se conecta:** Precisa de uma nova annotation `%% @ghost nodeId "razão do descarte"` ou um campo extra no MCP tool `update_diagram`. O renderer (live.html) precisaria de CSS para nós fantasma (opacity, dashed borders). Clicar num ghost path geraria um flag automático "prefiro esse caminho".
+   - **Complexidade estimada:** Alta — requer protocolo novo entre IA e SmartB, mudanças no Mermaid rendering (classDef para ghost nodes), e UX de redirecionamento.
+   - **Diferencial competitivo:** Transparência total do processo decisório da IA. Nenhum concorrente mostra alternativas descartadas.
+
+3. **Diagrama como contrato executável**
+   - **O que:** Inversão do fluxo atual. Em vez de a IA gerar o diagrama e o dev observar, o dev desenha/esboça um fluxograma com os passos desejados e a IA é obrigada a seguir essa estrutura. Se a IA desviar do plano, o SmartB detecta e alerta.
+   - **Por que:** Transforma o SmartB de "monitor" em "linguagem de programação visual". O dev expressa a arquitetura desejada como fluxograma, e a IA implementa dentro dessas constraints. É literalmente "programar via fluxogramas".
+   - **Como se conecta:** O MCP tool `get_diagram_context` (Phase 5) já dá à IA o estado do diagrama. Precisa de um novo modo "contract" onde o diagrama pré-existe e a IA atualiza status dos nós (pendente→em progresso→concluído) em vez de criar nós novos. O FileWatcher (Phase 3) monitoraria desvios. A UI (Phase 4) precisaria de um editor simplificado para o dev esboçar o plano.
+   - **Complexidade estimada:** Alta — mudança conceitual grande, precisa de editor de diagrama, sistema de validação de conformidade, e novo modo no MCP.
+   - **Diferencial competitivo:** Ninguém oferece "programação visual que constrains a IA". É o diferencial máximo do SmartB.
+
+4. **Pattern Memory — aprender com flags históricos**
+   - **O que:** O SmartB armazena todos os flags por projeto e identifica padrões recorrentes. Quando a IA está prestes a repetir um erro já flagado antes, o SmartB avisa proativamente antes que o dev precise intervir.
+   - **Por que:** Cada flag é um dado de preferência do dev. Com o tempo, centenas de flags formam um perfil de "como esse dev quer que a IA trabalhe nesse projeto". O SmartB aprende e fica mais valioso quanto mais é usado — criando um moat de retenção.
+   - **Como se conecta:** Precisa de um storage persistente de flags (SQLite ou JSON) além do `.mmd` atual. Um matcher de similaridade (embeddings ou keyword) compara a intenção da IA com flags passados. Um novo MCP tool `get_learned_preferences` retorna warnings antes da IA executar. O WebSocket notificaria o dev: "SmartB preveniu um erro baseado no flag X do dia Y".
+   - **Complexidade estimada:** Média — storage é simples, o matching de padrões pode começar com keyword matching e evoluir pra embeddings.
+   - **Diferencial competitivo:** Lock-in positivo — quanto mais o dev usa, mais o SmartB sabe. Migrar pra concorrente perde meses de aprendizado. É o equivalente a "histórico de code review" mas para interações com IA.
+
+5. **Risk Heatmap — custo/impacto visual por nó**
+   - **O que:** Cada nó do fluxograma recebe uma anotação de risco/impacto baseada no que a IA pretende fazer. Nós que modificam muitos arquivos, tocam banco de dados, ou são irreversíveis ficam destacados em cores quentes (laranja/vermelho). Nós read-only ou pure functions ficam frios (azul/verde).
+   - **Por que:** O dev bate o olho no diagrama e sabe imediatamente onde estão os pontos perigosos. Combina naturalmente com breakpoints — breakpoints automáticos em nós de alto risco.
+   - **Como se conecta:** A IA reportaria metadata de risco via MCP tool `update_node_status` (Phase 5) com campos adicionais (files_affected, is_reversible, touches_db). O classDef system (Phase 2) já suporta cores por nó — precisa de novos classDefs para risk levels. A UI (Phase 4) poderia ter um toggle "show risk overlay".
+   - **Complexidade estimada:** Média — a IA já sabe o risco (tem contexto do codebase), precisa de schema pra reportar e UI pra renderizar.
+   - **Diferencial competitivo:** Visual risk assessment de AI actions. Nenhum tool mostra "quão perigoso é o que a IA vai fazer" de forma visual.
+
+6. **Session Replay — rebobinar o raciocínio da IA**
+   - **O que:** Cada mudança no diagrama é versionada com timestamp. O dev pode arrastar um slider temporal e ver o diagrama evoluindo passo a passo — como um replay de partida. Mostra quando cada nó foi adicionado, quando status mudou, quando flags foram criados.
+   - **Por que:** Permite post-mortem ("onde a IA errou?"), aprendizado ("como a IA pensa sobre refactoring?"), e compartilhamento ("olha o replay de como a IA resolveu esse bug"). É observabilidade temporal, não só espacial.
+   - **Como se conecta:** O FileWatcher (Phase 3) já detecta mudanças em .mmd. Precisa de um changelog persistente (append-only log de diffs com timestamps). A UI precisaria de um componente de timeline/slider. O WebSocket poderia ter um modo "replay" além do modo "live". Export do replay como GIF/vídeo seria killer pra compartilhar.
+   - **Complexidade estimada:** Alta — versionamento temporal, UI de timeline, storage de histórico, rendering de diffs animados.
+   - **Diferencial competitivo:** "Git blame para raciocínio de IA". Nenhum concorrente oferece replay temporal de como a IA pensou.
 
 ### Blockers/Concerns
 
