@@ -96,12 +96,12 @@ Plans:
   3. An AI tool can call `get_diagram_context` and `update_node_status` to read diagram state and set node statuses that render as colors in the browser
   4. MCP resources expose the list of available diagram files and individual file content for AI tool discovery
   5. No stdout writes occur from the server process — all logging goes to stderr so the MCP stdio transport is never corrupted
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 05-01: MCP server setup with stdio transport, stderr-only logging, shared process with HTTP/WS
-- [ ] 05-02: MCP tools — update_diagram, read_flags, get_diagram_context, update_node_status with Zod schemas
-- [ ] 05-03: MCP resources — diagram file listing and individual content exposure
+- [ ] 05-01-PLAN.md — MCP foundation: SDK install, Zod schemas, @status annotation support, MCP server skeleton, smartb mcp CLI command
+- [ ] 05-02-PLAN.md — MCP tools (update_diagram, read_flags, get_diagram_context, update_node_status) and resources (diagram list, diagram content)
+- [ ] 05-03-PLAN.md — Shared-process integration (--serve mode), graceful shutdown, end-to-end verification
 
 ### Phase 6: CLI + Developer Experience + AI Integration
 **Goal**: Developers have a polished CLI workflow (init, serve, status), zero-config MCP setup, and AI agents have conventions and tools for generating useful diagrams and responding to flags
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. HTTP Server | 2/2 | ✓ Complete | 2026-02-14 |
 | 3. WebSocket + Real-Time Sync | 3/3 | ✓ Complete | 2026-02-15 |
 | 4. Interactive Browser UI | 2/2 | ✓ Complete | 2026-02-15 |
-| 5. MCP Server | 0/3 | Not started | - |
+| 5. MCP Server | 0/3 | Planned | - |
 | 6. CLI + DX + AI Integration | 0/3 | Not started | - |
 | 7. VS Code Extension | 0/3 | Not started | - |
 | 8. Scalability + Large Diagrams | 0/3 | Not started | - |
