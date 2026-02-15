@@ -8,12 +8,12 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-Phase: 09-foundation-refactoring
-Plan: 01-04 complete (Phase 9 COMPLETE)
-Status: Phase 9 complete — all modules migrated to DiagramDOM + EventBus
-Last activity: 2026-02-15 — Plan 09-04 completed (module migration to DiagramDOM + event bus)
+Phase: 10-graph-model-parser
+Plan: 01 of 03 complete
+Status: Plan 10-01 complete — GraphModel types defined, 22 fixture files created
+Last activity: 2026-02-15 — Plan 10-01 completed (graph model types + test fixtures)
 
-Progress: [██████████] v1.0 100% | Phase 9: [==========] 4/4 plans COMPLETE
+Progress: [██████████] v1.0 100% | Phase 10: [===-------] 1/3 plans complete
 
 ## v1.0 Performance Metrics
 
@@ -65,6 +65,14 @@ Progress: [██████████] v1.0 100% | Phase 9: [==========] 4/4
 - All public APIs preserved, hooks pattern kept for backward compat
 - All 131 tests pass, all files under 500 lines
 
+## Phase 10 Progress
+
+**10-01 (Complete):** GraphModel type system and test fixtures
+- src/diagram/graph-types.ts: 83 lines, 9 exports (NodeShape, EdgeType, FlowDirection, GraphNode, GraphEdge, GraphSubgraph, GraphModel, SHAPE_PATTERNS, EDGE_SYNTAX)
+- 22 .mmd fixture files in test/fixtures/graph/ covering all syntax features
+- Zero new dependencies, typecheck passes, all 131 tests pass
+- Duration: 2 min
+
 ## Phase 8 Summary
 
 All scalability features implemented:
@@ -102,6 +110,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - DiagramDOM.extractNodeId delegates from SmartBAnnotations.extractNodeId public API
 - DOM-safe createElement for popover construction instead of innerHTML
 
+**Phase 10:**
+- Separate graph-types.ts file — backward compatibility for existing DiagramNode/DiagramEdge
+- SHAPE_PATTERNS ordered longest-first for correct parsing precedence
+- Map<K,V> for all GraphModel collections — consistent with DiagramContent.flags pattern
+- Trapezoid vs parallelogram disambiguation via close bracket character
+
 ### Pre-Release Todos Status
 
 **RESOLVED (by Phase 8 agents):**
@@ -135,5 +149,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 09-04-PLAN.md (module migration to DiagramDOM + event bus) -- Phase 9 COMPLETE
-Next action: Phase 9 complete. Ready for next phase planning.
+Stopped at: Completed 10-01-PLAN.md (GraphModel types + 22 .mmd fixture files)
+Next action: Execute 10-02-PLAN.md (parseMermaidToGraph with multi-pass pipeline)
