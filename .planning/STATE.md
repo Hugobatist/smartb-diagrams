@@ -39,6 +39,7 @@ Progress: [████████░░] 88%
 - Trend: stable
 
 *Updated after each plan completion*
+| Phase 06 P01 | 3min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [06-02]: CorrectionContext includes full mermaid content, all flags, all statuses, and natural language instruction for AI self-correction
 - [06-02]: get_correction_context returns isError:true with descriptive message when nodeId has no flag (not an exception)
 - [06-02]: No-mmd-files check uses a temporary DiagramService instance in startServer, server does not refuse to start
+- [Phase 06-01]: node:http built-in request() for status CLI instead of fetch -- avoids experimental warnings and gives timeout control
+- [Phase 06-01]: CLI module pattern: src/cli/*.ts with dynamic import from commander actions for lazy loading
+- [Phase 06-01]: wsManager created before registerRoutes for dependency injection of client count into /api/status
 
 ### Pending Todos
 
