@@ -1,0 +1,8 @@
+flowchart TB
+    subgraph Outer["Outer Group"]
+        subgraph Inner["Inner Group"]
+            A["Node A"] --> B["Node B"]
+        end
+        C["Node C"] --> A
+    end
+    D["External"] --> C

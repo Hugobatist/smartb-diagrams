@@ -1,0 +1,7 @@
+flowchart LR
+    A["Success"] --> B["Failure"]
+    B --> C["Pending"]
+    classDef okStyle fill:#22c55e,stroke:#16a34a;
+    classDef errorStyle fill:#ef4444,stroke:#dc2626;
+    class A,C okStyle
+    class B errorStyle

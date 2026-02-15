@@ -1,0 +1,9 @@
+flowchart LR
+    A["Auth"] --> B["Validate"]
+    B --> C["Process"]
+    C --> D["Store"]
+
+%% @flag A needs security review
+%% @flag C performance bottleneck
+%% @status A ok
+%% @status B in-progress

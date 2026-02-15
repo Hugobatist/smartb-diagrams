@@ -1,0 +1,6 @@
+flowchart TB
+    subgraph SG["Service Group"]
+        A["API"] --> B["DB"]
+    end
+    C["Client"] --> SG
+    SG --> D["Logger"]
