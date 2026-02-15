@@ -10,17 +10,17 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 5 of 8 (MCP Server)
-Plan: 1 of 3 in current phase (05-01 complete)
+Plan: 2 of 3 in current phase (05-02 complete)
 Status: In Progress
-Last activity: 2026-02-15 — Completed 05-01 (MCP Server Foundation)
+Last activity: 2026-02-15 — Completed 05-02 (MCP Tools and Resources)
 
-Progress: [███████░░░] 71%
+Progress: [████████░░] 79%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 3.5min
+- Total plans completed: 11
+- Average duration: 3.4min
 - Total execution time: 0.6 hours
 
 **By Phase:**
@@ -31,10 +31,10 @@ Progress: [███████░░░] 71%
 | 02-http-server | 2 | 8min | 4min |
 | 03-websocket-real-time-sync | 3 | 8min | 2.7min |
 | 04-interactive-browser-ui | 2 | 4min | 2min |
-| 05-mcp-server | 1 | 4min | 4min |
+| 05-mcp-server | 2 | 6min | 3min |
 
 **Recent Trend:**
-- Last 5 plans: 2min, 3min, 2min, 2min, 4min
+- Last 5 plans: 3min, 2min, 2min, 4min, 2min
 - Trend: stable
 
 *Updated after each plan completion*
@@ -83,6 +83,9 @@ Recent decisions affecting current work:
 - [05-01]: @status annotation format without quotes (%% @status nodeId statusValue) since status is a constrained enum
 - [05-01]: parseFlags silently skips @status lines to avoid spurious debug warnings for valid annotations
 - [05-01]: Dynamic import of DiagramService in startMcpServer for lazy loading consistency with serve command
+- [05-02]: Tools return isError:true with plain message text on failure, never stack traces (AI agent safety)
+- [05-02]: diagram-content resource uses decodeURIComponent on filePath template variable for special character support
+- [05-02]: Resources return empty contents array on error (MCP resources have no isError mechanism)
 
 ### Pending Todos
 
@@ -138,5 +141,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 05-01-PLAN.md (MCP Server Foundation)
+Stopped at: Completed 05-02-PLAN.md (MCP Tools and Resources)
 Resume file: None
