@@ -1,55 +1,8 @@
 import * as vscode from 'vscode';
-import * as http from 'node:http';
 import { DiagramViewProvider } from './diagram-provider.js';
+import { getHttpBaseUrl, httpPost } from './http-client.js';
+import { StatusBarManager } from './status-bar.js';
 import { SmartBWsClient } from './ws-client.js';
-
-/** Derive HTTP base URL from the WebSocket URL. */
-function getHttpBaseUrl(wsUrl: string): string {
-  return wsUrl
-    .replace(/^wss?:\/\//, 'http://')
-    .replace(/\/ws\/?$/, '');
-}
-
-/** POST JSON to a URL using Node.js built-in http module. */
-function httpPost(url: string, body: object): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const parsed = new URL(url);
-
-    const req = http.request(
-      {
-        hostname: parsed.hostname,
-        port: parsed.port,
-        path: parsed.pathname,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(data),
-        },
-        timeout: 5000,
-      },
-      (res) => {
-        let responseBody = '';
-        res.on('data', (chunk) => (responseBody += chunk));
-        res.on('end', () => {
-          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(responseBody);
-          } else {
-            reject(new Error(`HTTP ${res.statusCode}: ${responseBody}`));
-          }
-        });
-      },
-    );
-
-    req.on('error', reject);
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error('Request timed out'));
-    });
-    req.write(data);
-    req.end();
-  });
-}
 
 export function activate(context: vscode.ExtensionContext): void {
   // Track current file and cached contents from WebSocket messages
@@ -62,12 +15,16 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerWebviewViewProvider(DiagramViewProvider.viewType, provider),
   );
 
-  // 2. Read configuration
+  // 2. Create and register the status bar indicator
+  const statusBar = new StatusBarManager();
+  context.subscriptions.push(statusBar);
+
+  // 3. Read configuration
   const config = vscode.workspace.getConfiguration('smartb');
   let serverUrl = config.get<string>('serverUrl', 'ws://localhost:3333/ws');
   const autoConnect = config.get<boolean>('autoConnect', true);
 
-  // 3. Handle messages from the webview
+  // 4. Handle messages from the webview
   provider.onWebviewMessage = (msg: unknown) => {
     handleWebviewMessage(msg);
   };
@@ -83,7 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
 
-  // 4. Create WebSocket client with callbacks that relay to the webview
+  // 5. Create WebSocket client with callbacks that relay to the webview
   const wsClient = new SmartBWsClient(serverUrl, {
     onMessage: (msg) => {
       const wsMsg = msg as Record<string, unknown>;
@@ -98,16 +55,17 @@ export function activate(context: vscode.ExtensionContext): void {
       provider.postMessage({ type: 'diagram:update', ...(msg as object) });
     },
     onStatus: (status) => {
+      statusBar.setStatus(status);
       provider.postMessage({ type: 'connection:status', status });
     },
   });
 
-  // 5. Auto-connect if configured
+  // 6. Auto-connect if configured
   if (autoConnect) {
     wsClient.connect();
   }
 
-  // 6. Register commands
+  // 7. Register commands
   context.subscriptions.push(
     vscode.commands.registerCommand('smartb.reconnect', () => {
       wsClient.reconnect();
@@ -122,7 +80,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // 7. Listen for configuration changes
+  // 8. Listen for configuration changes
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('smartb.serverUrl')) {
@@ -132,7 +90,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // 8. Clean up WebSocket on deactivation
+  // 9. Clean up WebSocket on deactivation
   context.subscriptions.push({
     dispose: () => wsClient.disconnect(),
   });
