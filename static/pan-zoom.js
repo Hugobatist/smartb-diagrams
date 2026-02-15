@@ -1,0 +1,139 @@
+/**
+ * SmartB Pan/Zoom -- viewport transformation, scroll zoom, drag pan.
+ * Extracted from live.html (Phase 9 Plan 02).
+ *
+ * Dependencies: none (standalone)
+ * Dependents: renderer.js (calls zoomFit/applyTransform via window globals)
+ *
+ * Usage:
+ *   SmartBPanZoom.zoomIn();
+ *   SmartBPanZoom.zoomOut();
+ *   SmartBPanZoom.zoomFit();
+ *   SmartBPanZoom.getPan();  // { panX, panY, zoom }
+ *   SmartBPanZoom.setPan(px, py);
+ */
+(function() {
+    'use strict';
+
+    // ── State ──
+    var zoom = 1;
+    var panX = 0, panY = 0;
+    var isPanning = false;
+    var panStartX = 0, panStartY = 0;
+    var panStartPanX = 0, panStartPanY = 0;
+
+    // ── DOM refs (queried once at load time -- these elements are static) ──
+    var previewPanel = document.getElementById('previewPanel');
+    var container = document.getElementById('preview-container');
+
+    // ── Transform ──
+    function applyTransform() {
+        var preview = document.getElementById('preview');
+        preview.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + zoom + ')';
+    }
+
+    // ── Mouse wheel zoom (trackpad-friendly: uses deltaY magnitude) ──
+    container.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        // Clamp deltaY so trackpad inertia doesn't over-zoom
+        var clamped = Math.max(-60, Math.min(60, e.deltaY));
+        var factor = 1 - clamped * 0.002; // ~0.12% per pixel of delta
+        var newZoom = Math.min(Math.max(zoom * factor, 0.1), 5);
+
+        // Zoom toward cursor
+        var rect = container.getBoundingClientRect();
+        var mx = e.clientX - rect.left;
+        var my = e.clientY - rect.top;
+
+        panX = mx - (mx - panX) * (newZoom / zoom);
+        panY = my - (my - panY) * (newZoom / zoom);
+        zoom = newZoom;
+
+        applyTransform();
+        document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+    }, { passive: false });
+
+    // ── Mouse drag pan (disabled in flag mode and editor mode) ──
+    container.addEventListener('mousedown', function(e) {
+        if (e.button !== 0) return;
+        if (window.SmartBAnnotations && SmartBAnnotations.getState().flagMode) return;
+        if (window.MmdEditor && MmdEditor.getState().mode) return;
+        isPanning = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+        panStartPanX = panX;
+        panStartPanY = panY;
+        previewPanel.classList.add('grabbing');
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isPanning) return;
+        panX = panStartPanX + (e.clientX - panStartX);
+        panY = panStartPanY + (e.clientY - panStartY);
+        applyTransform();
+    });
+
+    document.addEventListener('mouseup', function() {
+        isPanning = false;
+        previewPanel.classList.remove('grabbing');
+    });
+
+    // ── Zoom Fit ──
+    function zoomFit() {
+        var svg = document.querySelector('#preview svg');
+        if (!svg) return;
+        var rect = container.getBoundingClientRect();
+        var vb = svg.viewBox && svg.viewBox.baseVal;
+        var svgW = (vb && vb.width) || svg.getBoundingClientRect().width / zoom;
+        var svgH = (vb && vb.height) || svg.getBoundingClientRect().height / zoom;
+
+        if (svgW <= 0 || svgH <= 0) return;
+
+        var padFraction = 0.92;
+        var scaleX = (rect.width * padFraction) / svgW;
+        var scaleY = (rect.height * padFraction) / svgH;
+        zoom = Math.min(scaleX, scaleY, 2.5);
+
+        var scaledW = svgW * zoom;
+        var scaledH = svgH * zoom;
+        panX = (rect.width - scaledW) / 2;
+        panY = (rect.height - scaledH) / 2;
+
+        applyTransform();
+        document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+    }
+
+    // ── Zoom buttons ──
+    function zoomIn() {
+        zoom = Math.min(zoom * 1.15, 5);
+        panX = 0;
+        panY = 0;
+        applyTransform();
+        document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+    }
+
+    function zoomOut() {
+        zoom = Math.max(zoom * 0.85, 0.1);
+        panX = 0;
+        panY = 0;
+        applyTransform();
+        document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+    }
+
+    // ── Public API ──
+    window.SmartBPanZoom = {
+        getZoom: function() { return zoom; },
+        getPan: function() { return { panX: panX, panY: panY, zoom: zoom }; },
+        setPan: function(px, py) { panX = px; panY = py; applyTransform(); },
+        applyTransform: applyTransform,
+        zoomIn: zoomIn,
+        zoomOut: zoomOut,
+        zoomFit: zoomFit,
+    };
+
+    // Backward compat -- inline onclick handlers and keyboard shortcuts call these directly
+    window.zoomIn = zoomIn;
+    window.zoomOut = zoomOut;
+    window.zoomFit = zoomFit;
+    window.applyTransform = applyTransform;
+})();
