@@ -1,11 +1,26 @@
 # SmartB Diagrams
 
-AI observability diagrams -- see what your AI is thinking.
+**See what your AI is thinking.** A visual debugger for AI reasoning — watch your AI agent think in real-time, set breakpoints, flag mistakes, and replay sessions.
 
-SmartB Diagrams lets developers watch AI reasoning in real-time. AI agents emit
-Mermaid flowcharts via MCP tools, a file watcher detects changes, WebSocket
-broadcasts updates to the browser, and developers see each step as it happens.
-Developers can flag nodes to redirect the AI mid-execution.
+[![npm version](https://img.shields.io/npm/v/smartb-diagrams.svg)](https://www.npmjs.com/package/smartb-diagrams)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](https://nodejs.org/)
+
+---
+
+## Why SmartB Diagrams?
+
+AI coding tools are **black boxes**. You give Cursor, Claude Code, or Copilot a task and wait. If it goes down a wrong path, you only find out when it's done — after wasted time and tokens.
+
+SmartB Diagrams makes AI reasoning **visible and controllable**:
+
+- **See** the AI's reasoning as a live flowchart that updates in real-time
+- **Intervene** by flagging nodes mid-execution — the AI reads your feedback and course-corrects
+- **Debug** with breakpoints that pause AI execution at specific reasoning steps
+- **Understand** what the AI considered and rejected via ghost paths
+- **Analyze** patterns with session replay and heatmaps
+
+It's the **Datadog for AI reasoning** — not another AI tool, but a plugin that makes your existing tools transparent.
 
 ## Quick Start
 
@@ -15,17 +30,51 @@ smartb init
 smartb serve
 ```
 
-`smartb init` creates a `.smartb.json` config file and a sample `reasoning.mmd`
-diagram in the current directory.
+Your browser opens with a live diagram viewer. Edit any `.mmd` file and see changes instantly.
 
-`smartb serve` starts the HTTP server, opens your browser, and begins watching
-for `.mmd` file changes. Edits appear in the browser within 100ms.
+## Key Features
 
-## CLI Commands
+### Real-Time AI Observability
+
+AI agents write Mermaid diagrams via MCP tools. A file watcher detects changes and pushes updates to your browser via WebSocket — all within 100ms.
+
+### Interactive Canvas
+
+Custom SVG renderer with dagre layout engine. Select, drag, edit, delete, and connect nodes directly on the canvas. Full undo/redo support (Ctrl+Z / Ctrl+Shift+Z).
+
+### AI Breakpoints
+
+Set breakpoints on diagram nodes. When the AI reaches that node, it **pauses** and waits for you to review. Click "Continue" when ready — just like a code debugger, but for AI reasoning.
+
+### Ghost Paths
+
+See the reasoning branches the AI considered but **rejected**. Rendered as dashed translucent edges, ghost paths reveal the "deleted scenes" of AI thinking — information normally invisible.
+
+### Developer Flags
+
+Click any node to flag it with a message. The AI reads your flag via MCP, gets structured correction context, and adjusts its approach. Bidirectional human-AI communication embedded in the diagram.
+
+### Session Recording & Replay
+
+Every AI reasoning session is recorded as JSONL. Replay sessions with a timeline scrubber at 1x/2x/4x speed. Diff highlighting shows what changed between frames.
+
+### Risk Heatmap
+
+Color-code nodes by visit frequency (cold blue to hot red). Identify which reasoning steps the AI revisits most — potential confusion points or bottlenecks.
+
+### Node Status Tracking
+
+Color-coded progress: green (ok), yellow (in-progress), red (problem), gray (discarded). See at a glance where the AI succeeded and where it struggled.
+
+### VS Code Extension
+
+View diagrams directly in VS Code. WebSocket connection with auto-reconnect, flag interaction, and file selector. Open with `Cmd+Alt+M`.
+
+## CLI Reference
 
 ### `smartb init`
 
-Initialize a SmartB Diagrams project.
+Initialize a SmartB project.
 
 ```bash
 smartb init [--dir <path>] [--force]
@@ -35,8 +84,6 @@ smartb init [--dir <path>] [--force]
 |--------|---------|-------------|
 | `--dir <path>` | `.` | Project directory |
 | `--force` | `false` | Overwrite existing config |
-
-Creates `.smartb.json` and a sample `reasoning.mmd` diagram.
 
 ### `smartb serve`
 
@@ -50,24 +97,17 @@ smartb serve [--port <number>] [--dir <path>] [--no-open]
 |--------|---------|-------------|
 | `--port <number>` | `3333` | Server port |
 | `--dir <path>` | `.` | Project directory |
-| `--no-open` | `false` | Do not open browser automatically |
-
-Starts an HTTP server with WebSocket support. Watches `.mmd` files and pushes
-changes to all connected browsers in real-time.
+| `--no-open` | `false` | Don't open browser automatically |
 
 ### `smartb status`
 
-Check if the SmartB server is running.
+Check server health.
 
 ```bash
 smartb status [--port <number>]
 ```
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--port <number>` | `3333` | Server port to check |
-
-Displays server uptime, number of diagrams, connected clients, and active flags.
+Shows uptime, diagram count, connected clients, and active flags.
 
 ### `smartb mcp`
 
@@ -80,23 +120,20 @@ smartb mcp [--dir <path>] [--serve] [--port <number>]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--dir <path>` | `.` | Project directory |
-| `--serve` | `false` | Also start HTTP+WS server for browser viewing |
+| `--serve` | `false` | Co-host HTTP+WS server for browser viewing |
 | `--port <number>` | `3333` | HTTP server port (requires `--serve`) |
 
-Runs the MCP server on stdio transport. AI agents (Claude, etc.) connect to this
-server to create and update diagrams via structured tools.
+## MCP Integration
 
-## MCP Setup
+### Setup with Claude Code
 
-### Claude Code (recommended)
-
-Add the MCP server with a single command:
+One command:
 
 ```bash
 claude mcp add --transport stdio smartb -- npx -y smartb-diagrams mcp --dir .
 ```
 
-Or create a `.mcp.json` file in your project root:
+Or add a `.mcp.json` to your project root:
 
 ```json
 {
@@ -109,7 +146,7 @@ Or create a `.mcp.json` file in your project root:
 }
 ```
 
-### Claude Desktop
+### Setup with Claude Desktop
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
@@ -124,117 +161,136 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-Replace `/path/to/project` with the absolute path to your project directory.
-
 ### With Browser Viewer
 
-To run MCP and the browser viewer in the same process:
+Run MCP and browser viewer in a single process:
 
 ```bash
 smartb mcp --dir . --serve --port 3333
 ```
 
-The `--serve` flag starts the HTTP+WS server alongside MCP, sharing the same
-DiagramService. Diagram updates from AI tools appear instantly in the browser.
+AI tool calls and browser updates share the same `DiagramService` — zero-latency sync.
 
 ## MCP Tools
 
+SmartB exposes 11 tools via the Model Context Protocol:
+
 | Tool | Description |
 |------|-------------|
-| `update_diagram` | Create or update a `.mmd` file with Mermaid content |
-| `read_flags` | Read all active developer flags from a diagram |
+| `update_diagram` | Create or update a `.mmd` file |
+| `read_flags` | Read developer feedback annotations |
 | `get_diagram_context` | Get full diagram state (content, flags, statuses, validation) |
-| `update_node_status` | Set node status: `ok`, `problem`, `in-progress`, `discarded` |
+| `update_node_status` | Set node status: `ok` / `problem` / `in-progress` / `discarded` |
 | `get_correction_context` | Get structured correction prompt for a flagged node |
+| `check_breakpoints` | Check if AI should pause at the current node |
+| `record_ghost_path` | Record a discarded reasoning branch |
+| `start_session` | Begin a recording session |
+| `record_step` | Record a node visit in the active session |
+| `end_session` | End session and get summary statistics |
+| `set_risk_level` | Set risk annotation (high/medium/low) on a node |
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Z` | Undo |
+| `Ctrl+Shift+Z` | Redo |
+| `Ctrl+C` / `Ctrl+V` | Copy / Paste |
+| `Ctrl+D` | Duplicate |
+| `Ctrl+F` | Search nodes |
+| `Delete` | Delete selected |
+| `Escape` | Deselect |
+| Mouse wheel | Zoom |
+| Click + drag | Pan |
 
 ## AI Diagram Conventions
 
-These conventions help AI agents produce consistent, readable reasoning diagrams.
-
 ### Diagram Direction
 
-- Use `flowchart TD` for sequential reasoning (top to bottom)
-- Use `flowchart LR` for parallel or branching logic (left to right)
+- `flowchart TD` for sequential reasoning (top to bottom)
+- `flowchart LR` for parallel or branching logic (left to right)
 
 ### Node Naming
 
-- Node IDs: lowercase-hyphenated (e.g., `analyze-requirements`)
-- Node labels: short action phrases in quotes (e.g., `["Analyze Requirements"]`)
-
-Example:
-
-```mermaid
-flowchart TD
-    analyze-requirements["Analyze Requirements"]
-    design-schema["Design Schema"]
-    implement-api["Implement API"]
-    analyze-requirements --> design-schema --> implement-api
-```
+- IDs: lowercase-hyphenated (`analyze-requirements`)
+- Labels: short action phrases (`["Analyze Requirements"]`)
 
 ### Status Annotations
 
-Track progress by adding status annotations as Mermaid comments:
-
 ```
-%% @status analyze-requirements ok            -- step completed (green)
-%% @status design-schema in-progress          -- currently working (yellow)
-%% @status implement-api problem              -- encountered issue (red)
-%% @status abandoned-approach discarded       -- abandoned approach (gray)
+%% @status analyze-requirements ok            -- completed (green)
+%% @status design-schema in-progress          -- working (yellow)
+%% @status implement-api problem              -- issue found (red)
+%% @status abandoned-approach discarded       -- abandoned (gray)
 ```
-
-Status values render as node colors in the browser viewer.
 
 ### Developer Flags
 
-Developers add flags to signal feedback to the AI:
-
 ```
-%% @flag design-schema "Consider using a normalized schema instead"
+%% @flag design-schema "Consider normalized schema instead"
 ```
 
-AI agents should check for flags using `read_flags` and respond to feedback
-using `get_correction_context` for structured guidance.
+### Example CLAUDE.md Integration
 
-## Example CLAUDE.md Instructions
-
-Add this to your project's `CLAUDE.md` to enable AI diagram generation:
+Add to your project's `CLAUDE.md`:
 
 ```markdown
-## SmartB Diagrams Integration
+## SmartB Diagrams
 
-This project uses SmartB Diagrams for AI reasoning observability.
-
-### Diagram Updates
-- Use the `update_diagram` MCP tool to create/update .mmd files
-- Use `flowchart TD` for sequential reasoning steps
-- Node IDs should be lowercase-hyphenated (e.g., analyze-input)
-- Update node status as you work: in-progress -> ok or problem
-
-### Responding to Flags
-- Check for developer flags using `read_flags` before starting work
-- When flags exist, use `get_correction_context` to get structured correction guidance
-- Address the flag feedback, then update the diagram accordingly
-
-### Status Updates
-- Set nodes to `in-progress` when starting a step
-- Set nodes to `ok` when a step completes successfully
-- Set nodes to `problem` when you encounter an issue
-- Set nodes to `discarded` when abandoning an approach
+- Use `update_diagram` to create/update .mmd reasoning diagrams
+- Use `flowchart TD` for sequential steps, node IDs lowercase-hyphenated
+- Set nodes to `in-progress` when starting, `ok` when done, `problem` on issues
+- Check `read_flags` before starting — respond to developer feedback
+- Use `get_correction_context` when flags exist for structured guidance
 ```
 
-## How It Works
+## Architecture
 
-AI agents write Mermaid diagrams (`.mmd` files) using MCP tools. A file watcher
-powered by chokidar detects changes and triggers a WebSocket broadcast to all
-connected browsers. The browser renders the updated diagram instantly using
-Mermaid.js, with color-coded node statuses. Developers observe the AI's
-reasoning in real-time and can flag specific nodes to redirect the AI's approach.
+```
+Developer's Machine (single process)
++-----------------------------------------------+
+|  smartb serve / smartb mcp --serve             |
+|                                                |
+|  +------------------+  +-------------------+   |
+|  | MCP Server       |  | HTTP Server       |   |
+|  | (stdio transport)|  | (port 3333)       |   |
+|  +--------+---------+  +--------+----------+   |
+|           |                      |              |
+|           v                      v              |
+|  +------------------------------------------+  |
+|  |          DiagramService (shared)          |  |
+|  |  parse | validate | annotate | serialize  |  |
+|  +------------------------------------------+  |
+|           |                      |              |
+|           v                      v              |
+|  +----------------+    +------------------+     |
+|  | File Watcher   |--->| WebSocket Server |     |
+|  | (.mmd files)   |    | (broadcast)      |     |
+|  +----------------+    +------------------+     |
++-----------------------------------------------+
+          |                        |
+          v                        v
+   .mmd files on disk       Browser / VS Code
+   (source of truth)         (live viewer)
+```
 
 ## Requirements
 
 - Node.js >= 22
 - npm or npx
 
+## Contributing
+
+Contributions are welcome! Please open an issue first to discuss what you'd like to change.
+
+```bash
+git clone https://github.com/Hugobatist/smartb-diagrams.git
+cd smartb-diagrams
+npm install
+npm run build
+npm test
+```
+
 ## License
 
-MIT
+[MIT](LICENSE)

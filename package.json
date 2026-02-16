@@ -1,8 +1,34 @@
 {
   "name": "smartb-diagrams",
   "version": "0.1.0",
-  "description": "AI observability diagrams -- see what your AI is thinking",
+  "description": "Visual debugger for AI reasoning -- see what your AI is thinking, set breakpoints, flag mistakes, replay sessions",
   "type": "module",
+  "license": "MIT",
+  "author": "Hugobatist",
+  "homepage": "https://github.com/Hugobatist/smartb-diagrams#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hugobatist/smartb-diagrams.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hugobatist/smartb-diagrams/issues"
+  },
+  "keywords": [
+    "ai",
+    "observability",
+    "mermaid",
+    "diagrams",
+    "mcp",
+    "debugger",
+    "reasoning",
+    "ai-agents",
+    "claude",
+    "cursor",
+    "copilot",
+    "flowchart",
+    "visual-debugger",
+    "model-context-protocol"
+  ],
   "bin": {
     "smartb": "./dist/cli.js"
   },

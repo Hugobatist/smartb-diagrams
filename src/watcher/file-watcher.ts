@@ -18,13 +18,13 @@ export class FileWatcher {
   constructor(
     private projectDir: string,
     private onFileChanged: (relativePath: string) => void,
-    private onFileAdded: (relativePath: string) => void,
+    _onFileAdded: (relativePath: string) => void,
     private onFileRemoved: (relativePath: string) => void,
   ) {
     this.watcher = watch(
       projectDir,
       { recursive: true },
-      (eventType, filename) => {
+      (_eventType, filename) => {
         if (!filename) return;
 
         // Normalize to forward slashes

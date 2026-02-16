@@ -2,3 +2,26 @@ node_modules/
 dist/
 *.tgz
 .DS_Store
+
+# Local MCP config (contains absolute paths)
+.mcp.json
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# SmartB session data (local-only)
+.smartb/sessions/
+
+# OS
+Thumbs.db
+
+# Planning (internal)
+.planning/
