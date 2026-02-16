@@ -9,11 +9,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 14-undo-redo-edit-actions
-Plan: 01 and 02 of 03 complete
-Status: Plans 01+02 complete -- Command history + folder CRUD done, Plan 03 remaining
-Last activity: 2026-02-16 -- Plan 01 executed (2 tasks, 3min), 225 tests passing
+Plan: 03 of 03 complete
+Status: Phase 14 COMPLETE -- All 3 plans executed (command history, folder CRUD, clipboard + shortcuts)
+Last activity: 2026-02-16 -- Plan 03 executed (2 tasks, 2min), 225 tests passing
 
-Progress: [██████████] v1.0 100% | Phase 14: [======----] 2/3 plans complete
+Progress: [██████████] v1.0 100% | Phase 14: [==========] 3/3 plans complete
 
 ## v1.0 Performance Metrics
 
@@ -148,6 +148,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Reuse POST /move for folder rename -- fs.rename works on directories natively, no new endpoint needed
 - Folder delete confirmation dialog shows file count from treeData before proceeding
 - Folder buttons use same CSS classes (rename-btn, delete-btn) as file buttons for consistent styling
+- Internal JS buffer for clipboard instead of browser Clipboard API (localhost not HTTPS)
+- Ctrl+C only prevents default if node was actually copied -- browser text copy still works
+- Ctrl+D always prevents default to block browser bookmark dialog
+- Contenteditable guard added alongside existing textarea/flag-popover/search-bar guards
 
 **Phase 13:**
 - Object literal transition table FSM over XState library — 8 states max, no need for 30KB dependency
@@ -267,8 +271,16 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Current file path auto-updated when inside renamed/deleted folder
 - Duration: 2 min, 225 tests pass
 
+**14-03 (Complete):** Clipboard + keyboard shortcut wiring
+- clipboard.js (94 lines): SmartBClipboard with copy/paste/duplicate/hasContent/clear API
+- app-init.js (423 lines): Ctrl+Shift+Z/Y redo, Ctrl+C copy, Ctrl+V paste, Ctrl+D duplicate
+- Contenteditable guard prevents shortcuts during inline edit
+- Command history clears on file switch in file-tree.js loadFile()
+- Help overlay documents Ctrl+C/V/D shortcuts
+- Duration: 2 min, 225 tests pass
+
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 14-01-PLAN.md (command history + popover extraction)
-Next action: Execute 14-03-PLAN.md (clipboard + keyboard shortcut wiring)
+Stopped at: Completed 14-03-PLAN.md (clipboard + keyboard shortcut wiring)
+Next action: Phase 14 complete -- all undo/redo/clipboard/folder CRUD plans executed
