@@ -8,12 +8,12 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-Phase: 13-canvas-interactions
-Plan: 02 of 02 complete
-Status: Phase 13 COMPLETE — All canvas interaction features implemented
-Last activity: 2026-02-16 — Plan 02 executed (3 tasks, 5min), 225 tests passing
+Phase: 14-undo-redo-edit-actions
+Plan: 02 complete
+Status: Plan 02 complete — Folder rename/delete operations added
+Last activity: 2026-02-16 — Plan 02 executed (2 tasks, 2min), 225 tests passing
 
-Progress: [██████████] v1.0 100% | Phase 13: [==========] 2/2 plans complete
+Progress: [██████████] v1.0 100% | Phase 14: Plan 02 complete
 
 ## v1.0 Performance Metrics
 
@@ -138,6 +138,11 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - SHAPE_BRACKETS reverse map from SHAPE_PATTERNS, first-match-wins for disambiguation
 - Class assignments grouped by class name for compact serializer output
 
+**Phase 14:**
+- Reuse POST /move for folder rename -- fs.rename works on directories natively, no new endpoint needed
+- Folder delete confirmation dialog shows file count from treeData before proceeding
+- Folder buttons use same CSS classes (rename-btn, delete-btn) as file buttons for consistent styling
+
 **Phase 13:**
 - Object literal transition table FSM over XState library — 8 states max, no need for 30KB dependency
 - SVG overlay group for selection indicators — re-created on each render via diagram:rendered event
@@ -240,10 +245,17 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - live.html (158 lines): 2 new script tags + help overlay rows
 - Duration: 5 min, 225 tests pass
 
+## Phase 14 Progress
+
+**14-02 (Complete):** Folder rename/delete operations
+- POST /rmdir endpoint in routes.ts (404 lines) with resolveProjectPath security
+- Folder rename/delete buttons in file-tree.js (387 lines) with confirmation dialog
+- Reuses POST /move for folder rename (fs.rename works on directories natively)
+- Current file path auto-updated when inside renamed/deleted folder
+- Duration: 2 min, 225 tests pass
+
 ## Session Continuity
 
-Last session: 2026-02-15
-Stopped at: Phase 13 COMPLETE, all 2 plans executed
-Next action:
-  1. Commit state/roadmap updates
-  2. Continue to Phase 14 (Undo/Redo + Edit Actions) — plan-phase 14
+Last session: 2026-02-16
+Stopped at: Completed 14-02-PLAN.md (folder rename/delete)
+Next action: Continue Phase 14 remaining plans (undo/redo, clipboard)
