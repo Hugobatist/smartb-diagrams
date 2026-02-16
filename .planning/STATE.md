@@ -8,12 +8,12 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-Phase: 15-ai-breakpoints-ghost-paths
-Plan: 03 of 03 complete
-Status: Phase 15 complete -- AI breakpoints and ghost paths fully implemented
-Last activity: 2026-02-16 -- Plan 03 executed (2 tasks, 4min), 238 tests passing
+Phase: 16-heatmap-session-recording
+Plan: 01 of ?? in progress
+Status: Plan 01 complete -- backend infrastructure for @risk annotations, sessions, heatmap
+Last activity: 2026-02-16 -- Plan 01 executed (2 tasks, 4min), 238 tests passing
 
-Progress: [██████████] v1.0 100% | Phase 15: [==========] 3/3 plans complete
+Progress: [██████████] v1.0 100% | Phase 16: [==--------] 1/? plans complete
 
 ## v1.0 Performance Metrics
 
@@ -164,6 +164,13 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Inline edit uses blur-as-confirm with setTimeout(0) guard to prevent accidental commits
 - Collapse-ui FSM guards: click checks editing/context-menu, dblclick checks editing/selected
 - Mode toggle FSM sync: after calling toggleX(), forceState based on resulting module state
+
+**Phase 16:**
+- Four-annotation preservation: extended three-annotation pattern to include risks in all write operations
+- Per-session write locks in SessionStore: same pattern as DiagramService per-file locks
+- JSONL format for session persistence: append-only, one JSON per line, simple to read/write
+- SessionStore exposed on ServerInstance: same pattern as ghostStore and breakpointContinueSignals
+- Route module extraction: registerSessionRoutes in separate session-routes.ts to keep routes.ts under 500 lines
 
 **Phase 15:**
 - Three-annotation preservation: every write operation reads and re-injects flags, statuses, AND breakpoints
@@ -328,8 +335,20 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - live.html (173 lines): breakpoints.css link, Ghost toggle button, script tags, help rows
 - Duration: 4 min, 238 tests pass
 
+## Phase 16 Progress
+
+**16-01 (Complete):** Backend infrastructure for @risk annotations, sessions, heatmap
+- RiskLevel/RiskAnnotation types, RISK_REGEX, parseRisks() in annotations.ts
+- DiagramService: getRisks/setRisk/removeRisk CRUD, four-annotation preservation in all write ops
+- SessionStore class (215 lines) with JSONL persistence and per-session write locks
+- SessionEvent/SessionMeta/SessionSummary types in session-types.ts
+- 3 REST endpoints: GET /api/sessions/:file, GET /api/session/:id, GET /api/heatmap/:file
+- 2 new WsMessage types: session:event, heatmap:update
+- SessionStore instantiated in createHttpServer, exposed on ServerInstance
+- Duration: 4 min, 238 tests pass
+
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 15-03-PLAN.md (frontend UI for breakpoints and ghost paths) -- Phase 15 complete
-Next action: Phase 15 complete. All 3 plans executed (backend infra, MCP tools, frontend UI).
+Stopped at: Completed 16-01-PLAN.md (backend infrastructure for @risk annotations, sessions, heatmap)
+Next action: Execute 16-02-PLAN.md (MCP tools for sessions and risk annotations).
