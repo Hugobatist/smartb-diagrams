@@ -8,12 +8,12 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-Phase: 12-server-browser-integration
-Plan: 03 of 03 complete
-Status: Phase 12 COMPLETE — Full graph pipeline: file change → server parse → WS graph:update → custom renderer
-Last activity: 2026-02-15 — All 3 plans executed, 225 tests passing
+Phase: 13-canvas-interactions
+Plan: 01 of 02 complete
+Status: Plan 01 COMPLETE — FSM + node selection with visual indicators and keyboard shortcuts
+Last activity: 2026-02-16 — Plan 01 executed (3 tasks, 3min), 225 tests passing
 
-Progress: [██████████] v1.0 100% | Phase 12: [==========] 3/3 plans complete
+Progress: [██████████] v1.0 100% | Phase 13: [=====-----] 1/2 plans complete
 
 ## v1.0 Performance Metrics
 
@@ -138,6 +138,14 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - SHAPE_BRACKETS reverse map from SHAPE_PATTERNS, first-match-wins for disambiguation
 - Class assignments grouped by class name for compact serializer output
 
+**Phase 13:**
+- Object literal transition table FSM over XState library — 8 states max, no need for 30KB dependency
+- SVG overlay group for selection indicators — re-created on each render via diagram:rendered event
+- No corner handles for edge selection — edges get CSS class highlight (.selected-edge) only
+- PAN_THRESHOLD = 3px — balances click detection vs pan responsiveness
+- Click handler uses DiagramDOM.extractNodeId directly — no timer for click/dblclick disambiguation
+- FSM coordination pattern: all interaction modules query SmartBInteraction before acting
+
 ### Pre-Release Todos Status
 
 **RESOLVED (by Phase 8 agents):**
@@ -210,8 +218,17 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - annotations.js (491 lines): edge flags data-edge-id + L-* ID formats
 - export.js (145 lines): custom SVG PNG export via direct SVG clone
 
+## Phase 13 Progress
+
+**13-01 (Complete):** Interaction FSM + node selection
+- interaction-state.js (154 lines): 8-state FSM with transition table, SmartBInteraction API
+- selection.js (300 lines): node selection (blue dashed border + corner handles), edge selection (CSS highlight), keyboard shortcuts (Delete/Escape)
+- pan-zoom.js (167 lines): PAN_THRESHOLD=3px, panStarted flag, FSM state checking, FSM transitions
+- live.html: 2 new script tags, app-init.js: SmartBSelection.init()
+- Duration: 3 min, 225 tests pass
+
 ## Session Continuity
 
-Last session: 2026-02-15
-Stopped at: Phase 12 COMPLETE, committed as 8eae06d
-Next action: Continue to Phase 13 (Canvas Interactions) — plan-phase 13
+Last session: 2026-02-16
+Stopped at: Completed 13-01-PLAN.md
+Next action: Execute 13-02-PLAN.md (context menu + inline edit)
