@@ -1,7 +1,8 @@
 /**
- * SmartB Diagrams — Visual Diagram Editor
+ * SmartB Diagrams -- Visual Diagram Editor
  * Manipulates .mmd content: add/remove/edit nodes and edges.
- * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartBEventBus)
+ * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartBEventBus),
+ *   command-history.js (SmartBCommandHistory), editor-popovers.js (SmartBEditorPopovers)
  */
 (function () {
     'use strict';
@@ -175,8 +176,8 @@
 
         if (window.toast) {
             var msgs = {
-                addNode: 'Modo Nodo — clique no espaco vazio do diagrama',
-                addEdge: 'Modo Seta — clique no nodo de ORIGEM',
+                addNode: 'Modo Nodo -- clique no espaco vazio do diagrama',
+                addEdge: 'Modo Seta -- clique no nodo de ORIGEM',
             };
             window.toast(msgs[mode] || 'Modo edicao desativado');
         }
@@ -196,7 +197,9 @@
             if (nodeInfo) return; // Clicked an existing node, ignore
             e.preventDefault();
             e.stopPropagation();
-            showAddNodePopover(e.clientX, e.clientY);
+            if (window.SmartBEditorPopovers) {
+                SmartBEditorPopovers.showAddNodePopover(e.clientX, e.clientY);
+            }
         }
 
         if (editorState.mode === 'addEdge') {
@@ -206,177 +209,16 @@
             if (!editorState.edgeSource) {
                 editorState.edgeSource = nodeInfo.id;
                 DiagramDOM.highlightNode(nodeInfo.id, true);
-                if (window.toast) window.toast('Origem: ' + nodeInfo.id + ' — agora clique no DESTINO');
+                if (window.toast) window.toast('Origem: ' + nodeInfo.id + ' -- agora clique no DESTINO');
             } else {
                 var from = editorState.edgeSource;
                 var to = nodeInfo.id;
                 if (from === to) return;
-                showAddEdgePopover(e.clientX, e.clientY, from, to);
+                if (window.SmartBEditorPopovers) {
+                    SmartBEditorPopovers.showAddEdgePopover(e.clientX, e.clientY, from, to);
+                }
             }
         }
-    }
-
-    function closeEditorPopover() {
-        var existing = document.querySelector('.editor-popover');
-        if (existing) existing.remove();
-    }
-
-    function createPopover(x, y) {
-        closeEditorPopover();
-        var pop = document.createElement('div');
-        pop.className = 'flag-popover editor-popover';
-        pop.style.left = Math.min(x + 12, window.innerWidth - 360) + 'px';
-        pop.style.top = Math.min(y - 20, window.innerHeight - 280) + 'px';
-        document.body.appendChild(pop);
-
-        setTimeout(function() {
-            function outside(e) {
-                if (pop.contains(e.target)) return;
-                closeEditorPopover();
-                document.removeEventListener('mousedown', outside);
-            }
-            document.addEventListener('mousedown', outside);
-        }, 50);
-
-        return pop;
-    }
-
-    function showAddNodePopover(clientX, clientY) {
-        var editor = editorHooks.getEditor();
-        var suggestedId = generateNodeId(editor.value);
-        var pop = createPopover(clientX, clientY);
-
-        // Build popover content using DOM methods
-        var titleDiv = document.createElement('div');
-        titleDiv.className = 'flag-popover-title';
-        var titleSpan = document.createElement('span');
-        titleSpan.textContent = 'Novo Nodo';
-        titleDiv.appendChild(titleSpan);
-        pop.appendChild(titleDiv);
-
-        var idLabel = document.createElement('label');
-        idLabel.style.cssText = 'font-size:11px;color:var(--text-dim);margin-bottom:2px;display:block';
-        idLabel.textContent = 'ID (sem espacos)';
-        pop.appendChild(idLabel);
-
-        var idInput = document.createElement('input');
-        idInput.className = 'ep-input';
-        idInput.type = 'text';
-        idInput.value = suggestedId;
-        idInput.style.marginBottom = '8px';
-        pop.appendChild(idInput);
-
-        var labelLabel = document.createElement('label');
-        labelLabel.style.cssText = 'font-size:11px;color:var(--text-dim);margin-bottom:2px;display:block';
-        labelLabel.textContent = 'Texto';
-        pop.appendChild(labelLabel);
-
-        var labelInput = document.createElement('input');
-        labelInput.className = 'ep-input ep-label';
-        labelInput.type = 'text';
-        labelInput.placeholder = 'Texto do nodo...';
-        pop.appendChild(labelInput);
-
-        var actionsDiv = document.createElement('div');
-        actionsDiv.className = 'flag-popover-actions';
-        actionsDiv.style.marginTop = '10px';
-
-        var btnCancel = document.createElement('button');
-        btnCancel.className = 'btn-flag secondary';
-        btnCancel.textContent = 'Cancelar';
-        btnCancel.addEventListener('click', closeEditorPopover);
-        actionsDiv.appendChild(btnCancel);
-
-        var btnCreate = document.createElement('button');
-        btnCreate.className = 'btn-flag primary';
-        btnCreate.style.background = 'var(--accent)';
-        btnCreate.textContent = 'Criar Nodo';
-        actionsDiv.appendChild(btnCreate);
-        pop.appendChild(actionsDiv);
-
-        labelInput.focus();
-
-        function doCreate() {
-            var id = idInput.value.trim().replace(/\s+/g, '_');
-            var label = labelInput.value.trim();
-            if (!id || !label) return;
-            applyEdit(function(c) { return addNode(c, id, label); });
-            closeEditorPopover();
-        }
-
-        labelInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') doCreate();
-            if (e.key === 'Escape') closeEditorPopover();
-        });
-        btnCreate.addEventListener('click', doCreate);
-    }
-
-    function showAddEdgePopover(clientX, clientY, fromId, toId) {
-        var pop = createPopover(clientX, clientY);
-
-        // Build popover content using DOM methods
-        var titleDiv = document.createElement('div');
-        titleDiv.className = 'flag-popover-title';
-        var titleSpan = document.createElement('span');
-        titleSpan.textContent = 'Nova Conexao';
-        titleDiv.appendChild(titleSpan);
-        var edgeIdSpan = document.createElement('span');
-        edgeIdSpan.className = 'node-id';
-        edgeIdSpan.textContent = fromId + ' \u2192 ' + toId;
-        titleDiv.appendChild(edgeIdSpan);
-        pop.appendChild(titleDiv);
-
-        var labelLabel = document.createElement('label');
-        labelLabel.style.cssText = 'font-size:11px;color:var(--text-dim);margin-bottom:2px;display:block';
-        labelLabel.textContent = 'Label (opcional)';
-        pop.appendChild(labelLabel);
-
-        var labelInput = document.createElement('input');
-        labelInput.className = 'ep-input ep-label';
-        labelInput.type = 'text';
-        labelInput.placeholder = 'Texto da seta...';
-        pop.appendChild(labelInput);
-
-        var actionsDiv = document.createElement('div');
-        actionsDiv.className = 'flag-popover-actions';
-        actionsDiv.style.marginTop = '10px';
-
-        var btnCancel = document.createElement('button');
-        btnCancel.className = 'btn-flag secondary';
-        btnCancel.textContent = 'Cancelar';
-        btnCancel.addEventListener('click', function() {
-            closeEditorPopover();
-            DiagramDOM.highlightNode(fromId, false);
-            editorState.edgeSource = null;
-        });
-        actionsDiv.appendChild(btnCancel);
-
-        var btnCreate = document.createElement('button');
-        btnCreate.className = 'btn-flag primary';
-        btnCreate.style.background = 'var(--accent)';
-        btnCreate.textContent = 'Criar Seta';
-        actionsDiv.appendChild(btnCreate);
-        pop.appendChild(actionsDiv);
-
-        labelInput.focus();
-
-        function doCreate() {
-            var label = labelInput.value.trim();
-            applyEdit(function(c) { return addEdge(c, fromId, toId, label || null); });
-            closeEditorPopover();
-            DiagramDOM.highlightNode(fromId, false);
-            editorState.edgeSource = null;
-        }
-
-        labelInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') doCreate();
-            if (e.key === 'Escape') {
-                closeEditorPopover();
-                DiagramDOM.highlightNode(fromId, false);
-                editorState.edgeSource = null;
-            }
-        });
-        btnCreate.addEventListener('click', doCreate);
     }
 
     function doRemoveNode(nodeId) {
@@ -405,34 +247,47 @@
         setMode('addEdge');
         editorState.edgeSource = nodeId;
         DiagramDOM.highlightNode(nodeId, true);
-        if (window.toast) window.toast('Origem: ' + nodeId + ' — clique no DESTINO');
+        if (window.toast) window.toast('Origem: ' + nodeId + ' -- clique no DESTINO');
     }
 
-    var undoStack = [];
-    var MAX_UNDO = 50;
-
+    /** Undo the last edit via SmartBCommandHistory */
     async function undo() {
-        if (undoStack.length === 0) {
+        if (!window.SmartBCommandHistory || !SmartBCommandHistory.canUndo()) {
             if (window.toast) window.toast('Nada para desfazer');
             return;
         }
-        var prev = undoStack.pop();
+        var content = SmartBCommandHistory.undo();
         var editor = editorHooks.getEditor();
-        if (!editor) return;
-        editor.value = prev;
-        editorHooks.setLastContent(prev);
+        if (!editor || content === null) return;
+        editor.value = content;
+        editorHooks.setLastContent(content);
         if (editorHooks.saveFile) await editorHooks.saveFile();
-        if (editorHooks.renderDiagram) await editorHooks.renderDiagram(prev);
-        if (window.toast) window.toast('Desfeito (' + undoStack.length + ' restantes)');
+        if (editorHooks.renderDiagram) await editorHooks.renderDiagram(content);
+        if (window.toast) window.toast('Desfeito (' + SmartBCommandHistory.getUndoCount() + ' restantes)');
+    }
+
+    /** Redo the last undone edit via SmartBCommandHistory */
+    async function redo() {
+        if (!window.SmartBCommandHistory || !SmartBCommandHistory.canRedo()) {
+            if (window.toast) window.toast('Nada para refazer');
+            return;
+        }
+        var content = SmartBCommandHistory.redo();
+        var editor = editorHooks.getEditor();
+        if (!editor || content === null) return;
+        editor.value = content;
+        editorHooks.setLastContent(content);
+        if (editorHooks.saveFile) await editorHooks.saveFile();
+        if (editorHooks.renderDiagram) await editorHooks.renderDiagram(content);
+        if (window.toast) window.toast('Refeito (' + SmartBCommandHistory.getRedoCount() + ' restantes)');
     }
 
     async function applyEdit(editFn) {
         var editor = editorHooks.getEditor();
         if (!editor) return;
 
-        // Save current content to undo stack BEFORE editing
-        undoStack.push(editor.value);
-        if (undoStack.length > MAX_UNDO) undoStack.shift();
+        // Capture BEFORE state for command history
+        var beforeContent = editor.value;
 
         // Strip annotations, apply edit, re-inject annotations
         var annotations = window.SmartBAnnotations;
@@ -446,6 +301,16 @@
         if (annotations) content = annotations.injectAnnotations(content, flags);
         editor.value = content;
         editorHooks.setLastContent(content);
+
+        // Push command to history AFTER edit is applied
+        if (window.SmartBCommandHistory) {
+            SmartBCommandHistory.execute({
+                before: beforeContent,
+                after: content,
+                description: 'edit',
+            });
+        }
+
         if (editorHooks.saveFile) await editorHooks.saveFile();
         if (editorHooks.renderDiagram) await editorHooks.renderDiagram(content);
 
@@ -470,7 +335,7 @@
     }
 
     window.MmdEditor = {
-        init: init, setMode: setMode, undo: undo,
+        init: init, setMode: setMode, undo: undo, redo: redo,
         toggleAddNode: toggleAddNode, toggleAddEdge: toggleAddEdge,
         addNode: addNode, addEdge: addEdge, removeNode: removeNode,
         removeEdge: removeEdge, editNodeText: editNodeText, getNodeText: getNodeText,
@@ -480,6 +345,6 @@
         doEditNodeText: doEditNodeText, startConnectFrom: startConnectFrom,
         applyEdit: applyEdit,
         getState: function() { return editorState; },
-        closeEditorPopover: closeEditorPopover,
+        closeEditorPopover: function() { if (window.SmartBEditorPopovers) SmartBEditorPopovers.closePopover(); },
     };
 })();
