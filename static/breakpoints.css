@@ -1,0 +1,62 @@
+/* ═══════════════════════════════════════════════
+   SmartB Diagrams — Breakpoint Indicators & Notification Bar
+   ═══════════════════════════════════════════════ */
+
+/* Breakpoint indicator — red circle on left edge of node */
+.breakpoint-indicator {
+    pointer-events: none;
+    filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.6));
+}
+
+/* Notification bar — fixed top of preview container */
+.breakpoint-notification {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #1e1e2e 0%, #2a1a2e 100%);
+    border-bottom: 2px solid #ef4444;
+    color: #cdd6f4;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.breakpoint-notification .bp-node-name {
+    font-weight: 600;
+    color: #ef4444;
+}
+
+.btn-breakpoint-action {
+    padding: 4px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border, #313244);
+    background: var(--panel-bg, #1e1e2e);
+    color: var(--text, #cdd6f4);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s;
+}
+
+.btn-breakpoint-action:hover {
+    background: var(--hover-bg, #313244);
+}
+
+.btn-breakpoint-action.primary {
+    background: #22c55e;
+    color: #000;
+    border-color: #22c55e;
+}
+
+.btn-breakpoint-action.primary:hover {
+    background: #16a34a;
+}

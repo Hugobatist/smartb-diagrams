@@ -14,11 +14,13 @@
     const ANNOTATION_END = '%% --- END ANNOTATIONS ---';
     const FLAG_REGEX = /^%%\s*@flag\s+(\S+)\s+"([^"]*)"$/;
     const STATUS_REGEX = /^%%\s*@status\s+(\S+)\s+(\S+)$/;
+    const BREAKPOINT_REGEX = /^%%\s*@breakpoint\s+(\S+)$/;
 
     const state = {
         flagMode: false,
         flags: new Map(),      // nodeId -> { message, timestamp }
         statuses: new Map(),   // nodeId -> statusValue string (ok|problem|in-progress|discarded)
+        breakpoints: new Set(), // nodeId set
         panelOpen: false,
         popover: null,
     };
@@ -37,6 +39,7 @@
     function parseAnnotations(content) {
         const flags = new Map();
         const statuses = new Map();
+        const breakpoints = new Set();
         const lines = content.split('\n');
         let inBlock = false;
         for (const line of lines) {
@@ -47,10 +50,12 @@
                 const fm = trimmed.match(FLAG_REGEX);
                 if (fm) { flags.set(fm[1], { message: fm[2], timestamp: Date.now() }); continue; }
                 const sm = trimmed.match(STATUS_REGEX);
-                if (sm) { statuses.set(sm[1], sm[2]); }
+                if (sm) { statuses.set(sm[1], sm[2]); continue; }
+                const bm = trimmed.match(BREAKPOINT_REGEX);
+                if (bm) { breakpoints.add(bm[1]); }
             }
         }
-        return { flags, statuses };
+        return { flags, statuses, breakpoints };
     }
 
     function stripAnnotations(content) {
@@ -396,6 +401,9 @@
         var mergedStatuses = new Map(incoming.statuses);
         for (var sEntry of state.statuses) mergedStatuses.set(sEntry[0], sEntry[1]);
         state.statuses = mergedStatuses;
+        // Merge breakpoints: union of incoming and local
+        state.breakpoints = new Set([...incoming.breakpoints, ...state.breakpoints]);
+        if (window.SmartBBreakpoints) SmartBBreakpoints.updateBreakpoints(state.breakpoints);
         var cleanIncoming = stripAnnotations(incomingContent);
         return injectAnnotations(cleanIncoming, mergedFlags, mergedStatuses);
     }
@@ -439,6 +447,8 @@
             var parsed = parseAnnotations(editor.value);
             state.flags = parsed.flags;
             state.statuses = parsed.statuses;
+            state.breakpoints = parsed.breakpoints;
+            if (window.SmartBBreakpoints) SmartBBreakpoints.updateBreakpoints(parsed.breakpoints);
         }
         var container = document.getElementById('preview-container');
         if (container) container.addEventListener('click', handlePreviewClick);
@@ -451,12 +461,6 @@
                 applyFlagsToSVG();
             });
         }
-    }
-
-    function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
     }
 
     // ── Status Operations ──
