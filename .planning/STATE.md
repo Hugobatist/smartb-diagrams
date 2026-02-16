@@ -9,11 +9,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 14-undo-redo-edit-actions
-Plan: 02 complete
-Status: Plan 02 complete — Folder rename/delete operations added
-Last activity: 2026-02-16 — Plan 02 executed (2 tasks, 2min), 225 tests passing
+Plan: 01 and 02 of 03 complete
+Status: Plans 01+02 complete -- Command history + folder CRUD done, Plan 03 remaining
+Last activity: 2026-02-16 -- Plan 01 executed (2 tasks, 3min), 225 tests passing
 
-Progress: [██████████] v1.0 100% | Phase 14: Plan 02 complete
+Progress: [██████████] v1.0 100% | Phase 14: [======----] 2/3 plans complete
 
 ## v1.0 Performance Metrics
 
@@ -139,6 +139,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Class assignments grouped by class name for compact serializer output
 
 **Phase 14:**
+- Content-snapshot command pattern ({before, after, description}) over fine-grained operation commands -- simpler since applyEdit() handles annotation pipeline
+- MAX_HISTORY=100 (doubled from old MAX_UNDO=50) -- .mmd files small, 100 snapshots under 1MB
+- Redo stack clears on new edit (standard editor behavior)
+- history:changed event emitted via SmartBEventBus for future UI indicator integration
+- Popover extraction to editor-popovers.js to keep diagram-editor.js under 500 lines
+- editor-popovers.js accesses MmdEditor via window.MmdEditor (script load order enforces availability)
 - Reuse POST /move for folder rename -- fs.rename works on directories natively, no new endpoint needed
 - Folder delete confirmation dialog shows file count from treeData before proceeding
 - Folder buttons use same CSS classes (rename-btn, delete-btn) as file buttons for consistent styling
@@ -247,6 +253,13 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Phase 14 Progress
 
+**14-01 (Complete):** Command history module + popover extraction
+- command-history.js (89 lines): SmartBCommandHistory with execute/undo/redo, MAX_HISTORY=100, history:changed events
+- editor-popovers.js (181 lines): showAddNodePopover/showAddEdgePopover/closePopover extracted from diagram-editor.js
+- diagram-editor.js refactored from 485 to 350 lines: old undoStack removed, applyEdit pushes to SmartBCommandHistory
+- MmdEditor.redo exposed in public API, closeEditorPopover delegates to SmartBEditorPopovers
+- Duration: 3 min, 225 tests pass
+
 **14-02 (Complete):** Folder rename/delete operations
 - POST /rmdir endpoint in routes.ts (404 lines) with resolveProjectPath security
 - Folder rename/delete buttons in file-tree.js (387 lines) with confirmation dialog
@@ -257,5 +270,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 14-02-PLAN.md (folder rename/delete)
-Next action: Continue Phase 14 remaining plans (undo/redo, clipboard)
+Stopped at: Completed 14-01-PLAN.md (command history + popover extraction)
+Next action: Execute 14-03-PLAN.md (clipboard + keyboard shortcut wiring)
