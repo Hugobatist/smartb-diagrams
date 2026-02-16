@@ -134,7 +134,12 @@ Plans:
   4. Ghost paths (discarded reasoning branches) render as dashed edges at 30% opacity
   5. A toggle button shows/hides ghost paths
   6. MCP tool `record_ghost_path()` allows AI to log abandoned paths
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Backend: breakpoint annotations, DiagramService CRUD, ghost store, WS types, REST endpoints
+- [ ] 15-02-PLAN.md — MCP tools: check_breakpoints + record_ghost_path, test coverage
+- [ ] 15-03-PLAN.md — Frontend: breakpoint indicators, notification bar, ghost path rendering, toggle, app wiring
 
 #### Phase 16: Heatmap + Session Recording
 **Goal**: Developers can see AI reasoning patterns as a heatmap overlay and replay how a diagram evolved over time
@@ -158,5 +163,5 @@ Plans:
 | 12. Server + Browser Integration | 3/3 | Complete | 2026-02-15 |
 | 13. Canvas Interactions | 2/2 | Complete | 2026-02-15 |
 | 14. Undo/Redo + Edit Actions | 0/3 | Complete    | 2026-02-16 |
-| 15. AI Breakpoints + Ghost Paths | 0/? | Not Started | - |
+| 15. AI Breakpoints + Ghost Paths | 0/3 | Planned | - |
 | 16. Heatmap + Session Recording | 0/? | Not Started | - |
