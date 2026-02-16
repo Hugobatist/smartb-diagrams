@@ -98,7 +98,11 @@
         return addNode(content, newId, label + ' (copy)');
     }
 
-    /** Find edge source and target from content */
+    /**
+     * Find edge source and target from content.
+     * If edgeId contains "-->", "---", "-.->", or "==>", it encodes from/to.
+     * Otherwise returns all edges found in content (for iteration).
+     */
     function findEdgeEndpoints(edgeId, content) {
         var lines = content.split('\n');
         var edgePatterns = [];
@@ -109,6 +113,14 @@
                 var to = m[4].replace(/[\["'\(\{].*$/, '');
                 edgePatterns.push({ from: from, to: to, line: lines[i].trim() });
             }
+        }
+        // Filter by edgeId if it encodes a specific from-to pair (e.g., "A-B" or "L-A-B")
+        if (edgeId) {
+            var cleanId = edgeId.replace(/^L-/, '');
+            var filtered = edgePatterns.filter(function(ep) {
+                return cleanId === ep.from + '-' + ep.to || cleanId === ep.to + '-' + ep.from;
+            });
+            if (filtered.length > 0) return filtered;
         }
         return edgePatterns;
     }

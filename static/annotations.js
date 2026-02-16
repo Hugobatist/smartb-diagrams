@@ -19,6 +19,7 @@
         breakpoints: new Set(), // nodeId set
         risks: new Map(),      // nodeId -> { level, reason }
         panelOpen: false, popover: null,
+        popoverOutsideHandler: null, // stored ref to remove on close
     };
 
     let hooks = {
@@ -55,13 +56,12 @@
     }
 
     function stripAnnotations(content) {
-        const lines = content.split('\n');
-        const result = [];
+        const lines = content.split('\n'), result = [];
         let inBlock = false;
         for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed === ANNOTATION_START) { inBlock = true; continue; }
-            if (trimmed === ANNOTATION_END) { inBlock = false; continue; }
+            const t = line.trim();
+            if (t === ANNOTATION_START) { inBlock = true; continue; }
+            if (t === ANNOTATION_END) { inBlock = false; continue; }
             if (!inBlock) result.push(line);
         }
         while (result.length > 0 && result[result.length - 1].trim() === '') result.pop();
@@ -69,16 +69,14 @@
     }
 
     function injectAnnotations(content, flags, statuses) {
-        const clean = stripAnnotations(content);
-        const statusMap = statuses || state.statuses;
-        if (flags.size === 0 && statusMap.size === 0) return clean;
+        const clean = stripAnnotations(content), statusMap = statuses || state.statuses;
+        const hasAnnotations = flags.size > 0 || statusMap.size > 0 || state.breakpoints.size > 0 || state.risks.size > 0;
+        if (!hasAnnotations) return clean;
         const lines = ['', ANNOTATION_START];
-        for (const [nodeId, { message }] of flags) {
-            lines.push('%% @flag ' + nodeId + ' "' + message.replace(/"/g, "''") + '"');
-        }
-        for (const [nodeId, statusValue] of statusMap) {
-            lines.push('%% @status ' + nodeId + ' ' + statusValue);
-        }
+        for (const [nid, { message }] of flags) lines.push('%% @flag ' + nid + ' "' + message.replace(/"/g, "''") + '"');
+        for (const [nid, sv] of statusMap) lines.push('%% @status ' + nid + ' ' + sv);
+        for (const nid of state.breakpoints) lines.push('%% @breakpoint ' + nid);
+        for (const [nid, { level, reason }] of state.risks) lines.push('%% @risk ' + nid + ' ' + level + ' "' + reason.replace(/"/g, "''") + '"');
         lines.push(ANNOTATION_END);
         return clean + '\n' + lines.join('\n');
     }
@@ -101,13 +99,13 @@
             var nodeEl = DiagramDOM.findNodeElement(nodeId);
             if (nodeEl) {
                 nodeEl.classList.add('flagged');
-                addBadge(svg, nodeEl);
+                addBadge(svg, nodeEl, nodeId);
                 continue;
             }
             var subEl = DiagramDOM.findSubgraphElement(nodeId);
             if (subEl) {
                 subEl.classList.add('flagged');
-                addBadge(svg, subEl);
+                addBadge(svg, subEl, nodeId);
                 continue;
             }
             // Edge flags: check if ID starts with L- (Mermaid) or direct data-edge-id (custom)
@@ -119,45 +117,59 @@
                 }
                 if (edgeEl) {
                     edgeEl.classList.add('flagged-edge');
-                    addBadge(svg, edgeEl);
+                    addBadge(svg, edgeEl, nodeId);
                 }
             } else {
                 var directEdge = svg.querySelector('[data-edge-id="' + nodeId + '"]');
                 if (directEdge) {
                     directEdge.classList.add('flagged-edge');
-                    addBadge(svg, directEdge);
+                    addBadge(svg, directEdge, nodeId);
                 }
             }
         }
     }
 
-    function addBadge(svg, element) {
+    function svgEl(ns, tag, attrs) {
+        var el = document.createElementNS(ns, tag);
+        Object.entries(attrs).forEach(function(p) { el.setAttribute(p[0], p[1]); });
+        return el;
+    }
+
+    function addBadge(svg, element, nodeId) {
         const bbox = element.getBBox ? element.getBBox() : null;
         if (!bbox) return;
         const ns = 'http://www.w3.org/2000/svg';
-        const g = document.createElementNS(ns, 'g');
-        g.setAttribute('class', 'flag-badge');
+        const g = svgEl(ns, 'g', { 'class': 'flag-badge' });
         const cx = bbox.x + bbox.width - 2, cy = bbox.y + 2;
 
-        const circle = document.createElementNS(ns, 'circle');
-        Object.entries({ cx: cx, cy: cy, r: 10, fill: '#ef4444', stroke: '#fff', 'stroke-width': 2 })
-            .forEach(function(pair) { circle.setAttribute(pair[0], pair[1]); });
+        g.appendChild(svgEl(ns, 'circle', { cx: cx, cy: cy, r: 12, fill: '#ef4444', stroke: '#fff', 'stroke-width': 2 }));
+        var bang = svgEl(ns, 'text', { x: cx, y: cy + 1, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: '#fff', 'font-size': 13, 'font-weight': 700, 'font-family': 'Inter, sans-serif' });
+        bang.textContent = '!';
+        g.appendChild(bang);
 
-        const text = document.createElementNS(ns, 'text');
-        Object.entries({
-            x: cx, y: cy + 1, 'text-anchor': 'middle', 'dominant-baseline': 'central',
-            fill: '#fff', 'font-size': 12, 'font-weight': 700, 'font-family': 'Inter, sans-serif'
-        }).forEach(function(pair) { text.setAttribute(pair[0], pair[1]); });
-        text.textContent = '!';
-
-        g.appendChild(circle);
-        g.appendChild(text);
+        // Flag message label + tooltip
+        var flagData = nodeId ? state.flags.get(nodeId) : null;
+        if (flagData && flagData.message) {
+            var msg = flagData.message.length > 30 ? flagData.message.substring(0, 30) + '...' : flagData.message;
+            var tw = msg.length * 6 + 12;
+            g.appendChild(svgEl(ns, 'rect', { x: cx - tw / 2, y: cy + 14, width: tw, height: 16, rx: 8, fill: '#ef4444', opacity: '0.95' }));
+            var label = svgEl(ns, 'text', { x: cx, y: cy + 22, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: '#fff', 'font-size': 10, 'font-weight': 600, 'font-family': 'Inter, sans-serif' });
+            label.textContent = msg;
+            g.appendChild(label);
+            var title = document.createElementNS(ns, 'title');
+            title.textContent = 'Flag: ' + flagData.message;
+            g.appendChild(title);
+        }
         svg.appendChild(g);
     }
 
     // ── Popover ──
 
     function closePopover() {
+        if (state.popoverOutsideHandler) {
+            document.removeEventListener('mousedown', state.popoverOutsideHandler);
+            state.popoverOutsideHandler = null;
+        }
         if (state.popover) { state.popover.remove(); state.popover = null; }
     }
 
@@ -271,8 +283,8 @@
             function outsideClick(e) {
                 if (pop.contains(e.target)) return;
                 closePopover();
-                document.removeEventListener('mousedown', outsideClick);
             }
+            state.popoverOutsideHandler = outsideClick;
             document.addEventListener('mousedown', outsideClick);
         }, 50);
     }
@@ -327,16 +339,45 @@
             return;
         }
         list.textContent = '';
+
+        // Show current file name as context
+        var currentFile = hooks.getCurrentFile();
+        if (currentFile) {
+            var fileDiv = document.createElement('div');
+            fileDiv.className = 'flag-panel-file';
+            fileDiv.textContent = currentFile;
+            list.appendChild(fileDiv);
+        }
+
         for (var entry of state.flags) {
             var nodeId = entry[0];
             var message = entry[1].message;
             var item = document.createElement('div');
             item.className = 'flag-panel-item';
             item.dataset.nodeId = nodeId;
+
+            var topRow = document.createElement('div');
+            topRow.className = 'flag-panel-item-top';
+
             var idDiv = document.createElement('div');
             idDiv.className = 'flag-panel-item-id';
             idDiv.textContent = nodeId;
-            item.appendChild(idDiv);
+            topRow.appendChild(idDiv);
+
+            var btnDelete = document.createElement('button');
+            btnDelete.className = 'flag-panel-item-delete';
+            btnDelete.title = 'Remover flag';
+            btnDelete.textContent = '\u00d7';
+            btnDelete.addEventListener('click', (function(nid) {
+                return function(e) {
+                    e.stopPropagation();
+                    removeFlag(nid);
+                };
+            })(nodeId));
+            topRow.appendChild(btnDelete);
+
+            item.appendChild(topRow);
+
             var msgDiv = document.createElement('div');
             msgDiv.className = 'flag-panel-item-msg';
             if (message) {
@@ -354,25 +395,28 @@
     }
 
     function scrollToNode(nodeId) {
-        // Use DiagramDOM to find node/subgraph element
-        var el = DiagramDOM.findNodeElement(nodeId)
-            || DiagramDOM.findSubgraphElement(nodeId);
-        if (!el) {
-            // Fallback: try direct ID match for edge IDs
-            var svg = DiagramDOM.getSVG();
-            if (!svg) return;
-            var edgeEl = svg.querySelector('[id="' + nodeId + '"]');
-            if (edgeEl) {
-                flashElement(edgeEl);
+        var el = DiagramDOM.findNodeElement(nodeId) || DiagramDOM.findSubgraphElement(nodeId);
+        if (!el) { var svg = DiagramDOM.getSVG(); if (svg) el = svg.querySelector('[id="' + CSS.escape(nodeId) + '"]'); }
+        if (!el) return;
+        // Pan to center the node in the viewport
+        if (window.SmartBPanZoom) {
+            var container = document.getElementById('preview-container');
+            if (container) {
+                var rect = el.getBoundingClientRect();
+                var containerRect = container.getBoundingClientRect();
+                var pan = SmartBPanZoom.getPan();
+                var centerX = containerRect.width / 2;
+                var centerY = containerRect.height / 2;
+                var elCenterX = rect.left + rect.width / 2 - containerRect.left;
+                var elCenterY = rect.top + rect.height / 2 - containerRect.top;
+                SmartBPanZoom.setPan(pan.panX + (centerX - elCenterX), pan.panY + (centerY - elCenterY));
             }
-            return;
         }
         flashElement(el);
     }
 
     function flashElement(el) {
-        el.style.transition = 'opacity 0.15s';
-        el.style.opacity = '0.3';
+        el.style.transition = 'opacity 0.15s'; el.style.opacity = '0.3';
         setTimeout(function() { el.style.opacity = '1'; }, 150);
         setTimeout(function() { el.style.opacity = '0.3'; }, 300);
         setTimeout(function() { el.style.opacity = '1'; el.style.transition = ''; }, 450);

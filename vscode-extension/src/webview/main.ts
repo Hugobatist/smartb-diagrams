@@ -49,6 +49,7 @@ type ExtensionMessage = DiagramUpdateMessage | TreeUpdateMessage | ConnectionSta
 
 import { initFlagUI, initFlagClickHandlers, hideFlagInput } from './flag-ui.js';
 import { initFileList, updateFileList, setActiveFile, hideFileList } from './file-list.js';
+import { initPanZoom, zoomFit } from './pan-zoom.js';
 
 /**
  * Strip SmartB annotation blocks from raw .mmd content.
@@ -77,16 +78,18 @@ function stripAnnotations(content: string): string {
   const statusEl = document.getElementById('connection-status');
 
   // Initialize mermaid for dark theme rendering.
+  // SECURITY: Use 'sandbox' to prevent HTML injection via Mermaid labels
   mermaid.initialize({
     startOnLoad: false,
     theme: 'dark',
-    securityLevel: 'loose',
+    securityLevel: 'sandbox',
     flowchart: { htmlLabels: true, curve: 'basis' },
   });
 
   // Initialize UI components
   initFlagUI(vscode);
   initFileList(vscode);
+  initPanZoom();
 
   // Restore file list and active file from persisted state
   if (state.fileList.length > 0) {
@@ -110,6 +113,9 @@ function stripAnnotations(content: string): string {
     const cleanContent = stripAnnotations(content);
 
     try {
+      // Clean up old mermaid style tag to prevent accumulation
+      const oldStyle = document.getElementById('d' + renderCounter);
+      oldStyle?.remove();
       renderCounter++;
       const { svg } = await mermaid.render('diagram-' + renderCounter, cleanContent);
 
@@ -117,6 +123,9 @@ function stripAnnotations(content: string): string {
       diagramEl.insertAdjacentHTML('afterbegin', svg);
 
       initFlagClickHandlers();
+
+      // Fit diagram to viewport after render
+      setTimeout(() => zoomFit(), 50);
 
       // Update header with current file
       setActiveFile(file);
@@ -173,8 +182,18 @@ function stripAnnotations(content: string): string {
       case 'connection:status': {
         if (statusEl) {
           const status: string = msg.status;
-          statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+          const labels: Record<string, string> = {
+            connected: 'Servidor Local',
+            disconnected: 'Desconectado',
+            reconnecting: 'Reconectando...',
+          };
+          statusEl.textContent = labels[status] || status;
           statusEl.className = `connection-status ${status}`;
+          statusEl.title = status === 'connected'
+            ? 'Conectado ao servidor SmartB via WebSocket'
+            : status === 'disconnected'
+              ? 'Sem conexao com o servidor. Execute: smartb serve'
+              : 'Tentando reconectar...';
         }
         break;
       }

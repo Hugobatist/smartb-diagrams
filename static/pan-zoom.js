@@ -60,8 +60,17 @@
     // ── Mouse drag pan (disabled in flag mode, editor mode, and FSM blocking states) ──
     container.addEventListener('mousedown', function(e) {
         if (e.button !== 0) return;
-        // Check FSM blocking states (editing, context-menu)
+        // Check FSM blocking states (editing, context-menu, dragging)
         if (window.SmartBInteraction && SmartBInteraction.isBlocking()) return;
+        if (window.SmartBInteraction && SmartBInteraction.getState() === 'dragging') return;
+        // Don't pan if clicking on a selected node (node-drag handles this)
+        if (window.SmartBInteraction && SmartBInteraction.getState() === 'selected') {
+            var sel = window.SmartBSelection ? SmartBSelection.getSelected() : null;
+            if (sel && sel.type === 'node') {
+                var clickedNode = window.DiagramDOM ? DiagramDOM.extractNodeId(e.target) : null;
+                if (clickedNode && clickedNode.id === sel.id) return; // Let node-drag handle it
+            }
+        }
         // Keep existing checks for backward compat without FSM
         if (window.SmartBAnnotations && SmartBAnnotations.getState().flagMode) return;
         if (window.MmdEditor && MmdEditor.getState().mode) return;
@@ -131,19 +140,27 @@
         document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
     }
 
-    // ── Zoom buttons ──
+    // ── Zoom buttons (zoom toward viewport center, preserving pan position) ──
     function zoomIn() {
-        zoom = Math.min(zoom * 1.15, 5);
-        panX = 0;
-        panY = 0;
+        var newZoom = Math.min(zoom * 1.15, 5);
+        var rect = container.getBoundingClientRect();
+        var cx = rect.width / 2;
+        var cy = rect.height / 2;
+        panX = cx - (cx - panX) * (newZoom / zoom);
+        panY = cy - (cy - panY) * (newZoom / zoom);
+        zoom = newZoom;
         applyTransform();
         document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
     }
 
     function zoomOut() {
-        zoom = Math.max(zoom * 0.85, 0.1);
-        panX = 0;
-        panY = 0;
+        var newZoom = Math.max(zoom * 0.85, 0.1);
+        var rect = container.getBoundingClientRect();
+        var cx = rect.width / 2;
+        var cy = rect.height / 2;
+        panX = cx - (cx - panX) * (newZoom / zoom);
+        panY = cy - (cy - panY) * (newZoom / zoom);
+        zoom = newZoom;
         applyTransform();
         document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
     }

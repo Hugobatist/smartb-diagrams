@@ -20,12 +20,19 @@ export class DiagramService {
   /**
    * Serialize write operations on a given file path.
    * Each call waits for the previous write on the same file to finish before running.
+   * Cleans up lock entry when no further writes are queued.
    */
   private async withWriteLock<T>(filePath: string, fn: () => Promise<T>): Promise<T> {
     const prev = this.writeLocks.get(filePath) ?? Promise.resolve();
     const current = prev.then(fn, fn); // run fn after previous completes (even if it failed)
-    this.writeLocks.set(filePath, current.then(() => {}, () => {})); // swallow errors for the lock chain
-    return current;
+    const settled = current.then(() => {}, () => {}); // swallow errors for the lock chain
+    this.writeLocks.set(filePath, settled);
+    const result = await current;
+    // Clean up lock entry if no subsequent write has been queued
+    if (this.writeLocks.get(filePath) === settled) {
+      this.writeLocks.delete(filePath);
+    }
+    return result;
   }
 
   constructor(private readonly projectRoot: string) {}

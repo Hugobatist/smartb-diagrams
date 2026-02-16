@@ -1,4 +1,4 @@
-import { appendFile, readFile, readdir, mkdir } from 'node:fs/promises';
+import { appendFile, readFile, readdir, mkdir, open as fsOpen } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { SessionEvent, SessionMeta, SessionSummary } from './session-types.js';
@@ -17,6 +17,16 @@ export class SessionStore {
     this.sessionsDir = join(projectRoot, '.smartb', 'sessions');
   }
 
+  /** Valid session ID pattern (UUID format) */
+  private static readonly SESSION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+  /** Validate a session ID to prevent path traversal */
+  private validateSessionId(sessionId: string): void {
+    if (!SessionStore.SESSION_ID_RE.test(sessionId)) {
+      throw new Error(`Invalid session ID: ${sessionId}`);
+    }
+  }
+
   /** Ensure the sessions directory exists */
   private async ensureDir(): Promise<void> {
     await mkdir(this.sessionsDir, { recursive: true });
@@ -26,12 +36,19 @@ export class SessionStore {
   private async withWriteLock<T>(sessionId: string, fn: () => Promise<T>): Promise<T> {
     const prev = this.writeLocks.get(sessionId) ?? Promise.resolve();
     const current = prev.then(fn, fn);
-    this.writeLocks.set(sessionId, current.then(() => {}, () => {}));
-    return current;
+    const settled = current.then(() => {}, () => {});
+    this.writeLocks.set(sessionId, settled);
+    const result = await current;
+    // Clean up write lock entry if it's still ours (no subsequent write queued)
+    if (this.writeLocks.get(sessionId) === settled) {
+      this.writeLocks.delete(sessionId);
+    }
+    return result;
   }
 
   /** Get the file path for a session's JSONL file */
   private filePath(sessionId: string): string {
+    this.validateSessionId(sessionId);
     return join(this.sessionsDir, `${sessionId}.jsonl`);
   }
 
@@ -133,8 +150,8 @@ export class SessionStore {
 
       const sessionId = entry.replace('.jsonl', '');
       try {
-        const content = await readFile(join(this.sessionsDir, entry), 'utf-8');
-        const firstLine = content.split('\n')[0];
+        // Read only the first line instead of the entire file
+        const firstLine = await this.readFirstLine(join(this.sessionsDir, entry));
         if (!firstLine) continue;
         const event = JSON.parse(firstLine) as SessionEvent;
         if (event.type === 'session:start' && event.payload.diagramFile === diagramFile) {
@@ -167,6 +184,21 @@ export class SessionStore {
     }
 
     return counts;
+  }
+
+  /** Read only the first line of a file without loading the entire file into memory */
+  private async readFirstLine(filePath: string): Promise<string | null> {
+    const fh = await fsOpen(filePath, 'r');
+    try {
+      const buf = Buffer.alloc(4096); // First line of a session JSONL is ~100 bytes
+      const { bytesRead } = await fh.read(buf, 0, buf.length, 0);
+      if (bytesRead === 0) return null;
+      const text = buf.toString('utf-8', 0, bytesRead);
+      const newlineIdx = text.indexOf('\n');
+      return newlineIdx === -1 ? text : text.substring(0, newlineIdx);
+    } finally {
+      await fh.close();
+    }
   }
 
   /** Get metadata for an active session, or undefined if not active */

@@ -79,6 +79,12 @@
     }
 
     function selectNode(nodeId) {
+        // Clear pending delete confirmation when selection changes
+        if (deleteConfirmTimer) {
+            clearTimeout(deleteConfirmTimer);
+            deleteConfirmTimer = null;
+            deleteConfirmNodeId = null;
+        }
         clearIndicator();
 
         var el = DiagramDOM.findNodeElement(nodeId);
@@ -169,6 +175,12 @@
      * Deselect all. Removes indicators, clears state.
      */
     function deselectAll() {
+        // Clear pending delete confirmation
+        if (deleteConfirmTimer) {
+            clearTimeout(deleteConfirmTimer);
+            deleteConfirmTimer = null;
+            deleteConfirmNodeId = null;
+        }
         clearIndicator();
         selectedNodeId = null;
         selectedType = null;
@@ -261,24 +273,47 @@
 
     // ── Keyboard Handler (document-level) ──
 
+    var deleteConfirmTimer = null;
+    var deleteConfirmNodeId = null;
+
     function handleKeydown(e) {
         // Don't handle if focus is on text inputs
         if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' ||
             e.target.getAttribute('contenteditable')) return;
+
+        // Don't handle if inline edit is active
+        if (window.SmartBInlineEdit && SmartBInlineEdit.isActive()) return;
 
         var fsmState = window.SmartBInteraction ? SmartBInteraction.getState() : 'idle';
 
         if (fsmState === 'selected' && selectedNodeId) {
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
-                if (selectedType === 'node' && window.MmdEditor) {
-                    var nodeToRemove = selectedNodeId;
-                    deselectAll();
-                    MmdEditor.doRemoveNode(nodeToRemove);
+                // Require double-press within 2 seconds to confirm deletion
+                if (deleteConfirmNodeId === selectedNodeId && deleteConfirmTimer) {
+                    clearTimeout(deleteConfirmTimer);
+                    deleteConfirmTimer = null;
+                    deleteConfirmNodeId = null;
+                    if (selectedType === 'node' && window.MmdEditor) {
+                        var nodeToRemove = selectedNodeId;
+                        deselectAll();
+                        MmdEditor.doRemoveNode(nodeToRemove);
+                    }
+                    if (window.SmartBInteraction) SmartBInteraction.transition('delete_node');
+                } else {
+                    // First press: show confirmation toast
+                    deleteConfirmNodeId = selectedNodeId;
+                    if (deleteConfirmTimer) clearTimeout(deleteConfirmTimer);
+                    deleteConfirmTimer = setTimeout(function() {
+                        deleteConfirmTimer = null;
+                        deleteConfirmNodeId = null;
+                    }, 2000);
+                    if (window.toast) window.toast('Pressione Delete novamente para remover o nodo');
                 }
-                if (window.SmartBInteraction) SmartBInteraction.transition('delete_node');
             }
             if (e.key === 'Escape') {
+                deleteConfirmTimer = null;
+                deleteConfirmNodeId = null;
                 deselectAll();
                 if (window.SmartBInteraction) SmartBInteraction.transition('escape');
             }

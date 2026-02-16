@@ -41,6 +41,10 @@ export class DiagramPanelManager {
 
   /** Restore a previously serialized panel (called by WebviewPanelSerializer). */
   restore(existingPanel: vscode.WebviewPanel): void {
+    // Dispose old panel if different to prevent resource leak
+    if (this.panel && this.panel !== existingPanel) {
+      this.panel.dispose();
+    }
     existingPanel.webview.options = {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'media')],
@@ -137,8 +141,16 @@ export class DiagramPanelManager {
     <span id="connection-status" class="connection-status disconnected">Disconnected</span>
     <div id="file-list"></div>
   </div>
-  <div id="diagram">
-    <p class="status-message">Waiting for SmartB server connection...</p>
+  <div id="diagram-container">
+    <div id="diagram">
+      <p class="status-message">Waiting for SmartB server connection...</p>
+    </div>
+  </div>
+  <div id="zoom-controls">
+    <button class="zoom-btn" id="zoom-out" title="Zoom out">-</button>
+    <span id="zoom-label">100%</span>
+    <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+    <button class="zoom-btn" id="zoom-fit" title="Fit to view">Fit</button>
   </div>
   <script nonce="${nonce}" src="${mediaUri('mermaid.min.js')}"></script>
   <script nonce="${nonce}" src="${mediaUri('webview.js')}"></script>
@@ -147,11 +159,7 @@ export class DiagramPanelManager {
   }
 
   private getNonce(): string {
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let nonce = '';
-    for (let i = 0; i < 32; i++) {
-      nonce += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return nonce;
+    const crypto = require('node:crypto') as typeof import('node:crypto');
+    return crypto.randomBytes(16).toString('hex');
   }
 }

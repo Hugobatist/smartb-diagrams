@@ -6,7 +6,13 @@
 (function () {
     'use strict';
 
+    var _outsideHandler = null;
+
     function closeEditorPopover() {
+        if (_outsideHandler) {
+            document.removeEventListener('mousedown', _outsideHandler);
+            _outsideHandler = null;
+        }
         var existing = document.querySelector('.editor-popover');
         if (existing) existing.remove();
     }
@@ -23,8 +29,8 @@
             function outside(e) {
                 if (pop.contains(e.target)) return;
                 closeEditorPopover();
-                document.removeEventListener('mousedown', outside);
             }
+            _outsideHandler = outside;
             document.addEventListener('mousedown', outside);
         }, 50);
 

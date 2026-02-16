@@ -22,6 +22,7 @@
     var activeNodeId = null;
     var originalLabel = null;
     var hiddenTextEl = null;
+    var isCommitting = false; // guard against blur firing after confirm
 
     // ── Open Inline Edit ──
 
@@ -118,10 +119,16 @@
 
     function confirm() {
         if (!activeOverlay) return;
+        isCommitting = true;
 
         var newText = activeOverlay.textContent.trim();
         var nodeId = activeNodeId;
         var oldLabel = originalLabel;
+
+        // Restore SVG text visibility before close
+        if (hiddenTextEl) {
+            hiddenTextEl.style.visibility = '';
+        }
 
         // Save if changed and not empty
         if (newText && newText !== originalLabel && window.MmdEditor && MmdEditor.applyEdit) {
@@ -132,6 +139,7 @@
 
         // Close the overlay
         closeOverlay();
+        isCommitting = false;
 
         // Transition FSM
         if (window.SmartBInteraction) {
@@ -201,11 +209,19 @@
         }
     }
 
-    function handleOverlayBlur() {
-        // Small timeout to avoid blur firing when user clicks a context menu item
+    function handleOverlayBlur(e) {
+        // If focus moved to another interactive element (context menu, etc.), cancel
+        // Use a timeout to let the relatedTarget resolve
         setTimeout(function() {
-            if (activeOverlay) confirm();
-        }, 0);
+            if (!activeOverlay) return;
+            // Guard: if confirm() already ran, don't cancel
+            if (isCommitting) return;
+            // Check if focus went to a valid target that should keep the edit open
+            var active = document.activeElement;
+            if (active && (active.closest('.context-menu') || active.closest('.flag-popover'))) return;
+            // Default: cancel on blur to prevent accidental data loss
+            cancel();
+        }, 150);
     }
 
     // ── Double-click Handler (delegated on #preview-container) ──

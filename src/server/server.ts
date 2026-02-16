@@ -70,9 +70,11 @@ export async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
+    let aborted = false;
     req.on('data', (chunk: Buffer) => {
       size += chunk.length;
       if (size > MAX_BODY_SIZE) {
+        aborted = true;
         req.destroy();
         reject(new Error('Payload too large'));
         return;
@@ -80,13 +82,16 @@ export async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
       chunks.push(chunk);
     });
     req.on('end', () => {
+      if (aborted) return;
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString('utf-8')) as T);
       } catch {
         reject(new Error('Invalid JSON'));
       }
     });
-    req.on('error', reject);
+    req.on('error', (err) => {
+      if (!aborted) reject(err);
+    });
   });
 }
 
@@ -133,7 +138,7 @@ function createHandler(
       // Try serving static file from static dir (with path traversal protection)
       const safePath = path.normalize(url.pathname).replace(/^(\.\.[/\\])+/, '');
       const staticFilePath = path.join(staticDir, safePath);
-      if (staticFilePath.startsWith(staticDir)) {
+      if (staticFilePath === staticDir || staticFilePath.startsWith(staticDir + path.sep)) {
         const served = await serveStaticFile(res, staticFilePath);
         if (served) return;
       }
@@ -214,13 +219,13 @@ export function createHttpServer(projectDir: string, existingService?: DiagramSe
       wsManager.broadcast('default', { type: 'file:added', file });
       service.listFiles().then((files) => {
         wsManager.broadcast('default', { type: 'tree:updated', files });
-      });
+      }).catch((err) => { log.error('Failed to list files after add:', err); });
     },
     (file) => {
       wsManager.broadcast('default', { type: 'file:removed', file });
       service.listFiles().then((files) => {
         wsManager.broadcast('default', { type: 'tree:updated', files });
-      });
+      }).catch((err) => { log.error('Failed to list files after remove:', err); });
     },
   );
 
@@ -253,13 +258,13 @@ export function createHttpServer(projectDir: string, existingService?: DiagramSe
         wsManager.broadcast(name, { type: 'file:added', file });
         projectService.listFiles().then((files) => {
           wsManager.broadcast(name, { type: 'tree:updated', files });
-        });
+        }).catch((err) => { log.error(`Failed to list files for project ${name} after add:`, err); });
       },
       (file) => {
         wsManager.broadcast(name, { type: 'file:removed', file });
         projectService.listFiles().then((files) => {
           wsManager.broadcast(name, { type: 'tree:updated', files });
-        });
+        }).catch((err) => { log.error(`Failed to list files for project ${name} after remove:`, err); });
       },
     );
 
@@ -287,11 +292,11 @@ export async function startServer(options: ServerOptions): Promise<void> {
     log.warn(`Port ${options.port} is in use, using port ${actualPort}`);
   }
 
-  const { httpServer, wsManager, fileWatcher } = createHttpServer(projectDir);
+  const service = new DiagramService(projectDir);
+  const { httpServer, wsManager, fileWatcher } = createHttpServer(projectDir, service);
 
   // Check for .mmd files and warn if none found
-  const checkService = new DiagramService(projectDir);
-  const mmdFiles = await checkService.listFiles();
+  const mmdFiles = await service.listFiles();
   if (mmdFiles.length === 0) {
     log.warn('No .mmd files found in ' + projectDir);
     log.warn("Run 'smartb init' to create a sample diagram, or create a .mmd file manually.");
@@ -309,9 +314,9 @@ export async function startServer(options: ServerOptions): Promise<void> {
   });
 
   // Graceful shutdown
-  process.on('SIGINT', () => {
+  process.once('SIGINT', () => {
     log.info('Shutting down...');
-    fileWatcher.close().then(() => {
+    fileWatcher.close().catch(() => {}).then(() => {
       wsManager.close();
       httpServer.close(() => process.exit(0));
     });

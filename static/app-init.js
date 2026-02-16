@@ -82,6 +82,7 @@
     // ── Toast ──
     function toast(msg) {
         var el = document.getElementById('toast');
+        if (!el) return;
         el.textContent = msg;
         el.classList.add('show');
         setTimeout(function() { el.classList.remove('show'); }, 2000);
@@ -210,6 +211,7 @@
 
     // ── Init Phase 13: Canvas Interaction Modules ──
     if (window.SmartBSelection) SmartBSelection.init();
+    if (window.SmartBNodeDrag) SmartBNodeDrag.init();
     if (window.SmartBContextMenu) SmartBContextMenu.init();
     if (window.SmartBInlineEdit) SmartBInlineEdit.init();
 
@@ -242,7 +244,7 @@
                     if (data.mermaidContent) {
                         await renderWithType(data.mermaidContent);
                     }
-                } catch (e) {}
+                } catch (e) { console.warn('[SmartB] Collapse toggle error:', e); }
             }
         });
 
@@ -293,7 +295,7 @@
                             document.getElementById('preview').classList.remove('diagram-focus-mode');
                         }
                     }
-                } catch (e) {}
+                } catch (e) { console.warn('[SmartB] Focus mode error:', e); }
             }
         });
     }
@@ -316,7 +318,7 @@
                 SmartBFileTree.setLastContent(text);
                 await renderWithType(text);
             }
-        } catch (e) {}
+        } catch (e) { console.warn('[SmartB] Initial file load error:', e); }
 
         if (!SmartBFileTree.getLastContent() && editor.value.trim()) {
             await renderWithType(editor.value);
@@ -383,7 +385,9 @@
                         // Update effective renderer type based on diagram type from server
                         effectiveRendererType = selectRendererType(msg.graph.diagramType);
                         if (effectiveRendererType === 'custom') {
-                            SmartBCustomRenderer.render(msg.graph);
+                            SmartBCustomRenderer.render(msg.graph).catch(function(e) {
+                                console.warn('Custom renderer failed on graph:update, keeping current render:', e.message);
+                            });
                         }
                         // If using Mermaid, ignore graph:update (file:changed handles it)
                         updateRendererIndicator();
@@ -445,15 +449,18 @@
             switch (status) {
                 case 'connected':
                     dot.className = 'status-dot';
-                    statusText.textContent = 'Connected';
+                    statusText.textContent = 'Servidor Local';
+                    statusText.title = 'Conectado ao servidor SmartB via WebSocket. Para conectar uma IA, configure o MCP server no seu cliente AI.';
                     break;
                 case 'disconnected':
                     dot.className = 'status-dot paused';
-                    statusText.textContent = 'Disconnected';
+                    statusText.textContent = 'Desconectado';
+                    statusText.title = 'Sem conexao com o servidor SmartB. Execute: smartb serve';
                     break;
                 case 'reconnecting':
                     dot.className = 'status-dot paused';
-                    statusText.textContent = 'Reconnecting...';
+                    statusText.textContent = 'Reconectando...';
+                    statusText.title = 'Tentando reconectar ao servidor SmartB...';
                     break;
             }
         });
@@ -487,7 +494,7 @@
     window.SmartBApp = {
         toast: toast,
         showHelp: showHelp,
-        rendererType: effectiveRendererType, // backward compat
+        get rendererType() { return effectiveRendererType; }, // dynamic getter
         getRendererType: function() { return effectiveRendererType; },
     };
     window.toast = toast;

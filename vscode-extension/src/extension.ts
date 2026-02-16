@@ -9,6 +9,7 @@ export function activate(context: vscode.ExtensionContext): void {
   let currentFile = '';
   let fileList: string[] = [];
   const fileContents = new Map<string, string>();
+  let selectFileGeneration = 0; // Guards against stale responses on rapid file switching
 
   // 1. Create the panel manager
   const provider = new DiagramPanelManager(context.extensionUri);
@@ -61,6 +62,7 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   // 5. Create WebSocket client with callbacks that relay to the webview
+  let hasConnectedOnce = false; // Only auto-show panel on first connection
   const wsClient = new SmartBWsClient(serverUrl, {
     onMessage: (msg) => {
       const wsMsg = msg as Record<string, unknown>;
@@ -68,9 +70,15 @@ export function activate(context: vscode.ExtensionContext): void {
       // Track file contents for flag saving and initial state restore
       if (wsMsg.type === 'file:changed' && typeof wsMsg.file === 'string' && typeof wsMsg.content === 'string') {
         fileContents.set(wsMsg.file, wsMsg.content);
-        currentFile = wsMsg.file;
-        // Relay content update to webview
-        provider.postMessage({ type: 'diagram:update', file: wsMsg.file, content: wsMsg.content });
+        // Only update the display if this is the file the user is currently viewing,
+        // or if no file has been explicitly selected yet
+        if (wsMsg.file === currentFile || !currentFile) {
+          currentFile = wsMsg.file;
+          provider.postMessage({ type: 'diagram:update', file: wsMsg.file, content: wsMsg.content });
+        } else {
+          // Notify webview that another file changed (for potential badge/indicator)
+          provider.postMessage({ type: 'file:background-update', file: wsMsg.file });
+        }
       }
 
       // Handle file:added — fetch its content and relay to webview
@@ -119,7 +127,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
       // Fetch initial diagram data and file tree when connected
       if (status === 'connected') {
-        provider.show(vscode.ViewColumn.Beside);
+        // Only auto-show panel on first connection to avoid stealing focus on reconnect
+        if (!hasConnectedOnce) {
+          hasConnectedOnce = true;
+          provider.show(vscode.ViewColumn.Beside);
+        }
         fetchInitialData();
       }
     },
@@ -192,10 +204,13 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
 
-    // Otherwise fetch from server
+    // Otherwise fetch from server. Use generation counter to discard stale responses
+    // when user switches files rapidly.
+    const gen = ++selectFileGeneration;
     try {
       const httpBaseUrl = getHttpBaseUrl(serverUrl);
       const contentResp = await httpGet(`${httpBaseUrl}/api/diagrams/${encodeURIComponent(file)}`);
+      if (gen !== selectFileGeneration) return; // User switched to another file while fetching
       const parsed = JSON.parse(contentResp) as { mermaidContent: string };
       fileContents.set(file, parsed.mermaidContent);
       provider.postMessage({
@@ -204,6 +219,7 @@ export function activate(context: vscode.ExtensionContext): void {
         content: parsed.mermaidContent,
       });
     } catch (err) {
+      if (gen !== selectFileGeneration) return; // Stale request, ignore error
       const errMsg = err instanceof Error ? err.message : 'Unknown error';
       vscode.window.showErrorMessage(`SmartB: Failed to load diagram "${file}" - ${errMsg}`);
       provider.postMessage({
@@ -270,7 +286,11 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   }
 
-  /** Save a flag annotation to the .mmd file via SmartB server /save endpoint. */
+  /**
+   * Save a flag annotation to the .mmd file.
+   * Reads the current file, injects the flag inside the annotation block
+   * (creating one if needed), then saves via /save endpoint.
+   */
   async function saveFlag(nodeId: string, message: string): Promise<void> {
     if (!currentFile) {
       vscode.window.showErrorMessage('SmartB: No diagram file is currently active.');
@@ -284,7 +304,20 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     const flagLine = `%% @flag ${nodeId} "${message}"`;
-    const updatedContent = content.trimEnd() + '\n' + flagLine + '\n';
+    const startMarker = '%% --- ANNOTATIONS';
+    const endMarker = '%% --- END ANNOTATIONS ---';
+    let updatedContent: string;
+
+    const startIdx = content.indexOf(startMarker);
+    const endIdx = content.indexOf(endMarker);
+
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+      // Insert flag line before the end marker
+      updatedContent = content.substring(0, endIdx) + flagLine + '\n' + content.substring(endIdx);
+    } else {
+      // No annotation block — create one
+      updatedContent = content.trimEnd() + '\n\n' + startMarker + ' ---\n' + flagLine + '\n' + endMarker + '\n';
+    }
 
     try {
       const httpBaseUrl = getHttpBaseUrl(serverUrl);

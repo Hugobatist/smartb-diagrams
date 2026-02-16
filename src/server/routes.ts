@@ -276,7 +276,13 @@ export function registerRoutes(
 
         // Parse subgraphs and build collapse state
         const subgraphs = parseSubgraphs(diagram.mermaidContent);
-        const userCollapsed: string[] = collapsedParam ? JSON.parse(collapsedParam) as string[] : [];
+        let userCollapsed: string[] = [];
+        if (collapsedParam) {
+          try {
+            const parsed = JSON.parse(collapsedParam);
+            if (Array.isArray(parsed)) userCollapsed = parsed as string[];
+          } catch { /* ignore malformed collapsed param */ }
+        }
         let state: CollapseState = {
           ...createEmptyState(),
           collapsed: new Set(userCollapsed),
@@ -365,6 +371,11 @@ export function registerRoutes(
           return;
         }
         if (breakpointContinueSignals) {
+          // Prevent unbounded growth: evict oldest if map exceeds 500 entries
+          if (breakpointContinueSignals.size >= 500) {
+            const firstKey = breakpointContinueSignals.keys().next().value;
+            if (firstKey !== undefined) breakpointContinueSignals.delete(firstKey);
+          }
           breakpointContinueSignals.set(`${file}:${body.nodeId}`, true);
         }
         if (wsManager) {

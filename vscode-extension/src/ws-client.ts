@@ -74,15 +74,18 @@ export class SmartBWsClient {
 
   /** Disconnect and reconnect with a fresh connection. */
   reconnect(): void {
-    this.disposed = false;
+    // Temporarily mark as disposed to prevent the close handler from scheduling reconnect
+    this.disposed = true;
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
     }
     if (this.ws) {
+      this.ws.removeAllListeners();
       this.ws.close();
       this.ws = null;
     }
+    this.disposed = false;
     this.attempt = 0;
     this.connect();
   }
