@@ -9,11 +9,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 13-canvas-interactions
-Plan: 01 of 02 complete
-Status: Plan 01 COMPLETE — FSM + node selection with visual indicators and keyboard shortcuts
-Last activity: 2026-02-16 — Plan 01 executed (3 tasks, 3min), 225 tests passing
+Plan: 02 of 02 complete
+Status: Phase 13 COMPLETE — All canvas interaction features implemented
+Last activity: 2026-02-16 — Plan 02 executed (3 tasks, 5min), 225 tests passing
 
-Progress: [██████████] v1.0 100% | Phase 13: [=====-----] 1/2 plans complete
+Progress: [██████████] v1.0 100% | Phase 13: [==========] 2/2 plans complete
 
 ## v1.0 Performance Metrics
 
@@ -145,6 +145,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - PAN_THRESHOLD = 3px — balances click detection vs pan responsiveness
 - Click handler uses DiagramDOM.extractNodeId directly — no timer for click/dblclick disambiguation
 - FSM coordination pattern: all interaction modules query SmartBInteraction before acting
+- Flag action in context menu activates flag mode (toggleFlagMode) instead of directly showing popover — avoids modifying annotations.js
+- Inline edit uses blur-as-confirm with setTimeout(0) guard to prevent accidental commits
+- Collapse-ui FSM guards: click checks editing/context-menu, dblclick checks editing/selected
+- Mode toggle FSM sync: after calling toggleX(), forceState based on resulting module state
 
 ### Pre-Release Todos Status
 
@@ -227,8 +231,17 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - live.html: 2 new script tags, app-init.js: SmartBSelection.init()
 - Duration: 3 min, 225 tests pass
 
+**13-02 (Complete):** Context menu + inline edit + integration wiring
+- context-menu.js (238 lines): right-click context menu with 5 node actions, 2 edge actions
+- inline-edit.js (278 lines): double-click contenteditable overlay with Enter/Escape/blur
+- diagram-editor.js (485 lines): added duplicateNode(), exposed applyEdit in public API
+- app-init.js (398 lines): init new modules, FSM-aware keyboard shortcuts
+- collapse-ui.js (320 lines): FSM guards on click/dblclick handlers
+- live.html (158 lines): 2 new script tags + help overlay rows
+- Duration: 5 min, 225 tests pass
+
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 13-01-PLAN.md
-Next action: Execute 13-02-PLAN.md (context menu + inline edit)
+Stopped at: Completed 13-02-PLAN.md — Phase 13 fully complete
+Next action: Plan next phase or verify Phase 13 features in browser
