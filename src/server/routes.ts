@@ -22,6 +22,7 @@ import type { GhostPath } from '../diagram/types.js';
 import { buildFileTree } from './file-tree.js';
 import type { SessionStore } from '../session/session-store.js';
 import { registerSessionRoutes } from './session-routes.js';
+import { list as listWorkspaces } from '../registry/workspace-registry.js';
 
 /**
  * Register all route handlers for the diagram viewer server.
@@ -466,7 +467,24 @@ export function registerRoutes(
   }
 
   // -------------------------------------------------------
-  // 15. GET /*.mmd -- Serve raw .mmd file content from project dir
+  // 15. GET /api/workspaces -- List all registered workspace instances
+  // -------------------------------------------------------
+  routes.push({
+    method: 'GET',
+    pattern: new RegExp('^/api/workspaces$'),
+    handler: async (_req: IncomingMessage, res: ServerResponse) => {
+      try {
+        const workspaces = await listWorkspaces();
+        sendJson(res, workspaces);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        sendJson(res, { error: message }, 500);
+      }
+    },
+  });
+
+  // -------------------------------------------------------
+  // 16. GET /*.mmd -- Serve raw .mmd file content from project dir
   //     (must be registered AFTER /api routes to avoid conflicts)
   // -------------------------------------------------------
   routes.push({

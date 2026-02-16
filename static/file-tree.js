@@ -31,7 +31,13 @@
     var treeData = [];
     var collapsedFolders = new Set(JSON.parse(localStorage.getItem('smartb-collapsed') || '[]'));
 
-    // Keep window.currentFile in sync for cross-module access
+    // Centralized setter -- keeps window.currentFile in sync
+    function setFile(path) {
+        currentFile = path;
+        window.currentFile = path;
+    }
+
+    // Initial sync
     window.currentFile = currentFile;
 
     function saveCollapsed() {
@@ -53,9 +59,12 @@
         return (node.children || []).reduce(function(s, c) { return s + countFiles(c); }, 0);
     }
 
+    // ── URL helper ──
+    function bUrl(path) { return (window.SmartBBaseUrl || '') + path; }
+
     // ── Tree rendering ──
     function refreshFileList() {
-        fetch('tree.json?t=' + Date.now())
+        fetch(bUrl('/tree.json?t=' + Date.now()))
             .then(function(resp) {
                 if (resp.ok) return resp.json();
                 return null;
@@ -156,8 +165,7 @@
     function loadFile(path) {
         // Clear undo/redo history when switching files
         if (window.SmartBCommandHistory) SmartBCommandHistory.clear();
-        currentFile = path;
-        window.currentFile = path;
+        setFile(path);
         document.getElementById('currentFileName').textContent = prettyName(path);
         lastContent = '';
         SmartBRenderer.setInitialRender(true);
@@ -167,13 +175,13 @@
         // Fetch overlay data for the new file (ghost paths, heatmap, sessions)
         var encoded = encodeURIComponent(path);
         if (window.SmartBGhostPaths) {
-            fetch('/api/ghost-paths/' + encoded)
+            fetch(bUrl('/api/ghost-paths/' + encoded))
                 .then(function(r) { return r.ok ? r.json() : null; })
                 .then(function(d) { if (d) SmartBGhostPaths.updateGhostPaths(d.ghostPaths || []); })
                 .catch(function() {});
         }
         if (window.SmartBHeatmap) {
-            fetch('/api/heatmap/' + encoded)
+            fetch(bUrl('/api/heatmap/' + encoded))
                 .then(function(r) { return r.ok ? r.json() : null; })
                 .then(function(d) { if (d) SmartBHeatmap.updateVisitCounts(d); })
                 .catch(function() {});
@@ -186,7 +194,7 @@
     // ── File sync via fetch ──
     function syncFile() {
         var editor = document.getElementById('editor');
-        fetch(currentFile + '?t=' + Date.now())
+        fetch(bUrl('/' + currentFile + '?t=' + Date.now()))
             .then(function(resp) {
                 if (!resp.ok) throw new Error('not ok');
                 return resp.text();
@@ -219,8 +227,7 @@
         var fname = name.replace(/[^a-z0-9-_/]/gi, '-').toLowerCase().replace(/^\/|\/$/g, '') + '.mmd';
         var editor = document.getElementById('editor');
         editor.value = 'flowchart LR\n    A["Inicio"] --> B["Fim"]';
-        currentFile = fname;
-        window.currentFile = fname;
+        setFile(fname);
         lastContent = editor.value;
         saveCurrentFile();
         render(editor.value);
@@ -231,7 +238,7 @@
         var name = prompt('Nome da pasta:');
         if (!name) return;
         var safe = name.replace(/[^a-z0-9-_/]/gi, '-').toLowerCase();
-        fetch('/mkdir', {
+        fetch(bUrl('/mkdir'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ folder: safe }),
@@ -245,7 +252,7 @@
         var editor = document.getElementById('editor');
         var content = editor.value;
         if (!content.trim()) { if (window.toast) toast('Nada para salvar'); return; }
-        fetch('/save', {
+        fetch(bUrl('/save'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: currentFile, content: content }),
@@ -267,15 +274,14 @@
 
     function deleteFile(fpath) {
         if (!confirm('Deletar ' + prettyName(fpath) + '?')) return;
-        fetch('/delete', {
+        fetch(bUrl('/delete'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: fpath }),
         }).then(function() {
             if (window.toast) toast('Deletado');
             if (currentFile === fpath) {
-                currentFile = '';
-                window.currentFile = '';
+                setFile('');
                 document.getElementById('currentFileName').textContent = '';
                 var editor = document.getElementById('editor');
                 editor.value = '';
@@ -295,14 +301,13 @@
         if (!newBase || newBase === base) return;
         var safeName = newBase.replace(/[^a-z0-9-_]/gi, '-').toLowerCase() + '.mmd';
         var newPath = folder ? folder + '/' + safeName : safeName;
-        fetch('/move', {
+        fetch(bUrl('/move'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ from: oldPath, to: newPath }),
         }).then(function() {
             if (currentFile === oldPath) {
-                currentFile = newPath;
-                window.currentFile = newPath;
+                setFile(newPath);
                 document.getElementById('currentFileName').textContent = prettyName(newPath);
             }
             refreshFileList();
@@ -315,7 +320,7 @@
         var newName = prompt('Novo nome da pasta:', displayName);
         if (!newName || newName === displayName) return;
         var safeName = newName.replace(/[^a-z0-9-_]/gi, '-').toLowerCase();
-        fetch('/move', {
+        fetch(bUrl('/move'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ from: oldName, to: safeName }),
@@ -323,8 +328,7 @@
             // If current file is inside the renamed folder, update its path
             if (currentFile.startsWith(oldName + '/')) {
                 var newPath = currentFile.replace(oldName + '/', safeName + '/');
-                currentFile = newPath;
-                window.currentFile = newPath;
+                setFile(newPath);
                 document.getElementById('currentFileName').textContent = prettyName(newPath);
             }
             // Update collapsed folders set
@@ -358,15 +362,14 @@
         else msg += ' (vazia)?';
         msg += '\nEsta acao nao pode ser desfeita.';
         if (!confirm(msg)) return;
-        fetch('/rmdir', {
+        fetch(bUrl('/rmdir'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ folder: folderName }),
         }).then(function() {
             // If current file was inside deleted folder, clear it
             if (currentFile.startsWith(folderName + '/')) {
-                currentFile = '';
-                window.currentFile = '';
+                setFile('');
                 document.getElementById('currentFileName').textContent = '';
                 document.getElementById('editor').value = '';
                 lastContent = '';
@@ -386,7 +389,7 @@
         loadFile: loadFile,
         syncFile: syncFile,
         getCurrentFile: function() { return currentFile; },
-        setCurrentFile: function(p) { currentFile = p; window.currentFile = p; },
+        setCurrentFile: function(p) { setFile(p); },
         getLastContent: function() { return lastContent; },
         setLastContent: function(v) { lastContent = v; },
         createNewFile: createNewFile,

@@ -201,7 +201,7 @@ var SmartBHeatmap = (function() {
         }
         var file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : '';
         if (file) {
-            fetch('/api/heatmap/' + encodeURIComponent(file))
+            fetch((window.SmartBBaseUrl || '') + '/api/heatmap/' + encodeURIComponent(file))
                 .then(function(r) { return r.ok ? r.json() : null; })
                 .then(function(data) { if (data) updateVisitCounts(data); })
                 .catch(function() {});

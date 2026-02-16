@@ -21,6 +21,8 @@
 <div class="topbar">
     <span class="logo">SMARTB DIAGRAMS</span>
     <div class="sep"></div>
+    <span id="workspaceSwitcher" class="workspace-switcher"></span>
+    <div class="sep"></div>
     <span class="file-name" id="currentFileName">Plano Acao</span>
     <div class="sep"></div>
     <button class="btn" id="toggleSidebar" title="Toggle sidebar">Arquivos</button>
@@ -162,6 +164,7 @@
 </div>
 
 <!-- Module scripts (load order matters) -->
+<script src="workspace-switcher.js"></script>
 <script src="event-bus.js"></script>
 <script src="diagram-dom.js"></script>
 <script src="renderer.js"></script>

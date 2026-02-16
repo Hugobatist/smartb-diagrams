@@ -47,9 +47,17 @@
             var bbox = nodeEl.getBBox ? nodeEl.getBBox() : null;
             if (!bbox) return;
 
+            // Account for transform="translate(x,y)" on custom renderer nodes
+            var tx = 0, ty = 0;
+            var transform = nodeEl.getAttribute('transform');
+            if (transform) {
+                var m = transform.match(/translate\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)/);
+                if (m) { tx = parseFloat(m[1]); ty = parseFloat(m[2]); }
+            }
+
             var circle = document.createElementNS(SVG_NS, 'circle');
-            circle.setAttribute('cx', bbox.x - 4);
-            circle.setAttribute('cy', bbox.y + bbox.height / 2);
+            circle.setAttribute('cx', tx + bbox.x - 4);
+            circle.setAttribute('cy', ty + bbox.y + bbox.height / 2);
             circle.setAttribute('r', '6');
             circle.setAttribute('fill', '#ef4444');
             circle.setAttribute('class', 'breakpoint-indicator');
@@ -116,7 +124,7 @@
         var file = getCurrentFile();
         if (!file) return;
         var action = breakpoints.has(nodeId) ? 'remove' : 'set';
-        fetch('/api/breakpoints/' + encodeURIComponent(file), {
+        fetch((window.SmartBBaseUrl || '') + '/api/breakpoints/' + encodeURIComponent(file), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nodeId: nodeId, action: action })
@@ -136,7 +144,7 @@
     function continueBreakpoint(nodeId) {
         var file = getCurrentFile();
         if (!file) return;
-        fetch('/api/breakpoints/' + encodeURIComponent(file) + '/continue', {
+        fetch((window.SmartBBaseUrl || '') + '/api/breakpoints/' + encodeURIComponent(file) + '/continue', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nodeId: nodeId })
@@ -149,7 +157,7 @@
     function removeBreakpoint(nodeId) {
         var file = getCurrentFile();
         if (!file) return;
-        fetch('/api/breakpoints/' + encodeURIComponent(file), {
+        fetch((window.SmartBBaseUrl || '') + '/api/breakpoints/' + encodeURIComponent(file), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nodeId: nodeId, action: 'remove' })

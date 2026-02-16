@@ -61,6 +61,45 @@ body {
     font-weight: 500;
 }
 
+.workspace-switcher {
+    display: flex;
+    align-items: center;
+}
+
+.workspace-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.workspace-select {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    padding: 4px 24px 4px 8px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    min-width: 100px;
+    transition: border-color 0.15s;
+}
+
+.workspace-select:hover {
+    border-color: rgba(255,255,255,0.25);
+}
+
+.workspace-select:focus {
+    border-color: #6366f1;
+}
+
 .topbar .status {
     margin-left: auto;
     font-size: 12px;
@@ -110,211 +149,7 @@ body {
     box-shadow: 0 2px 12px rgba(99,102,241,0.4);
 }
 
-/* -- Main layout -- */
-.main {
-    display: flex;
-    height: calc(100vh - 52px);
-}
-
-/* -- File sidebar -- */
-.sidebar {
-    width: 260px;
-    background: var(--bg-panel);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    transition: width 0.3s ease, opacity 0.3s ease;
-}
-
-.sidebar.hidden { display: none; }
-
-.sidebar-header {
-    padding: 10px 12px 8px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text-dim);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.sidebar-header .actions { display: flex; gap: 4px; }
-.sidebar-header .actions button {
-    background: none; border: none; color: var(--text-dim);
-    cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px;
-}
-.sidebar-header .actions button:hover { background: rgba(255,255,255,0.08); color: var(--text); }
-
-/* Tree items */
-.tree-folder {
-    cursor: pointer;
-    user-select: none;
-}
-.tree-folder-header {
-    padding: 4px 8px;
-    font-size: 12px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--text);
-    transition: background 0.1s;
-}
-.tree-folder-header:hover { background: rgba(255,255,255,0.05); }
-.tree-chevron {
-    font-size: 10px;
-    width: 16px;
-    text-align: center;
-    color: var(--text-dim);
-    transition: transform 0.15s;
-    flex-shrink: 0;
-}
-.tree-chevron.open { transform: rotate(90deg); }
-.tree-folder-icon { font-size: 13px; flex-shrink: 0; }
-.tree-folder-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tree-folder-count {
-    font-size: 10px; color: var(--text-dim); background: rgba(255,255,255,0.06);
-    padding: 1px 6px; border-radius: 8px; font-weight: 500;
-}
-.tree-children { overflow: hidden; }
-.tree-children.collapsed { display: none; }
-
-.tree-file {
-    padding: 3px 8px 3px 0;
-    font-size: 12px;
-    font-weight: 400;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: background 0.1s;
-    color: var(--text-dim);
-    border-left: 2px solid transparent;
-}
-.tree-file:hover { background: rgba(255,255,255,0.04); color: var(--text); }
-.tree-file.active {
-    background: rgba(99,102,241,0.15);
-    color: var(--accent-purple);
-    border-left-color: var(--accent);
-}
-.tree-file-icon { font-size: 11px; flex-shrink: 0; opacity: 0.5; }
-.tree-file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tree-file-actions { opacity: 0; display: flex; gap: 2px; flex-shrink: 0; }
-.tree-file:hover .tree-file-actions { opacity: 1; }
-.tree-file-actions button {
-    background: none; border: none; cursor: pointer;
-    font-size: 10px; padding: 1px 3px; border-radius: 3px;
-}
-.tree-file-actions .rename-btn { color: var(--text-dim); }
-.tree-file-actions .delete-btn { color: var(--accent-red); }
-.tree-file-actions button:hover { background: rgba(255,255,255,0.08); }
-
-/* -- Content area -- */
-.content {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-}
-
-/* -- Editor panel -- */
-.editor-panel {
-    width: 40%;
-    min-width: 300px;
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid var(--border);
-    transition: width 0.3s ease;
-}
-
-.editor-panel.hidden { display: none; }
-.editor-panel.hidden + .resize-handle { display: none; }
-
-.panel-header {
-    height: 40px;
-    display: flex;
-    align-items: center;
-    padding: 0 14px;
-    font-size: 12px;
-    color: var(--text-dim);
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
-    gap: 8px;
-}
-
-.panel-header .tab {
-    padding: 3px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-}
-.panel-header .tab.active { background: rgba(255,255,255,0.08); color: var(--text); }
-
-#editor {
-    flex: 1;
-    resize: none;
-    border: none;
-    outline: none;
-    background: var(--bg-editor);
-    color: #cdd6f4;
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 13px;
-    line-height: 1.7;
-    padding: 16px;
-    tab-size: 4;
-    overflow: auto;
-}
-
-/* -- Preview panel (LIGHT) -- */
-.preview-panel {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-preview);
-    position: relative;
-    cursor: grab;
-}
-.preview-panel.grabbing { cursor: grabbing; }
-
-#preview-container {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    position: relative;
-}
-
-#preview {
-    position: absolute;
-    top: 0;
-    left: 0;
-    transform-origin: 0 0;
-    padding: 40px;
-    min-width: 100%;
-    min-height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#preview svg {
-    max-width: none !important;
-    height: auto !important;
-}
-
-/* High-contrast mermaid overrides for light background.
- * IMPORTANT: Do NOT override font-size or font-weight here — Mermaid calculates
- * node box sizes based on its own font metrics. CSS overrides applied after layout
- * cause text to overflow the allocated space, producing overlap artifacts.
- * Font configuration must be done in MERMAID_CONFIG (renderer.js themeVariables). */
-#preview .node rect,
-#preview .node circle,
-#preview .node polygon,
-#preview .node .label-container {
-    stroke-width: 2px !important;
-}
+/* -- Layout rules in main-layout.css -- */
 
 /* -- Zoom controls (glass pill) -- */
 .zoom-controls {
@@ -361,18 +196,7 @@ body {
     font-weight: 600;
 }
 
-/* -- Resize handle -- */
-.resize-handle {
-    width: 5px;
-    cursor: col-resize;
-    background: transparent;
-    transition: background 0.2s;
-    position: relative;
-    z-index: 5;
-}
-.resize-handle:hover, .resize-handle.active {
-    background: var(--accent);
-}
+/* -- Resize handle in main-layout.css -- */
 
 /* -- Toast -- */
 .toast {
@@ -556,3 +380,35 @@ kbd {
 .diagram-focus-mode .cluster.focused {
     opacity: 1;
 }
+
+/* -- Context Menu -- */
+.context-menu {
+    position: fixed;
+    z-index: 10000;
+    background: var(--bg-panel, #1e1e2e);
+    border: 1px solid var(--border, #313244);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    padding: 4px 0;
+    min-width: 180px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+}
+.context-menu-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    color: var(--text, #cdd6f4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.1s;
+}
+.context-menu-item:hover { background: rgba(255,255,255,0.08); }
+.context-menu-item.danger { color: #ef4444; }
+.context-menu-item.danger:hover { background: rgba(239,68,68,0.15); }
+.context-menu-separator { height: 1px; background: var(--border, #313244); margin: 4px 0; }
+
+/* -- Selection -- */
+.selected-edge path { stroke: #6366f1 !important; stroke-width: 3 !important; }
+.selected-edge .smartb-edge-path { stroke: #6366f1 !important; stroke-width: 3 !important; }
+.selection-indicator { pointer-events: none; }

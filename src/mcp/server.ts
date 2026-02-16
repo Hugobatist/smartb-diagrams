@@ -6,7 +6,9 @@ import type { WebSocketManager } from '../server/websocket.js';
 import type { SessionStore } from '../session/session-store.js';
 import { registerTools } from './tools.js';
 import { registerResources } from './resources.js';
+import { MCP_INSTRUCTIONS } from './instructions.js';
 import { log } from '../utils/logger.js';
+import { register as registerWorkspace, deregister as deregisterWorkspace } from '../registry/workspace-registry.js';
 
 /** Options for starting the MCP server */
 export interface McpServerOptions {
@@ -32,15 +34,15 @@ export function createMcpServer(
   service: DiagramService,
   deps?: McpToolDependencies,
 ): McpServer {
-  const server = new McpServer({
-    name: 'smartb-diagrams',
-    version: '0.1.0',
-  });
+  const server = new McpServer(
+    { name: 'smartb-diagrams', version: '0.1.0' },
+    { instructions: MCP_INSTRUCTIONS },
+  );
 
   registerTools(server, service, deps);
   registerResources(server, service);
 
-  log.debug('MCP server created with 11 tools and 2 resources');
+  log.debug('MCP server created');
 
   return server;
 }
@@ -91,8 +93,14 @@ export async function startMcpServer(options: McpServerOptions): Promise<void> {
       });
     });
 
+    // Register in workspace registry so other browsers can discover this instance
+    await registerWorkspace(resolvedDir, actualPort).catch((err) => {
+      log.warn('Failed to register workspace:', err instanceof Error ? err.message : err);
+    });
+
     httpCleanup = async () => {
       log.info('Shutting down HTTP+WS server...');
+      await deregisterWorkspace(actualPort).catch(() => {});
       await fileWatcher.close();
       wsManager.close();
       await new Promise<void>((resolveClose) => {

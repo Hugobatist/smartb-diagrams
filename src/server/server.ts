@@ -13,6 +13,7 @@ import { FileWatcher } from '../watcher/file-watcher.js';
 import { serializeGraphModel } from '../diagram/graph-serializer.js';
 import { GhostPathStore } from './ghost-store.js';
 import { SessionStore } from '../session/session-store.js';
+import { register as registerWorkspace, deregister as deregisterWorkspace } from '../registry/workspace-registry.js';
 
 /** Options for starting the HTTP server */
 export interface ServerOptions {
@@ -198,37 +199,43 @@ export function createHttpServer(projectDir: string, existingService?: DiagramSe
   // Track all watchers for cleanup
   const watchers = new Map<string, FileWatcher>();
 
-  const fileWatcher = new FileWatcher(
-    resolvedDir,
-    async (file) => {
-      const content = await readFile(
-        path.join(resolvedDir, file), 'utf-8',
-      ).catch(() => null);
-      if (content !== null) {
-        wsManager.broadcast('default', { type: 'file:changed', file, content });
-      }
-      try {
-        const graph = await service.readGraph(file);
-        const graphJson = serializeGraphModel(graph);
-        wsManager.broadcast('default', { type: 'graph:update', file, graph: graphJson });
-      } catch {
-        // Parse failure -- file:changed already sent, browser falls back to Mermaid
-      }
-    },
-    (file) => {
-      wsManager.broadcast('default', { type: 'file:added', file });
-      service.listFiles().then((files) => {
-        wsManager.broadcast('default', { type: 'tree:updated', files });
-      }).catch((err) => { log.error('Failed to list files after add:', err); });
-    },
-    (file) => {
-      wsManager.broadcast('default', { type: 'file:removed', file });
-      service.listFiles().then((files) => {
-        wsManager.broadcast('default', { type: 'tree:updated', files });
-      }).catch((err) => { log.error('Failed to list files after remove:', err); });
-    },
-  );
+  /** Create a FileWatcher for a project directory with standard broadcast callbacks */
+  function createProjectWatcher(
+    projectName: string, projectDir: string, projectService: DiagramService,
+  ): FileWatcher {
+    return new FileWatcher(
+      projectDir,
+      async (file) => {
+        const content = await readFile(
+          path.join(projectDir, file), 'utf-8',
+        ).catch(() => null);
+        if (content !== null) {
+          wsManager.broadcast(projectName, { type: 'file:changed', file, content });
+        }
+        try {
+          const graph = await projectService.readGraph(file);
+          const graphJson = serializeGraphModel(graph);
+          wsManager.broadcast(projectName, { type: 'graph:update', file, graph: graphJson });
+        } catch {
+          // Parse failure -- file:changed already sent, browser falls back to Mermaid
+        }
+      },
+      (file) => {
+        wsManager.broadcast(projectName, { type: 'file:added', file });
+        projectService.listFiles().then((files) => {
+          wsManager.broadcast(projectName, { type: 'tree:updated', files });
+        }).catch((err) => { log.error(`Failed to list files for ${projectName} after add:`, err); });
+      },
+      (file) => {
+        wsManager.broadcast(projectName, { type: 'file:removed', file });
+        projectService.listFiles().then((files) => {
+          wsManager.broadcast(projectName, { type: 'tree:updated', files });
+        }).catch((err) => { log.error(`Failed to list files for ${projectName} after remove:`, err); });
+      },
+    );
+  }
 
+  const fileWatcher = createProjectWatcher('default', resolvedDir, service);
   watchers.set('default', fileWatcher);
 
   /** Add a new project directory with its own FileWatcher and WebSocket namespace */
@@ -236,39 +243,7 @@ export function createHttpServer(projectDir: string, existingService?: DiagramSe
     const resolvedProjectDir = path.resolve(dir);
     const projectService = new DiagramService(resolvedProjectDir);
     wsManager.addProject(name);
-
-    const watcher = new FileWatcher(
-      resolvedProjectDir,
-      async (file) => {
-        const content = await readFile(
-          path.join(resolvedProjectDir, file), 'utf-8',
-        ).catch(() => null);
-        if (content !== null) {
-          wsManager.broadcast(name, { type: 'file:changed', file, content });
-        }
-        try {
-          const graph = await projectService.readGraph(file);
-          const graphJson = serializeGraphModel(graph);
-          wsManager.broadcast(name, { type: 'graph:update', file, graph: graphJson });
-        } catch {
-          // Parse failure -- file:changed already sent, browser falls back to Mermaid
-        }
-      },
-      (file) => {
-        wsManager.broadcast(name, { type: 'file:added', file });
-        projectService.listFiles().then((files) => {
-          wsManager.broadcast(name, { type: 'tree:updated', files });
-        }).catch((err) => { log.error(`Failed to list files for project ${name} after add:`, err); });
-      },
-      (file) => {
-        wsManager.broadcast(name, { type: 'file:removed', file });
-        projectService.listFiles().then((files) => {
-          wsManager.broadcast(name, { type: 'tree:updated', files });
-        }).catch((err) => { log.error(`Failed to list files for project ${name} after remove:`, err); });
-      },
-    );
-
-    watchers.set(name, watcher);
+    watchers.set(name, createProjectWatcher(name, resolvedProjectDir, projectService));
   }
 
   return { httpServer, wsManager, fileWatcher, ghostStore, breakpointContinueSignals, sessionStore, addProject };
@@ -313,12 +288,26 @@ export async function startServer(options: ServerOptions): Promise<void> {
     }
   });
 
+  // Register in workspace registry
+  await registerWorkspace(projectDir, actualPort).catch((err) => {
+    log.warn('Failed to register workspace:', err instanceof Error ? err.message : err);
+  });
+
   // Graceful shutdown
-  process.once('SIGINT', () => {
+  process.once('SIGINT', async () => {
     log.info('Shutting down...');
-    fileWatcher.close().catch(() => {}).then(() => {
+    const shutdownTimeout = setTimeout(() => {
+      log.warn('Shutdown timed out after 5s, forcing exit');
+      process.exit(1);
+    }, 5000);
+    try {
+      await deregisterWorkspace(actualPort).catch(() => {});
+      await fileWatcher.close().catch(() => {});
       wsManager.close();
-      httpServer.close(() => process.exit(0));
-    });
+      await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+    } finally {
+      clearTimeout(shutdownTimeout);
+      process.exit(0);
+    }
   });
 }

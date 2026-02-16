@@ -237,7 +237,7 @@ var SmartBSessionPlayer = (function() {
     // ── Session Loading ──
 
     function loadSession(sessionId) {
-        return fetch('/api/session/' + encodeURIComponent(sessionId))
+        return fetch((window.SmartBBaseUrl || '') + '/api/session/' + encodeURIComponent(sessionId))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!data.events || data.events.length === 0) return;
@@ -272,7 +272,7 @@ var SmartBSessionPlayer = (function() {
 
     function fetchSessionList(file) {
         if (!file) return Promise.resolve([]);
-        return fetch('/api/sessions/' + encodeURIComponent(file))
+        return fetch((window.SmartBBaseUrl || '') + '/api/sessions/' + encodeURIComponent(file))
             .then(function(r) { return r.ok ? r.json() : { sessions: [] }; })
             .then(function(data) {
                 renderSessionList(data.sessions || []);

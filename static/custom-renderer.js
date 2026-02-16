@@ -182,7 +182,7 @@
     async function fetchAndRender(filePath) {
         if (!filePath) return;
 
-        var resp = await fetch('/api/graph/' + encodeURIComponent(filePath));
+        var resp = await fetch((window.SmartBBaseUrl || '') + '/api/graph/' + encodeURIComponent(filePath));
         if (!resp.ok) {
             throw new Error('Failed to fetch graph model: ' + resp.status + ' ' + resp.statusText);
         }

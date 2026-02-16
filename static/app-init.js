@@ -233,12 +233,12 @@
         SmartBCollapseUI.init({
             onToggle: async function(collapsedIds) {
                 try {
-                    var params = new URLSearchParams();
+                    var toggleParams = new URLSearchParams();
                     if (collapsedIds.length > 0) {
-                        params.set('collapsed', JSON.stringify(collapsedIds));
+                        toggleParams.set('collapsed', JSON.stringify(collapsedIds));
                     }
                     var currentFile = SmartBFileTree.getCurrentFile();
-                    var url = '/api/diagrams/' + encodeURIComponent(currentFile) + '?' + params.toString();
+                    var url = baseUrl('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + toggleParams.toString());
                     var resp = await fetch(url);
                     if (!resp.ok) return;
                     var data = await resp.json();
@@ -258,12 +258,12 @@
                 try {
                     var currentFile = SmartBFileTree.getCurrentFile();
                     if (event.action === 'focus') {
-                        var params = new URLSearchParams({ focus: event.nodeId });
+                        var focusParams = new URLSearchParams({ focus: event.nodeId });
                         var collapsed = SmartBCollapseUI.getCollapsed();
                         if (collapsed.length > 0) {
-                            params.set('collapsed', JSON.stringify(collapsed));
+                            focusParams.set('collapsed', JSON.stringify(collapsed));
                         }
-                        var resp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + params.toString());
+                        var resp = await fetch(baseUrl('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + focusParams.toString()));
                         if (!resp.ok) return;
                         var data = await resp.json();
                         if (data.collapse) {
@@ -279,7 +279,7 @@
                         }
                     } else if (event.action === 'navigate') {
                         var navParams = new URLSearchParams({ breadcrumb: event.breadcrumbId });
-                        var navResp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + navParams.toString());
+                        var navResp = await fetch(baseUrl('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + navParams.toString()));
                         if (!navResp.ok) return;
                         var navData = await navResp.json();
                         if (navData.collapse) {
@@ -290,7 +290,7 @@
                             await renderWithType(navData.mermaidContent);
                         }
                     } else if (event.action === 'exit') {
-                        var exitResp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile));
+                        var exitResp = await fetch(baseUrl('/api/diagrams/' + encodeURIComponent(currentFile)));
                         if (!exitResp.ok) return;
                         var exitData = await exitResp.json();
                         SmartBCollapseUI.setBreadcrumbs([], null);
@@ -305,6 +305,122 @@
         });
     }
 
+    // ── Helper: resolve URL with workspace base ──
+    function baseUrl(path) {
+        return (window.SmartBBaseUrl || '') + path;
+    }
+    // Expose globally so other modules can use it
+    window.SmartBUrl = baseUrl;
+
+    // ── WebSocket message handler (extracted for reconnection) ──
+    function handleWsMessage(msg) {
+        switch (msg.type) {
+            case 'graph:update':
+                if (msg.file === SmartBFileTree.getCurrentFile()) {
+                    effectiveRendererType = selectRendererType(msg.graph.diagramType);
+                    if (effectiveRendererType === 'custom') {
+                        SmartBCustomRenderer.render(msg.graph).catch(function(e) {
+                            console.warn('Custom renderer failed on graph:update, keeping current render:', e.message);
+                        });
+                    }
+                    updateRendererIndicator();
+                }
+                break;
+            case 'file:changed':
+                if (!SmartBEditorPanel.isAutoSync()) return;
+                if (msg.file === SmartBFileTree.getCurrentFile()) {
+                    var wsText = msg.content;
+                    if (wsText !== SmartBFileTree.getLastContent()) {
+                        var finalText = wsText;
+                        if (window.SmartBAnnotations && SmartBAnnotations.getState().flags.size > 0) {
+                            finalText = SmartBAnnotations.mergeIncomingContent(wsText);
+                        } else if (window.SmartBAnnotations) {
+                            var incoming = SmartBAnnotations.parseAnnotations(wsText);
+                            SmartBAnnotations.getState().flags = incoming.flags;
+                            SmartBAnnotations.getState().statuses = incoming.statuses;
+                            SmartBAnnotations.getState().breakpoints = incoming.breakpoints;
+                            SmartBAnnotations.getState().risks = incoming.risks;
+                            if (window.SmartBBreakpoints) SmartBBreakpoints.updateBreakpoints(incoming.breakpoints);
+                            if (window.SmartBHeatmap) SmartBHeatmap.updateRisks(incoming.risks);
+                            SmartBAnnotations.renderPanel();
+                            SmartBAnnotations.updateBadge();
+                        }
+                        SmartBFileTree.setLastContent(finalText);
+                        document.getElementById('editor').value = finalText;
+                        if (effectiveRendererType !== 'custom') {
+                            renderWithType(finalText);
+                        }
+                    }
+                }
+                break;
+            case 'breakpoint:hit':
+                if (window.SmartBBreakpoints) SmartBBreakpoints.showNotification(msg.nodeId);
+                break;
+            case 'breakpoint:continue':
+                if (window.SmartBBreakpoints) SmartBBreakpoints.hideNotification();
+                break;
+            case 'ghost:update':
+                if (window.SmartBGhostPaths) SmartBGhostPaths.updateGhostPaths(msg.ghostPaths);
+                break;
+            case 'heatmap:update':
+                if (window.SmartBHeatmap) SmartBHeatmap.updateVisitCounts(msg.data);
+                break;
+            case 'session:event':
+                if (window.SmartBSessionPlayer) SmartBSessionPlayer.handleSessionEvent(msg.sessionId, msg.event);
+                break;
+            case 'file:added':
+            case 'file:removed':
+            case 'tree:updated':
+                SmartBFileTree.refreshFileList();
+                break;
+        }
+    }
+
+    function handleWsStatus(status) {
+        var dot = document.getElementById('statusDot');
+        var statusText = document.getElementById('statusText');
+        switch (status) {
+            case 'connected':
+                dot.className = 'status-dot';
+                statusText.textContent = 'Servidor Local';
+                statusText.title = 'Conectado ao servidor SmartB via WebSocket.';
+                break;
+            case 'disconnected':
+                dot.className = 'status-dot paused';
+                statusText.textContent = 'Desconectado';
+                statusText.title = 'Sem conexao com o servidor SmartB. Execute: smartb serve';
+                break;
+            case 'reconnecting':
+                dot.className = 'status-dot paused';
+                statusText.textContent = 'Reconectando...';
+                statusText.title = 'Tentando reconectar ao servidor SmartB...';
+                break;
+        }
+    }
+
+    function buildWsUrl(baseUrlStr) {
+        var wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        if (baseUrlStr) {
+            // Extract host from http://localhost:PORT
+            var host = baseUrlStr.replace(/^https?:\/\//, '');
+            return wsProtocol + '//' + host + '/ws';
+        }
+        return wsProtocol + '//' + location.host + '/ws';
+    }
+
+    // ── Active WS connection ──
+    var activeWs = null;
+
+    /** Reconnect WebSocket to a new base URL (called by workspace-switcher) */
+    function reconnectWebSocket(newBaseUrl) {
+        if (activeWs) activeWs.close();
+        var wsUrl = buildWsUrl(newBaseUrl);
+        activeWs = createReconnectingWebSocket(wsUrl, handleWsMessage, handleWsStatus);
+    }
+
+    // Expose reconnect for workspace-switcher
+    window.SmartBWsReconnect = reconnectWebSocket;
+
     // ── Bootstrap: load initial file, connect WebSocket ──
     (async function() {
         // Show hint briefly
@@ -316,7 +432,7 @@
         var editor = document.getElementById('editor');
 
         try {
-            var resp = await fetch(currentFile);
+            var resp = await fetch(baseUrl('/' + currentFile));
             if (resp.ok) {
                 var text = await resp.text();
                 editor.value = text;
@@ -332,7 +448,7 @@
         // Fetch diagram metadata for auto-renderer selection and collapse
         if (currentFile) {
             try {
-                var apiResp = await fetch('/api/diagrams/' + encodeURIComponent(currentFile));
+                var apiResp = await fetch(baseUrl('/api/diagrams/' + encodeURIComponent(currentFile)));
                 if (apiResp.ok) {
                     var data = await apiResp.json();
 
@@ -359,7 +475,7 @@
             // Fetch ghost paths for initial file
             if (window.SmartBGhostPaths) {
                 try {
-                    var gpResp = await fetch('/api/ghost-paths/' + encodeURIComponent(currentFile));
+                    var gpResp = await fetch(baseUrl('/api/ghost-paths/' + encodeURIComponent(currentFile)));
                     if (gpResp.ok) {
                         var gpData = await gpResp.json();
                         SmartBGhostPaths.updateGhostPaths(gpData.ghostPaths || []);
@@ -369,7 +485,7 @@
 
             // Fetch heatmap data for initial file
             if (window.SmartBHeatmap) {
-                fetch('/api/heatmap/' + encodeURIComponent(currentFile))
+                fetch(baseUrl('/api/heatmap/' + encodeURIComponent(currentFile)))
                     .then(function(r) { return r.ok ? r.json() : null; })
                     .then(function(data) { if (data) SmartBHeatmap.updateVisitCounts(data); })
                     .catch(function() {});
@@ -379,96 +495,9 @@
             if (window.SmartBSessionPlayer) SmartBSessionPlayer.fetchSessionList(currentFile);
         }
 
-        // WebSocket real-time sync
-        var wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        var wsUrl = wsProtocol + '//' + location.host + '/ws';
-
-        createReconnectingWebSocket(wsUrl, function(msg) {
-            switch (msg.type) {
-                case 'graph:update':
-                    if (msg.file === SmartBFileTree.getCurrentFile()) {
-                        // Update effective renderer type based on diagram type from server
-                        effectiveRendererType = selectRendererType(msg.graph.diagramType);
-                        if (effectiveRendererType === 'custom') {
-                            SmartBCustomRenderer.render(msg.graph).catch(function(e) {
-                                console.warn('Custom renderer failed on graph:update, keeping current render:', e.message);
-                            });
-                        }
-                        // If using Mermaid, ignore graph:update (file:changed handles it)
-                        updateRendererIndicator();
-                    }
-                    break;
-                case 'file:changed':
-                    if (!SmartBEditorPanel.isAutoSync()) return;
-                    if (msg.file === SmartBFileTree.getCurrentFile()) {
-                        var wsText = msg.content;
-                        if (wsText !== SmartBFileTree.getLastContent()) {
-                            var finalText = wsText;
-                            if (window.SmartBAnnotations && SmartBAnnotations.getState().flags.size > 0) {
-                                finalText = SmartBAnnotations.mergeIncomingContent(wsText);
-                            } else if (window.SmartBAnnotations) {
-                                var incoming = SmartBAnnotations.parseAnnotations(wsText);
-                                SmartBAnnotations.getState().flags = incoming.flags;
-                                SmartBAnnotations.getState().statuses = incoming.statuses;
-                                SmartBAnnotations.getState().breakpoints = incoming.breakpoints;
-                                SmartBAnnotations.getState().risks = incoming.risks;
-                                if (window.SmartBBreakpoints) SmartBBreakpoints.updateBreakpoints(incoming.breakpoints);
-                                if (window.SmartBHeatmap) SmartBHeatmap.updateRisks(incoming.risks);
-                                SmartBAnnotations.renderPanel();
-                                SmartBAnnotations.updateBadge();
-                            }
-                            SmartBFileTree.setLastContent(finalText);
-                            document.getElementById('editor').value = finalText;
-                            // Only render via file:changed if NOT using custom renderer
-                            // (custom renderer gets data from graph:update instead)
-                            if (effectiveRendererType !== 'custom') {
-                                renderWithType(finalText);
-                            }
-                        }
-                    }
-                    break;
-                case 'breakpoint:hit':
-                    if (window.SmartBBreakpoints) SmartBBreakpoints.showNotification(msg.nodeId);
-                    break;
-                case 'breakpoint:continue':
-                    if (window.SmartBBreakpoints) SmartBBreakpoints.hideNotification();
-                    break;
-                case 'ghost:update':
-                    if (window.SmartBGhostPaths) SmartBGhostPaths.updateGhostPaths(msg.ghostPaths);
-                    break;
-                case 'heatmap:update':
-                    if (window.SmartBHeatmap) SmartBHeatmap.updateVisitCounts(msg.data);
-                    break;
-                case 'session:event':
-                    if (window.SmartBSessionPlayer) SmartBSessionPlayer.handleSessionEvent(msg.sessionId, msg.event);
-                    break;
-                case 'file:added':
-                case 'file:removed':
-                case 'tree:updated':
-                    SmartBFileTree.refreshFileList();
-                    break;
-            }
-        }, function(status) {
-            var dot = document.getElementById('statusDot');
-            var statusText = document.getElementById('statusText');
-            switch (status) {
-                case 'connected':
-                    dot.className = 'status-dot';
-                    statusText.textContent = 'Servidor Local';
-                    statusText.title = 'Conectado ao servidor SmartB via WebSocket. Para conectar uma IA, configure o MCP server no seu cliente AI.';
-                    break;
-                case 'disconnected':
-                    dot.className = 'status-dot paused';
-                    statusText.textContent = 'Desconectado';
-                    statusText.title = 'Sem conexao com o servidor SmartB. Execute: smartb serve';
-                    break;
-                case 'reconnecting':
-                    dot.className = 'status-dot paused';
-                    statusText.textContent = 'Reconectando...';
-                    statusText.title = 'Tentando reconectar ao servidor SmartB...';
-                    break;
-            }
-        });
+        // WebSocket real-time sync — connect to current base URL
+        var wsUrl = buildWsUrl(window.SmartBBaseUrl);
+        activeWs = createReconnectingWebSocket(wsUrl, handleWsMessage, handleWsStatus);
 
         // Show CUSTOM indicator in status bar (dynamic, based on effectiveRendererType)
         updateRendererIndicator();
@@ -476,8 +505,12 @@
 
     SmartBFileTree.refreshFileList();
 
-    // Re-fit on window resize
-    window.addEventListener('resize', function() { zoomFit(); });
+    // Re-fit on window resize (debounced to avoid excessive calls)
+    var resizeTimer = null;
+    window.addEventListener('resize', function() {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() { zoomFit(); }, 150);
+    });
 
     // ── Drag & Drop .mmd files ──
     document.addEventListener('dragover', function(e) { e.preventDefault(); });
