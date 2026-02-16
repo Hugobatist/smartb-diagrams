@@ -5,12 +5,13 @@ import {
   parseFlags,
   parseStatuses,
   parseBreakpoints,
+  parseRisks,
   stripAnnotations,
   injectAnnotations,
   ANNOTATION_START,
   ANNOTATION_END,
 } from '../../src/diagram/annotations.js';
-import type { Flag, NodeStatus } from '../../src/diagram/types.js';
+import type { Flag, NodeStatus, RiskAnnotation } from '../../src/diagram/types.js';
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures');
 const withFlagsContent = readFileSync(join(fixturesDir, 'with-flags.mmd'), 'utf-8');
@@ -374,5 +375,102 @@ describe('breakpoint annotations', () => {
     for (const id of breakpoints) {
       expect(parsed.has(id)).toBe(true);
     }
+  });
+});
+
+describe('parseRisks', () => {
+  it('parses single @risk annotation', () => {
+    const content = [
+      'flowchart LR',
+      '    A --> B --> C',
+      '',
+      ANNOTATION_START,
+      '%% @risk C high "External API"',
+      ANNOTATION_END,
+    ].join('\n');
+
+    const risks = parseRisks(content);
+    expect(risks.size).toBe(1);
+    expect(risks.get('C')).toEqual({ nodeId: 'C', level: 'high', reason: 'External API' });
+  });
+
+  it('parses multiple @risk annotations', () => {
+    const content = [
+      'flowchart LR',
+      '    A --> B --> C',
+      '',
+      ANNOTATION_START,
+      '%% @risk A high "Data loss possible"',
+      '%% @risk B medium "Slow response"',
+      '%% @risk C low "Minor styling issue"',
+      ANNOTATION_END,
+    ].join('\n');
+
+    const risks = parseRisks(content);
+    expect(risks.size).toBe(3);
+    expect(risks.get('A')).toEqual({ nodeId: 'A', level: 'high', reason: 'Data loss possible' });
+    expect(risks.get('B')).toEqual({ nodeId: 'B', level: 'medium', reason: 'Slow response' });
+    expect(risks.get('C')).toEqual({ nodeId: 'C', level: 'low', reason: 'Minor styling issue' });
+  });
+
+  it('ignores @risk outside annotation block', () => {
+    const content = [
+      'flowchart LR',
+      '%% @risk X high "Outside block"',
+      '    A --> B',
+    ].join('\n');
+
+    const risks = parseRisks(content);
+    expect(risks.size).toBe(0);
+  });
+
+  it('round-trip: inject and re-parse risks', () => {
+    const flags = new Map<string, Flag>();
+    const statuses = new Map<string, NodeStatus>();
+    const breakpoints = new Set<string>();
+    const risks = new Map<string, RiskAnnotation>([
+      ['A', { nodeId: 'A', level: 'high', reason: 'Critical path' }],
+      ['B', { nodeId: 'B', level: 'low', reason: 'Safe operation' }],
+    ]);
+
+    const injected = injectAnnotations(validFlowchartContent, flags, statuses, breakpoints, risks);
+    const parsed = parseRisks(injected);
+
+    expect(parsed.size).toBe(2);
+    expect(parsed.get('A')).toEqual({ nodeId: 'A', level: 'high', reason: 'Critical path' });
+    expect(parsed.get('B')).toEqual({ nodeId: 'B', level: 'low', reason: 'Safe operation' });
+  });
+
+  it('setRisk preserves existing flags and statuses and breakpoints', () => {
+    const flags = new Map<string, Flag>([
+      ['A', { nodeId: 'A', message: 'check this' }],
+    ]);
+    const statuses = new Map<string, NodeStatus>([
+      ['B', 'ok'],
+    ]);
+    const breakpoints = new Set(['C']);
+    const risks = new Map<string, RiskAnnotation>([
+      ['D', { nodeId: 'D', level: 'medium', reason: 'Needs review' }],
+    ]);
+
+    const injected = injectAnnotations(validFlowchartContent, flags, statuses, breakpoints, risks);
+
+    // Re-parse all 4 annotation types
+    const parsedFlags = parseFlags(injected);
+    const parsedStatuses = parseStatuses(injected);
+    const parsedBreakpoints = parseBreakpoints(injected);
+    const parsedRisks = parseRisks(injected);
+
+    expect(parsedFlags.size).toBe(1);
+    expect(parsedFlags.get('A')?.message).toBe('check this');
+
+    expect(parsedStatuses.size).toBe(1);
+    expect(parsedStatuses.get('B')).toBe('ok');
+
+    expect(parsedBreakpoints.size).toBe(1);
+    expect(parsedBreakpoints.has('C')).toBe(true);
+
+    expect(parsedRisks.size).toBe(1);
+    expect(parsedRisks.get('D')).toEqual({ nodeId: 'D', level: 'medium', reason: 'Needs review' });
   });
 });
