@@ -117,7 +117,12 @@ Plans:
   4. Ctrl+D duplicates selected node(s) in place
   5. Folder rename and delete work from file tree context menu
   6. Command history is capped at 100 entries
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 14-01-PLAN.md -- Command history module, popover extraction, diagram-editor refactor
+- [ ] 14-02-PLAN.md -- POST /rmdir endpoint, folder rename/delete UI in file tree
+- [ ] 14-03-PLAN.md -- Clipboard module, keyboard shortcuts, live.html wiring, history clear on file switch
 
 #### Phase 15: AI Breakpoints + Ghost Paths
 **Goal**: Developers can set breakpoints on diagram nodes that pause AI execution, and discarded reasoning branches appear as ghost paths
@@ -152,6 +157,6 @@ Plans:
 | 11. Custom Renderer | 4/4 | Complete | 2026-02-15 |
 | 12. Server + Browser Integration | 3/3 | Complete | 2026-02-15 |
 | 13. Canvas Interactions | 2/2 | Complete | 2026-02-15 |
-| 14. Undo/Redo + Edit Actions | 0/? | Not Started | - |
+| 14. Undo/Redo + Edit Actions | 0/3 | Planned | - |
 | 15. AI Breakpoints + Ghost Paths | 0/? | Not Started | - |
 | 16. Heatmap + Session Recording | 0/? | Not Started | - |
