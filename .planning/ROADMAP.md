@@ -151,7 +151,13 @@ Plans:
   4. MCP tools `start_session`, `record_step`, `end_session` allow AI to record reasoning
   5. Timeline scrubber UI replays diagram evolution at 1x/2x/4x speed
   6. Diff highlighting shows added (green), removed (red), modified (yellow) nodes between frames
-**Plans:** TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 16-01-PLAN.md — Backend: @risk annotations, SessionStore JSONL persistence, REST endpoints, WebSocket types
+- [ ] 16-02-PLAN.md — MCP tools: start_session, record_step, end_session, set_risk_level + test coverage
+- [ ] 16-03-PLAN.md — Frontend heatmap: risk overlay, execution frequency coloring, toggle button
+- [ ] 16-04-PLAN.md — Frontend session replay: timeline scrubber, playback controls, diff highlighting
 
 ### Progress
 
@@ -164,4 +170,4 @@ Plans:
 | 13. Canvas Interactions | 2/2 | Complete | 2026-02-15 |
 | 14. Undo/Redo + Edit Actions | 0/3 | Complete    | 2026-02-16 |
 | 15. AI Breakpoints + Ghost Paths | 0/3 | Complete    | 2026-02-16 |
-| 16. Heatmap + Session Recording | 0/? | Not Started | - |
+| 16. Heatmap + Session Recording | 0/4 | Not Started | - |
