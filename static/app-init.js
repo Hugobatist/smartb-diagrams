@@ -160,6 +160,10 @@
             }
             return;
         }
+        if (e.key === 'h' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (window.SmartBHeatmap) SmartBHeatmap.toggle();
+            return;
+        }
         if (e.key === 'b' && !e.ctrlKey && !e.metaKey && !e.altKey) {
             if (window.SmartBBreakpoints && window.SmartBSelection) {
                 var sel = SmartBSelection.getSelected();
@@ -201,6 +205,9 @@
     // ── Init Phase 15: Breakpoints & Ghost Paths ──
     if (window.SmartBBreakpoints) SmartBBreakpoints.init();
     if (window.SmartBGhostPaths) SmartBGhostPaths.init();
+
+    // ── Init Phase 16: Heatmap ──
+    if (window.SmartBHeatmap) SmartBHeatmap.init();
 
     // ── Init Collapse UI ──
     if (window.SmartBCollapseUI) {
@@ -340,6 +347,14 @@
                     }
                 } catch (e) {}
             }
+
+            // Fetch heatmap data for initial file
+            if (window.SmartBHeatmap) {
+                fetch('/api/heatmap/' + encodeURIComponent(currentFile))
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(data) { if (data) SmartBHeatmap.updateVisitCounts(data); })
+                    .catch(function() {});
+            }
         }
 
         // WebSocket real-time sync
@@ -372,7 +387,9 @@
                                 SmartBAnnotations.getState().flags = incoming.flags;
                                 SmartBAnnotations.getState().statuses = incoming.statuses;
                                 SmartBAnnotations.getState().breakpoints = incoming.breakpoints;
+                                SmartBAnnotations.getState().risks = incoming.risks;
                                 if (window.SmartBBreakpoints) SmartBBreakpoints.updateBreakpoints(incoming.breakpoints);
+                                if (window.SmartBHeatmap) SmartBHeatmap.updateRisks(incoming.risks);
                                 SmartBAnnotations.renderPanel();
                                 SmartBAnnotations.updateBadge();
                             }
@@ -394,6 +411,9 @@
                     break;
                 case 'ghost:update':
                     if (window.SmartBGhostPaths) SmartBGhostPaths.updateGhostPaths(msg.ghostPaths);
+                    break;
+                case 'heatmap:update':
+                    if (window.SmartBHeatmap) SmartBHeatmap.updateVisitCounts(msg.data);
                     break;
                 case 'file:added':
                 case 'file:removed':

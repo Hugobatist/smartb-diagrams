@@ -1,11 +1,6 @@
 /**
- * SmartB Diagrams — Annotations / Flag & Status System
- * Click-to-flag diagram nodes/edges/subgraphs.
- * Flags persisted as %% @flag comments in .mmd files.
- * Status annotations persisted as %% @status comments in .mmd files.
- * Exposed as window.SmartBAnnotations
- *
- * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartBEventBus)
+ * SmartB Annotations -- Flag, Status, Breakpoint, Risk annotation system.
+ * Dependencies: diagram-dom.js, event-bus.js. Exposed as window.SmartBAnnotations
  */
 (function () {
     'use strict';
@@ -15,14 +10,15 @@
     const FLAG_REGEX = /^%%\s*@flag\s+(\S+)\s+"([^"]*)"$/;
     const STATUS_REGEX = /^%%\s*@status\s+(\S+)\s+(\S+)$/;
     const BREAKPOINT_REGEX = /^%%\s*@breakpoint\s+(\S+)$/;
+    const RISK_REGEX = /^%%\s*@risk\s+(\S+)\s+(high|medium|low)\s+"([^"]*)"$/;
 
     const state = {
         flagMode: false,
         flags: new Map(),      // nodeId -> { message, timestamp }
-        statuses: new Map(),   // nodeId -> statusValue string (ok|problem|in-progress|discarded)
+        statuses: new Map(),   // nodeId -> statusValue string
         breakpoints: new Set(), // nodeId set
-        panelOpen: false,
-        popover: null,
+        risks: new Map(),      // nodeId -> { level, reason }
+        panelOpen: false, popover: null,
     };
 
     let hooks = {
@@ -37,9 +33,7 @@
     // ── Parsing & Serialization ──
 
     function parseAnnotations(content) {
-        const flags = new Map();
-        const statuses = new Map();
-        const breakpoints = new Set();
+        const flags = new Map(), statuses = new Map(), breakpoints = new Set(), risks = new Map();
         const lines = content.split('\n');
         let inBlock = false;
         for (const line of lines) {
@@ -52,10 +46,12 @@
                 const sm = trimmed.match(STATUS_REGEX);
                 if (sm) { statuses.set(sm[1], sm[2]); continue; }
                 const bm = trimmed.match(BREAKPOINT_REGEX);
-                if (bm) { breakpoints.add(bm[1]); }
+                if (bm) { breakpoints.add(bm[1]); continue; }
+                const rm = trimmed.match(RISK_REGEX);
+                if (rm) { risks.set(rm[1], { level: rm[2], reason: rm[3] }); }
             }
         }
-        return { flags, statuses, breakpoints };
+        return { flags, statuses, breakpoints, risks };
     }
 
     function stripAnnotations(content) {
@@ -401,9 +397,13 @@
         var mergedStatuses = new Map(incoming.statuses);
         for (var sEntry of state.statuses) mergedStatuses.set(sEntry[0], sEntry[1]);
         state.statuses = mergedStatuses;
-        // Merge breakpoints: union of incoming and local
+        // Merge breakpoints and risks
         state.breakpoints = new Set([...incoming.breakpoints, ...state.breakpoints]);
         if (window.SmartBBreakpoints) SmartBBreakpoints.updateBreakpoints(state.breakpoints);
+        var mergedRisks = new Map(incoming.risks);
+        for (var rEntry of state.risks) mergedRisks.set(rEntry[0], rEntry[1]);
+        state.risks = mergedRisks;
+        if (window.SmartBHeatmap) SmartBHeatmap.updateRisks(state.risks);
         var cleanIncoming = stripAnnotations(incomingContent);
         return injectAnnotations(cleanIncoming, mergedFlags, mergedStatuses);
     }
@@ -448,7 +448,9 @@
             state.flags = parsed.flags;
             state.statuses = parsed.statuses;
             state.breakpoints = parsed.breakpoints;
+            state.risks = parsed.risks;
             if (window.SmartBBreakpoints) SmartBBreakpoints.updateBreakpoints(parsed.breakpoints);
+            if (window.SmartBHeatmap) SmartBHeatmap.updateRisks(parsed.risks);
         }
         var container = document.getElementById('preview-container');
         if (container) container.addEventListener('click', handlePreviewClick);
@@ -489,7 +491,7 @@
         toggleFlagMode: toggleFlagMode, togglePanel: togglePanel,
         renderPanel: renderPanel, updateBadge: updateBadge,
         extractNodeId: function(element) { return DiagramDOM.extractNodeId(element); },
-        closePopover: closePopover,
+        closePopover: closePopover, getRisks: function() { return state.risks; },
         getStatusMap: getStatusMap, setStatus: setStatus, removeStatus: removeStatus,
     };
 })();

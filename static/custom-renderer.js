@@ -156,6 +156,11 @@
         // Apply status colors from graph model (overrides nodeStyles for flagged nodes)
         applyStatusColors(graphModel);
 
+        // Re-apply heatmap risk overlay if active (heatmap overrides status colors)
+        if (window.SmartBHeatmap && SmartBHeatmap.isActive()) {
+            SmartBHeatmap.applyRiskOverlay();
+        }
+
         // Apply collapse overlays if available
         if (window.SmartBCollapseUI && SmartBCollapseUI.applyOverlays) {
             SmartBCollapseUI.applyOverlays();
