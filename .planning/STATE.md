@@ -9,11 +9,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 16-heatmap-session-recording
-Plan: 03 of ?? in progress
-Status: Plan 03 complete -- frontend heatmap module with risk overlay and frequency coloring
-Last activity: 2026-02-16 -- Plan 03 executed (2 tasks, 4min), 251 tests passing
+Plan: 04 of 04 complete
+Status: Phase 16 complete -- all plans executed (backend, MCP tools, heatmap, session replay)
+Last activity: 2026-02-16 -- Plan 04 executed (2 tasks, 4min), 251 tests passing
 
-Progress: [██████████] v1.0 100% | Phase 16: [======----] 3/? plans complete
+Progress: [██████████] v1.0 100% | Phase 16: [==========] 4/4 plans complete
 
 ## v1.0 Performance Metrics
 
@@ -180,6 +180,11 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Risk data accepted as both Map and plain object for WS/REST compatibility
 - H key shortcut for heatmap toggle (consistent F, N, A, B, H single-key pattern)
 - Fill save/restore pattern: save fill+fill-opacity before overlay, restore on deactivate
+- Session list logic in session-player.js (not app-init.js) to keep app-init.js under 500 lines
+- Precomputed cumulative states for O(1) seeking: diagramStates[index] vs O(n) replay-from-start
+- BBox caching for removed node ghost rects before applying frame
+- Space key for play/pause, Left/Right arrow for frame stepping (guarded by isVisible())
+- Session dropdown positioned with relative container in topbar for proper absolute positioning
 
 **Phase 15:**
 - Three-annotation preservation: every write operation reads and re-injects flags, statuses, AND breakpoints
@@ -374,8 +379,15 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - diagram-dom.js (241 lines): getAllNodeElements() helper
 - Duration: 4 min, 251 tests pass
 
+**16-04 (Complete):** Frontend session replay UI with timeline scrubber and diff highlighting
+- session-player.js (411 lines): SmartBSessionPlayer with precomputed cumulative states, O(1) seeking, diff highlighting
+- session-player.css (137 lines): scrubber bar, diff highlight classes, session dropdown styles
+- app-init.js (495 lines): SmartBSessionPlayer.init(), WS session:event handler, session list fetch, Space/Arrow shortcuts
+- live.html (196 lines): session-player.css, Sessions button with dropdown, session player bar, session-player.js script
+- Duration: 4 min, 251 tests pass
+
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 16-03-PLAN.md (frontend heatmap module with risk overlay and frequency coloring)
-Next action: Execute 16-04-PLAN.md (session replay UI).
+Stopped at: Completed 16-04-PLAN.md (session replay UI with timeline scrubber and diff highlighting)
+Next action: Phase 16 complete. Proceed to next phase or wrap up.
