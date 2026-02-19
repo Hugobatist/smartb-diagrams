@@ -1,6 +1,7 @@
 /**
  * SmartB Heatmap -- risk overlay coloring and execution frequency heatmap.
  * Colors nodes by risk level (red/yellow/green) or frequency (cold blue to hot red).
+ * Supports mode toggle (risk/frequency), incremental merges, and empty state guidance.
  * Dependencies: diagram-dom.js, event-bus.js, file-tree.js
  */
 var SmartBHeatmap = (function() {
@@ -100,10 +101,22 @@ var SmartBHeatmap = (function() {
         }
     }
 
+    /** Check if there is any data for the current mode */
+    function hasDataForMode(mode) {
+        if (mode === 'frequency') return Object.keys(state.visitCounts).length > 0;
+        if (mode === 'risk') return state.risks.size > 0;
+        return false;
+    }
+
+    /** Check if there is any data at all (either mode) */
+    function hasAnyData() {
+        return Object.keys(state.visitCounts).length > 0 || state.risks.size > 0;
+    }
+
     function applyCurrent() {
         if (state.mode === 'frequency' && Object.keys(state.visitCounts).length > 0) {
             applyFrequencyHeatmap();
-        } else {
+        } else if (state.mode === 'risk') {
             applyRiskOverlay();
         }
         updateLegend();
@@ -116,22 +129,66 @@ var SmartBHeatmap = (function() {
         return el;
     }
 
+    /** Create the mode toggle button */
+    function createModeToggle() {
+        var btn = createEl('button', 'heatmap-mode-toggle');
+        var otherMode = state.mode === 'risk' ? 'frequency' : 'risk';
+        btn.textContent = otherMode === 'frequency' ? 'Frequency' : 'Risk';
+        btn.title = 'Switch to ' + otherMode + ' mode';
+        btn.addEventListener('click', function() {
+            setMode(otherMode);
+        });
+        return btn;
+    }
+
+    /** Build the empty state message */
+    function buildEmptyState(legend) {
+        var msg = createEl('div', 'heatmap-empty-state');
+        if (state.mode === 'frequency') {
+            msg.textContent = 'No frequency data yet. Click on diagram nodes to build a frequency map.';
+        } else {
+            msg.textContent = 'No risk annotations. Use MCP set_risk_level to annotate node risk levels.';
+        }
+        legend.appendChild(msg);
+    }
+
     function updateLegend() {
         var existing = document.querySelector('.heatmap-legend');
         if (existing) existing.remove();
         if (!state.active) return;
         var container = document.getElementById('preview-container');
         if (!container) return;
+
         var legend = createEl('div', 'heatmap-legend');
+
+        // Header with title and mode toggle
+        var header = createEl('div', 'heatmap-legend-header');
+        var title = createEl('div', 'heatmap-legend-title',
+            state.mode === 'frequency' ? 'Frequency' : 'Risk');
+        header.appendChild(title);
+
+        // Only show toggle if there is data in the other mode too
+        if (hasAnyData()) {
+            header.appendChild(createModeToggle());
+        }
+        legend.appendChild(header);
+
+        // Show empty state if no data for current mode
+        if (!hasDataForMode(state.mode)) {
+            buildEmptyState(legend);
+            container.appendChild(legend);
+            return;
+        }
+
+        // Frequency legend content
         if (state.mode === 'frequency') {
-            legend.appendChild(createEl('div', 'heatmap-legend-title', 'Frequency'));
             legend.appendChild(createEl('div', 'heatmap-legend-gradient'));
             var labels = createEl('div', 'heatmap-legend-labels');
             labels.appendChild(createEl('span', null, 'Low'));
             labels.appendChild(createEl('span', null, 'High'));
             legend.appendChild(labels);
         } else {
-            legend.appendChild(createEl('div', 'heatmap-legend-title', 'Risk'));
+            // Risk legend content
             var levels = [['high','High'],['medium','Medium'],['low','Low']];
             for (var i = 0; i < levels.length; i++) {
                 var item = createEl('div', 'heatmap-legend-item');
@@ -153,7 +210,13 @@ var SmartBHeatmap = (function() {
             if (btn) btn.classList.remove('active');
             updateLegend();
         } else {
-            state.mode = Object.keys(state.visitCounts).length > 0 ? 'frequency' : 'risk';
+            // Auto-select mode based on available data
+            if (Object.keys(state.visitCounts).length > 0) {
+                state.mode = 'frequency';
+            } else if (state.risks.size > 0) {
+                state.mode = 'risk';
+            }
+            // If no data in either mode, still activate to show empty state
             saveFills();
             state.active = true;
             if (btn) btn.classList.add('active');
@@ -170,14 +233,37 @@ var SmartBHeatmap = (function() {
             for (var i = 0; i < keys.length; i++) state.risks.set(keys[i], risksMap[keys[i]]);
         }
         if (state.active && state.mode === 'risk') {
-            restoreFills(); saveFills(); applyRiskOverlay();
+            restoreFills(); saveFills(); applyRiskOverlay(); updateLegend();
         }
     }
 
+    /**
+     * Replace all visit counts (used for full refresh, e.g., file switch or initial load).
+     */
     function updateVisitCounts(counts) {
         state.visitCounts = counts || {};
         if (state.active) {
-            state.mode = 'frequency';
+            if (Object.keys(state.visitCounts).length > 0) {
+                state.mode = 'frequency';
+            }
+            restoreFills(); saveFills(); applyCurrent();
+        }
+    }
+
+    /**
+     * Merge incremental visit counts (used for real-time WebSocket updates).
+     * Adds delta counts to existing counts rather than replacing.
+     */
+    function mergeVisitCounts(delta) {
+        if (!delta || typeof delta !== 'object') return;
+        var keys = Object.keys(delta);
+        for (var i = 0; i < keys.length; i++) {
+            var nodeId = keys[i];
+            var count = delta[nodeId];
+            if (typeof count !== 'number') continue;
+            state.visitCounts[nodeId] = (state.visitCounts[nodeId] || 0) + count;
+        }
+        if (state.active && state.mode === 'frequency') {
             restoreFills(); saveFills(); applyFrequencyHeatmap(); updateLegend();
         }
     }
@@ -209,9 +295,14 @@ var SmartBHeatmap = (function() {
     }
 
     return {
-        init: init, toggle: toggle,
-        updateRisks: updateRisks, updateVisitCounts: updateVisitCounts,
-        setMode: setMode, isActive: function() { return state.active; },
+        init: init,
+        toggle: toggle,
+        updateRisks: updateRisks,
+        updateVisitCounts: updateVisitCounts,
+        mergeVisitCounts: mergeVisitCounts,
+        setMode: setMode,
+        isActive: function() { return state.active; },
         applyRiskOverlay: applyRiskOverlay,
+        getState: function() { return state; },
     };
 })();

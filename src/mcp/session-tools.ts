@@ -119,6 +119,16 @@ export function registerSessionTools(
             sessionId,
             event: { ts: event.ts, type: event.type, payload: event.payload } as Record<string, unknown>,
           });
+
+          // Broadcast incremental heatmap update for real-time visualization (HEAT-02)
+          const activeMeta = sessionStore.getActiveSession(sessionId);
+          if (activeMeta?.diagramFile) {
+            options.wsManager.broadcastAll({
+              type: 'heatmap:update',
+              file: activeMeta.diagramFile,
+              data: { [nodeId]: 1 },
+            });
+          }
         }
 
         return {

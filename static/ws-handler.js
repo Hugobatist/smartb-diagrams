@@ -70,7 +70,17 @@
                 if (window.SmartBGhostPaths) SmartBGhostPaths.updateGhostPaths(msg.file, msg.ghostPaths);
                 break;
             case 'heatmap:update':
-                if (window.SmartBHeatmap) SmartBHeatmap.updateVisitCounts(msg.data);
+                if (window.SmartBHeatmap) {
+                    // Check if this is a full refresh or incremental delta
+                    // Small deltas (1-3 keys) from record_step or click tracking: merge
+                    // Full refreshes (many keys) from file switch: replace
+                    var dataKeys = msg.data ? Object.keys(msg.data) : [];
+                    if (dataKeys.length <= 3) {
+                        SmartBHeatmap.mergeVisitCounts(msg.data);
+                    } else {
+                        SmartBHeatmap.updateVisitCounts(msg.data);
+                    }
+                }
                 break;
             case 'session:event':
                 if (window.SmartBSessionPlayer) SmartBSessionPlayer.handleSessionEvent(msg.sessionId, msg.event);

@@ -72,3 +72,45 @@
     font-size: 9px;
     color: var(--text-secondary);
 }
+
+/* Legend header with title + mode toggle */
+.heatmap-legend-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.heatmap-legend-header .heatmap-legend-title {
+    margin-bottom: 0;
+}
+
+/* Mode toggle button */
+.heatmap-mode-toggle {
+    font-size: 9px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border-default);
+    background: var(--surface-2, #2a2a2a);
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+
+.heatmap-mode-toggle:hover {
+    background: var(--surface-3, #333);
+    color: var(--text-primary);
+}
+
+/* Empty state guidance */
+.heatmap-empty-state {
+    font-size: 10px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    padding: 4px 0;
+    max-width: 180px;
+}
