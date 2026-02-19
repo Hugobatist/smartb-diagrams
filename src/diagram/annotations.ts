@@ -1,4 +1,4 @@
-import type { Flag, NodeStatus, RiskAnnotation, RiskLevel } from './types.js';
+import type { Flag, GhostPathAnnotation, NodeStatus, RiskAnnotation, RiskLevel } from './types.js';
 import { log } from '../utils/logger.js';
 
 export const ANNOTATION_START = '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---';
@@ -7,56 +7,30 @@ const FLAG_REGEX = /^%%\s*@flag\s+(\S+)\s+"([^"]*)"$/;
 const STATUS_REGEX = /^%%\s*@status\s+(\S+)\s+(\S+)$/;
 export const BREAKPOINT_REGEX = /^%%\s*@breakpoint\s+(\S+)$/;
 export const RISK_REGEX = /^%%\s*@risk\s+(\S+)\s+(high|medium|low)\s+"([^"]*)"$/;
-
-/**
- * Parse all `%% @flag` lines from within the annotation block.
- * Unrecognized lines are skipped with a debug warning.
- * Returns a Map keyed by nodeId.
- */
-export function parseFlags(content: string): Map<string, Flag> {
-  const flags = new Map<string, Flag>();
-  const lines = content.split('\n');
-
-  let inBlock = false;
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    if (trimmed === ANNOTATION_START) {
-      inBlock = true;
-      continue;
-    }
-
-    if (trimmed === ANNOTATION_END) {
-      inBlock = false;
-      continue;
-    }
-
-    if (!inBlock) continue;
-
-    // Skip empty lines inside the block
-    if (trimmed === '') continue;
-
-    const match = FLAG_REGEX.exec(trimmed);
-    if (match) {
-      const nodeId = match[1]!;
-      const message = match[2]!;
-      flags.set(nodeId, { nodeId, message });
-    } else if (!STATUS_REGEX.test(trimmed) && !BREAKPOINT_REGEX.test(trimmed) && !RISK_REGEX.test(trimmed)) {
-      log.debug(`Skipping unrecognized annotation line: ${trimmed}`);
-    }
-  }
-
-  return flags;
-}
+export const GHOST_REGEX = /^%%\s*@ghost\s+(\S+)\s+(\S+)\s+"([^"]*)"$/;
 
 const VALID_STATUSES: readonly string[] = ['ok', 'problem', 'in-progress', 'discarded'];
 
+/** Result of parsing all annotation types in a single pass */
+export interface AllAnnotations {
+  flags: Map<string, Flag>;
+  statuses: Map<string, NodeStatus>;
+  breakpoints: Set<string>;
+  risks: Map<string, RiskAnnotation>;
+  ghosts: GhostPathAnnotation[];
+}
+
 /**
- * Parse all `%% @status` lines from within the annotation block.
- * Returns a Map keyed by nodeId with NodeStatus values.
+ * Parse all annotation types (flags, statuses, breakpoints, risks) in a single pass.
+ * Iterates through lines once, matching each annotation regex.
+ * Unrecognized lines inside the annotation block are logged as debug warnings.
  */
-export function parseStatuses(content: string): Map<string, NodeStatus> {
+export function parseAllAnnotations(content: string): AllAnnotations {
+  const flags = new Map<string, Flag>();
   const statuses = new Map<string, NodeStatus>();
+  const breakpoints = new Set<string>();
+  const risks = new Map<string, RiskAnnotation>();
+  const ghosts: GhostPathAnnotation[] = [];
   const lines = content.split('\n');
 
   let inBlock = false;
@@ -73,97 +47,72 @@ export function parseStatuses(content: string): Map<string, NodeStatus> {
       continue;
     }
 
-    if (!inBlock) continue;
+    if (!inBlock || trimmed === '') continue;
 
-    if (trimmed === '') continue;
-
-    const match = STATUS_REGEX.exec(trimmed);
+    let match = FLAG_REGEX.exec(trimmed);
     if (match) {
-      const nodeId = match[1]!;
+      flags.set(match[1]!, { nodeId: match[1]!, message: match[2]! });
+      continue;
+    }
+
+    match = STATUS_REGEX.exec(trimmed);
+    if (match) {
       const statusValue = match[2]!;
       if (VALID_STATUSES.includes(statusValue)) {
-        statuses.set(nodeId, statusValue as NodeStatus);
+        statuses.set(match[1]!, statusValue as NodeStatus);
       } else {
         log.debug(`Skipping invalid status value: ${statusValue}`);
       }
-    }
-    // Non-status lines (flags, etc.) are silently skipped here
-  }
-
-  return statuses;
-}
-
-/**
- * Parse all `%% @breakpoint` lines from within the annotation block.
- * Returns a Set of nodeIds that have breakpoints.
- */
-export function parseBreakpoints(content: string): Set<string> {
-  const breakpoints = new Set<string>();
-  const lines = content.split('\n');
-
-  let inBlock = false;
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    if (trimmed === ANNOTATION_START) {
-      inBlock = true;
       continue;
     }
 
-    if (trimmed === ANNOTATION_END) {
-      inBlock = false;
-      continue;
-    }
-
-    if (!inBlock) continue;
-
-    if (trimmed === '') continue;
-
-    const match = BREAKPOINT_REGEX.exec(trimmed);
+    match = BREAKPOINT_REGEX.exec(trimmed);
     if (match) {
       breakpoints.add(match[1]!);
+      continue;
     }
+
+    match = RISK_REGEX.exec(trimmed);
+    if (match) {
+      risks.set(match[1]!, { nodeId: match[1]!, level: match[2]! as RiskLevel, reason: match[3]! });
+      continue;
+    }
+
+    match = GHOST_REGEX.exec(trimmed);
+    if (match) {
+      ghosts.push({ fromNodeId: match[1]!, toNodeId: match[2]!, label: match[3]! });
+      continue;
+    }
+
+    log.debug(`Skipping unrecognized annotation line: ${trimmed}`);
   }
 
-  return breakpoints;
+  return { flags, statuses, breakpoints, risks, ghosts };
 }
 
-/**
- * Parse all `%% @risk` lines from within the annotation block.
- * Returns a Map keyed by nodeId with RiskAnnotation values.
- */
+/** Parse all `%% @flag` lines. Delegates to parseAllAnnotations. */
+export function parseFlags(content: string): Map<string, Flag> {
+  return parseAllAnnotations(content).flags;
+}
+
+/** Parse all `%% @status` lines. Delegates to parseAllAnnotations. */
+export function parseStatuses(content: string): Map<string, NodeStatus> {
+  return parseAllAnnotations(content).statuses;
+}
+
+/** Parse all `%% @breakpoint` lines. Delegates to parseAllAnnotations. */
+export function parseBreakpoints(content: string): Set<string> {
+  return parseAllAnnotations(content).breakpoints;
+}
+
+/** Parse all `%% @risk` lines. Delegates to parseAllAnnotations. */
 export function parseRisks(content: string): Map<string, RiskAnnotation> {
-  const risks = new Map<string, RiskAnnotation>();
-  const lines = content.split('\n');
+  return parseAllAnnotations(content).risks;
+}
 
-  let inBlock = false;
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    if (trimmed === ANNOTATION_START) {
-      inBlock = true;
-      continue;
-    }
-
-    if (trimmed === ANNOTATION_END) {
-      inBlock = false;
-      continue;
-    }
-
-    if (!inBlock) continue;
-
-    if (trimmed === '') continue;
-
-    const match = RISK_REGEX.exec(trimmed);
-    if (match) {
-      const nodeId = match[1]!;
-      const level = match[2]! as RiskLevel;
-      const reason = match[3]!;
-      risks.set(nodeId, { nodeId, level, reason });
-    }
-  }
-
-  return risks;
+/** Parse all `%% @ghost` lines. Delegates to parseAllAnnotations. */
+export function parseGhosts(content: string): GhostPathAnnotation[] {
+  return parseAllAnnotations(content).ghosts;
 }
 
 /**
@@ -213,6 +162,7 @@ export function injectAnnotations(
   statuses?: Map<string, NodeStatus>,
   breakpoints?: Set<string>,
   risks?: Map<string, RiskAnnotation>,
+  ghosts?: GhostPathAnnotation[],
 ): string {
   const clean = stripAnnotations(content);
 
@@ -220,8 +170,9 @@ export function injectAnnotations(
   const hasStatuses = statuses !== undefined && statuses.size > 0;
   const hasBreakpoints = breakpoints !== undefined && breakpoints.size > 0;
   const hasRisks = risks !== undefined && risks.size > 0;
+  const hasGhosts = ghosts !== undefined && ghosts.length > 0;
 
-  if (!hasFlags && !hasStatuses && !hasBreakpoints && !hasRisks) {
+  if (!hasFlags && !hasStatuses && !hasBreakpoints && !hasRisks && !hasGhosts) {
     return clean;
   }
 
@@ -251,6 +202,13 @@ export function injectAnnotations(
     for (const [nodeId, risk] of risks!) {
       const escapedReason = risk.reason.replace(/"/g, "''");
       lines.push(`%% @risk ${nodeId} ${risk.level} "${escapedReason}"`);
+    }
+  }
+
+  if (hasGhosts) {
+    for (const ghost of ghosts!) {
+      const escapedLabel = ghost.label.replace(/"/g, "''");
+      lines.push(`%% @ghost ${ghost.fromNodeId} ${ghost.toNodeId} "${escapedLabel}"`);
     }
   }
 
