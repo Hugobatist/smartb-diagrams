@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartB - Live Diagrams</title>
+    <title>SmartCode - Live Diagrams</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%233b82f6'/><text x='16' y='22' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='18'>S</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="tokens.css">
     <link rel="stylesheet" href="main-layout.css">
     <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="sidebar.css">
     <link rel="stylesheet" href="annotations.css">
     <link rel="stylesheet" href="breakpoints.css">
     <link rel="stylesheet" href="heatmap.css">
@@ -25,7 +26,7 @@
 <div class="topbar">
     <!-- Group 1: Navigation -->
     <div class="toolbar-group">
-        <span class="logo">SmartB</span>
+        <span class="logo">SmartCode</span>
         <span id="workspaceSwitcher" class="workspace-switcher"></span>
         <span class="file-name" id="currentFileName">Action Plan</span>
     </div>
@@ -51,10 +52,10 @@
 
     <!-- Group 4: Inspect -->
     <div class="toolbar-group">
-        <button class="toolbar-btn" id="btnFlags" onclick="SmartBAnnotations.toggleFlagMode()" title="Toggle flag mode (F)"><span class="toolbar-icon" data-icon="flag"></span>Flags <span class="toolbar-badge" id="flagCountBadge" data-count="0"></span></button>
-        <button class="toolbar-btn" id="toggleFlagPanel" onclick="SmartBAnnotations.togglePanel()" title="Toggle flags panel"><span class="toolbar-icon" data-icon="eye"></span>Panel</button>
-        <button class="toolbar-btn" id="btnGhostPaths" onclick="SmartBGhostPaths.toggle()" title="Toggle ghost paths"><span class="toolbar-icon" data-icon="ghost"></span>Ghost <span class="toolbar-badge" id="ghostCountBadge" data-count="0"></span></button>
-        <button class="toolbar-btn" id="btnHeatmap" onclick="SmartBHeatmap.toggle()" title="Toggle heatmap (H)"><span class="toolbar-icon" data-icon="heatmap"></span>Heat</button>
+        <button class="toolbar-btn" id="btnFlags" onclick="SmartCodeAnnotations.toggleFlagMode()" title="Toggle flag mode (F)"><span class="toolbar-icon" data-icon="flag"></span>Flags <span class="toolbar-badge" id="flagCountBadge" data-count="0"></span></button>
+        <button class="toolbar-btn" id="toggleFlagPanel" onclick="SmartCodeAnnotations.togglePanel()" title="Toggle flags panel"><span class="toolbar-icon" data-icon="eye"></span>Panel</button>
+        <button class="toolbar-btn" id="btnGhostPaths" onclick="SmartCodeGhostPaths.toggle()" title="Toggle ghost paths"><span class="toolbar-icon" data-icon="ghost"></span>Ghost <span class="toolbar-badge" id="ghostCountBadge" data-count="0"></span></button>
+        <button class="toolbar-btn" id="btnHeatmap" onclick="SmartCodeHeatmap.toggle()" title="Toggle heatmap (H)"><span class="toolbar-icon" data-icon="heatmap"></span>Heat</button>
         <span style="position:relative">
             <button class="toolbar-btn" id="btnSessions" title="Session recordings"><span class="toolbar-icon" data-icon="play"></span>Recordings</button>
             <div class="session-dropdown hidden" id="sessionDropdown"><div id="sessionList"></div></div>
@@ -83,8 +84,8 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-tabs">
-                <button class="sidebar-tab active" id="tabFiles" onclick="SmartBMcpSessions.setViewMode('files')">Files</button>
-                <button class="sidebar-tab" id="tabSessions" onclick="SmartBMcpSessions.setViewMode('sessions')">Sessions</button>
+                <button class="sidebar-tab active" id="tabFiles" onclick="SmartCodeMcpSessions.setViewMode('files')">Files</button>
+                <button class="sidebar-tab" id="tabSessions" onclick="SmartCodeMcpSessions.setViewMode('sessions')">Sessions</button>
             </div>
             <div class="actions">
                 <button id="btnNewFolder" onclick="createNewFolder()" title="New folder"></button>

@@ -7,6 +7,10 @@ export type {
   DiagramContent,
   ValidationResult,
   ValidationError,
+  RiskLevel,
+  RiskAnnotation,
+  GhostPath,
+  GhostPathAnnotation,
   Project,
 } from './diagram/types.js';
 
@@ -16,9 +20,11 @@ export { DiagramService } from './diagram/service.js';
 // Annotations
 export {
   parseFlags,
+  parseAllAnnotations,
   stripAnnotations,
   injectAnnotations,
 } from './diagram/annotations.js';
+export type { AllAnnotations } from './diagram/annotations.js';
 
 // Validator
 export { validateMermaidSyntax } from './diagram/validator.js';

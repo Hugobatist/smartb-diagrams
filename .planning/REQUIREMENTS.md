@@ -42,10 +42,10 @@ Requirements for stability and usability release. Each maps to roadmap phases.
 
 ### Code Quality
 
-- [ ] **QUAL-01**: Split main.css (577 lines) into component-specific files (each under 500 lines)
-- [ ] **QUAL-02**: Fix keyboard shortcut 'B' to not fire in unexpected input contexts
-- [ ] **QUAL-03**: PNG export includes visible ghost paths
-- [ ] **QUAL-04**: Export missing types from public API (RiskLevel, RiskAnnotation, GhostPath)
+- [x] **QUAL-01**: Split main.css (577 lines) into component-specific files (each under 500 lines)
+- [x] **QUAL-02**: Fix keyboard shortcut 'B' to not fire in unexpected input contexts
+- [x] **QUAL-03**: PNG export includes visible ghost paths
+- [x] **QUAL-04**: Export missing types from public API (RiskLevel, RiskAnnotation, GhostPath)
 
 ## Deferred to v2.2
 
@@ -94,10 +94,10 @@ Requirements for stability and usability release. Each maps to roadmap phases.
 | HEAT-03 | Phase 19 | Complete |
 | HEAT-04 | Phase 19 | Complete |
 | HEAT-05 | Phase 19 | Complete |
-| QUAL-01 | Phase 20 | Pending |
-| QUAL-02 | Phase 20 | Pending |
-| QUAL-03 | Phase 20 | Pending |
-| QUAL-04 | Phase 20 | Pending |
+| QUAL-01 | Phase 20 | Complete |
+| QUAL-02 | Phase 20 | Complete |
+| QUAL-03 | Phase 20 | Complete |
+| QUAL-04 | Phase 20 | Complete |
 
 **Coverage:**
 - v2.1 requirements: 23 total

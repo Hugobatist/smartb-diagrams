@@ -1,13 +1,13 @@
 /**
- * SmartB Export -- SVG and PNG export of current diagram.
+ * SmartCode Export -- SVG and PNG export of current diagram.
  * Extracted from live.html (Phase 9 Plan 02).
  *
- * Dependencies: mermaid (CDN), renderer.js (SmartBRenderer.MERMAID_CONFIG)
+ * Dependencies: mermaid (CDN), renderer.js (SmartCodeRenderer.MERMAID_CONFIG)
  * Dependents: none (triggered by UI buttons)
  *
  * Usage:
- *   SmartBExport.exportSVG();
- *   SmartBExport.exportPNG();
+ *   SmartCodeExport.exportSVG();
+ *   SmartCodeExport.exportPNG();
  */
 (function() {
     'use strict';
@@ -19,30 +19,63 @@
         a.download = name;
         a.click();
         URL.revokeObjectURL(a.href);
-        if (window.toast) toast('Exportado: ' + name);
+        if (window.toast) toast('Exported: ' + name);
+    }
+
+    // ── Ghost path cloning for export (QUAL-03) ──
+    // Copies visible ghost path SVG elements from the live SVG into the export SVG
+    // so PNG exports include ghost paths.
+    function copyGhostPathsToExport(exportSvg) {
+        if (!window.SmartCodeGhostPaths || !SmartCodeGhostPaths.isVisible()) return;
+
+        var liveSvg = document.querySelector('#preview svg');
+        if (!liveSvg) return;
+
+        var ghostEls = liveSvg.querySelectorAll('.ghost-path');
+        if (ghostEls.length === 0) return;
+
+        // Clone the ghost-arrow marker definition if present
+        var ghostMarker = liveSvg.querySelector('#ghost-arrow');
+        if (ghostMarker) {
+            var exportDefs = exportSvg.querySelector('defs');
+            if (!exportDefs) {
+                exportDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                exportSvg.insertBefore(exportDefs, exportSvg.firstChild);
+            }
+            // Only add if not already present
+            if (!exportDefs.querySelector('#ghost-arrow')) {
+                exportDefs.appendChild(ghostMarker.cloneNode(true));
+            }
+        }
+
+        // Clone each ghost path group into the export SVG
+        for (var i = 0; i < ghostEls.length; i++) {
+            exportSvg.appendChild(ghostEls[i].cloneNode(true));
+        }
     }
 
     // ── SVG Export ──
     function exportSVG() {
         var svg = document.querySelector('#preview svg');
-        if (!svg) return window.toast && toast('Nada para exportar');
+        if (!svg) return window.toast && toast('Nothing to export');
         var blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
-        var currentFile = (window.SmartBFileTree && SmartBFileTree.getCurrentFile()) || 'export';
+        var currentFile = (window.SmartCodeFileTree && SmartCodeFileTree.getCurrentFile()) || 'export';
         download(blob, currentFile.replace('.mmd', '.svg'));
     }
 
     // ── PNG Export ──
-    // Uses SmartBRenderer.MERMAID_CONFIG to avoid triplicating the config object.
+    // Uses SmartCodeRenderer.MERMAID_CONFIG to avoid triplicating the config object.
     // Re-initializes mermaid with htmlLabels:false to avoid foreignObject Canvas taint,
     // then restores original config after rendering.
     async function exportPNG() {
         var currentSvg = document.querySelector('#preview svg');
-        if (!currentSvg) return window.toast && toast('Nada para exportar');
+        if (!currentSvg) return window.toast && toast('Nothing to export');
 
         // Custom SVG: direct PNG export without mermaid re-render
         if (window.DiagramDOM && DiagramDOM.getRendererType() === 'custom') {
-            var currentFile = (window.SmartBFileTree && SmartBFileTree.getCurrentFile()) || 'export';
+            var currentFile = (window.SmartCodeFileTree && SmartCodeFileTree.getCurrentFile()) || 'export';
             var clone = currentSvg.cloneNode(true);
+            copyGhostPathsToExport(clone);
             var canvas = document.createElement('canvas');
             var ctx = canvas.getContext('2d');
             var data = new XMLSerializer().serializeToString(clone);
@@ -57,26 +90,26 @@
                 }, 'image/png');
             };
             img.onerror = function() {
-                if (window.toast) toast('Erro ao exportar PNG -- tente SVG');
+                if (window.toast) toast('Error exporting PNG -- try SVG');
             };
             img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data)));
             return;
         }
 
-        var baseConfig = window.SmartBRenderer && SmartBRenderer.MERMAID_CONFIG;
+        var baseConfig = window.SmartCodeRenderer && SmartCodeRenderer.MERMAID_CONFIG;
         if (!baseConfig) {
-            if (window.toast) toast('Erro: renderer nao carregado');
+            if (window.toast) toast('Error: renderer not loaded');
             return;
         }
 
-        var currentFile = (window.SmartBFileTree && SmartBFileTree.getCurrentFile()) || 'export';
+        var currentFile = (window.SmartCodeFileTree && SmartCodeFileTree.getCurrentFile()) || 'export';
 
         try {
             // Get current diagram source code (same pipeline as render())
             var editor = document.getElementById('editor');
             var code = editor.value;
-            var cleanCode = window.SmartBAnnotations
-                ? SmartBAnnotations.getCleanContent(code)
+            var cleanCode = window.SmartCodeAnnotations
+                ? SmartCodeAnnotations.getCleanContent(code)
                 : code;
             var styledCode = window.injectStatusStyles
                 ? injectStatusStyles(cleanCode)
@@ -105,6 +138,9 @@
             tempDiv.insertAdjacentHTML('afterbegin', exportSvgStr);
             var exportSvg = tempDiv.querySelector('svg');
 
+            // Copy ghost paths into the export SVG (QUAL-03)
+            copyGhostPathsToExport(exportSvg);
+
             var canvas = document.createElement('canvas');
             var ctx = canvas.getContext('2d');
             var data = new XMLSerializer().serializeToString(exportSvg);
@@ -122,22 +158,22 @@
                         download(blob, currentFile.replace('.mmd', '.png'));
                     }, 'image/png');
                 } catch (taintErr) {
-                    if (window.toast) toast('Erro ao exportar PNG -- tente SVG');
+                    if (window.toast) toast('Error exporting PNG -- try SVG');
                 }
             };
             img.onerror = function() {
-                if (window.toast) toast('Erro ao exportar PNG -- tente SVG');
+                if (window.toast) toast('Error exporting PNG -- try SVG');
             };
             img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data)));
         } catch (e) {
             // Restore original config on error
             if (baseConfig) mermaid.initialize(baseConfig);
-            if (window.toast) toast('Erro ao exportar PNG -- tente SVG');
+            if (window.toast) toast('Error exporting PNG -- try SVG');
         }
     }
 
     // ── Public API ──
-    window.SmartBExport = { exportSVG: exportSVG, exportPNG: exportPNG };
+    window.SmartCodeExport = { exportSVG: exportSVG, exportPNG: exportPNG };
 
     // Backward compat -- onclick handlers in HTML call these directly
     window.exportSVG = exportSVG;

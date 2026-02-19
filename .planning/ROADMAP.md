@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 MVP** - Phases 1-8 (shipped 2026-02-15)
 - ✅ **v2.0 Interactive Canvas + AI Observability** - Phases 9-16 (shipped 2026-02-16)
-- 🚧 **v2.1 Stability & Usability** - Phases 17-20 (in progress)
+- ✅ **v2.1 Stability & Usability** - Phases 17-20 (shipped 2026-02-19)
 
 <details>
 <summary>✅ v1.0 MVP (Phases 1-8) - SHIPPED 2026-02-15</summary>
@@ -44,7 +44,7 @@ All 8 phases completed. Custom interactive canvas (dagre + SVG), node selection/
 - [x] **Phase 17: Critical Fixes + Write Safety** - Fix data-destroying MCP bugs and race conditions so every tool call preserves existing data (completed 2026-02-19)
 - [x] **Phase 18: Ghost Paths Functional** - Ghost paths persist in .mmd files, are fully manageable from UI, and visible to AI via MCP (completed 2026-02-19)
 - [x] **Phase 19: Heatmap Practical** - Heatmap shows useful data without MCP setup, updates in real-time, and supports mode toggling (completed 2026-02-19)
-- [ ] **Phase 20: Polish** - Code quality compliance, keyboard shortcut fixes, complete exports
+- [x] **Phase 20: Polish** - Code quality compliance, keyboard shortcut fixes, complete exports (completed 2026-02-19)
 
 ## Phase Details
 
@@ -105,10 +105,10 @@ Plans:
   2. Pressing 'B' while typing in an input field, textarea, or contenteditable element does not trigger the breakpoint shortcut -- the key is correctly filtered by input context
   3. Exporting a diagram as PNG includes all visible ghost paths in the exported image
   4. RiskLevel, RiskAnnotation, and GhostPath types are importable from the smartb-diagrams package public API
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 20-01: CSS splitting, keyboard shortcut fix, PNG ghost path export, type exports
+- [x] 20-01: CSS splitting, keyboard shortcut fix, PNG ghost path export, type exports
 
 ## Progress
 
@@ -120,4 +120,4 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 | 17. Critical Fixes + Write Safety | 2/2 | Complete    | 2026-02-19 |
 | 18. Ghost Paths Functional | 2/2 | Complete    | 2026-02-19 |
 | 19. Heatmap Practical | 2/2 | Complete    | 2026-02-19 |
-| 20. Polish | 0/1 | Not started | - |
+| 20. Polish | 1/1 | Complete | 2026-02-19 |

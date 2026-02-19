@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Developers can see what their AI is thinking and intervene surgically before it finishes
-**Current focus:** Phase 20 - Polish
+**Current focus:** v2.1 milestone SHIPPED
 
 ## Current Position
 
-Phase: 20 of 20 (Polish)
-Plan: 1 of 1 in current phase
-Status: Ready
-Last activity: 2026-02-19 — Completed Phase 19 (Heatmap Practical: click tracking, real-time updates, mode toggle, empty state)
+Phase: 20 of 20 (Polish) -- COMPLETE
+Plan: 1 of 1 in current phase -- COMPLETE
+Status: v2.1 milestone shipped
+Last activity: 2026-02-19 — Completed Phase 20 (Polish: CSS split, keyboard fix, PNG ghost export, type exports)
 
-Progress: [########░░] 86% (6/7 plans across 4 phases)
+Progress: [##########] 100% (7/7 plans across 4 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6 (v2.1) | 55 (lifetime: 23 v1.0 + 26 v2.0 + 6 v2.1)
+- Total plans completed: 7 (v2.1) | 56 (lifetime: 23 v1.0 + 26 v2.0 + 7 v2.1)
 - Average duration: ~4min (v2.1)
-- Total execution time: ~24min (v2.1)
+- Total execution time: ~28min (v2.1)
 
 **By Phase:**
 
@@ -30,7 +30,7 @@ Progress: [########░░] 86% (6/7 plans across 4 phases)
 | 17. Critical Fixes + Write Safety | 2/2 | 7min | 3.5min |
 | 18. Ghost Paths Functional | 2/2 | ~8min | ~4min |
 | 19. Heatmap Practical | 2/2 | ~9min | ~4.5min |
-| 20. Polish | 0/1 | - | - |
+| 20. Polish | 1/1 | ~4min | ~4min |
 
 ## Accumulated Context
 
@@ -60,10 +60,14 @@ Recent decisions affecting current work:
 - [19]: record_step broadcasts heatmap:update with single-node delta for real-time visualization
 - [19]: ws-handler uses key count heuristic (<=3 keys = merge, >3 = replace) for delta detection
 - [19]: Mode toggle only appears when data exists in at least one mode
+- [20]: CSS split: main.css sidebar/context-menu/MCP styles extracted to sidebar.css (QUAL-01)
+- [20]: isTypingContext() guard blocks single-key shortcuts in INPUT/TEXTAREA/SELECT/contenteditable (QUAL-02)
+- [20]: copyGhostPathsToExport() clones .ghost-path SVG elements + #ghost-arrow marker into export SVG (QUAL-03)
+- [20]: Public API now exports RiskLevel, RiskAnnotation, GhostPath, GhostPathAnnotation from types.ts (QUAL-04)
 
 ### Pending Todos
 
-None yet.
+None -- v2.1 milestone complete.
 
 ### Blockers/Concerns
 
@@ -72,6 +76,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 19 (Heatmap Practical) — all 5 HEAT requirements done
+Stopped at: Completed Phase 20 (Polish) — v2.1 milestone shipped
 Resume file: None
-Next: Phase 20 (Polish) — plan and execute 20-01
+Next: v2.2 planning (deferred features: pattern memory, diagram contracts, parser unification)

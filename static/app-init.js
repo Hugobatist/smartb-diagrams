@@ -1,15 +1,6 @@
 /**
- * SmartB App Init -- bootstrap, WebSocket setup, keyboard shortcuts,
- * toast notifications, help overlay, drag & drop, module initialization.
- * Extracted from live.html (Phase 9 Plan 03).
- *
- * Dependencies: All other modules must be loaded before this script.
- *   - event-bus.js, diagram-dom.js, renderer.js, pan-zoom.js, export.js
- *   - file-tree.js, editor-panel.js, ws-client.js
- *   - collapse-ui.js, annotations.js, diagram-editor.js, search.js
- *   - ws-handler.js
- *
- * This is the last script loaded -- it wires everything together.
+ * SmartCode App Init -- bootstrap, WebSocket, keyboard shortcuts, module init.
+ * Last script loaded -- wires everything together.
  */
 (function() {
     'use strict';
@@ -64,14 +55,14 @@
 
         if (effectiveRendererType === 'custom') {
             try {
-                var currentFile = SmartBFileTree.getCurrentFile();
-                await SmartBCustomRenderer.fetchAndRender(currentFile);
+                var currentFile = SmartCodeFileTree.getCurrentFile();
+                await SmartCodeCustomRenderer.fetchAndRender(currentFile);
             } catch (e) {
                 console.warn('Custom renderer failed, falling back to Mermaid:', e.message);
-                await SmartBRenderer.render(text);
+                await SmartCodeRenderer.render(text);
             }
         } else {
-            await SmartBRenderer.render(text);
+            await SmartCodeRenderer.render(text);
         }
     }
 
@@ -91,104 +82,134 @@
         document.getElementById('helpOverlay').classList.toggle('show');
     }
 
+    // ── Typing context detection (QUAL-02) ──
+    // Returns true when the active element is an input field, textarea, select,
+    // or contenteditable -- single-key shortcuts must not fire in these contexts.
+    function isTypingContext(target) {
+        if (!target) return false;
+        var tag = target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+        if (target.isContentEditable) return true;
+        return false;
+    }
+
     // ── Keyboard shortcuts ──
     document.addEventListener('keydown', function(e) {
+        var target = e.target;
         var editor = document.getElementById('editor');
-        if (e.target === editor) return;
-        if (e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') return;
-        if (e.target.closest('.flag-popover')) return;
-        if (e.target.closest('.search-bar')) return;
-        if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); SmartBSearch.open(); return; }
-        if (e.key === 'f' && !e.ctrlKey && !e.metaKey) {
-            if (window.SmartBInteraction && SmartBInteraction.isBlocking()) return;
-            SmartBAnnotations.toggleFlagMode();
-            if (window.SmartBInteraction) SmartBInteraction.forceState(SmartBAnnotations.getState().flagMode ? 'flagging' : 'idle');
-            return;
-        }
-        if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
-            if (window.SmartBInteraction && SmartBInteraction.isBlocking()) return;
-            MmdEditor.toggleAddNode();
-            if (window.SmartBInteraction) SmartBInteraction.forceState(MmdEditor.getState().mode === 'addNode' ? 'add-node' : 'idle');
-            return;
-        }
-        if (e.key === 'a' && !e.ctrlKey && !e.metaKey) {
-            if (window.SmartBInteraction && SmartBInteraction.isBlocking()) return;
-            MmdEditor.toggleAddEdge();
-            if (window.SmartBInteraction) SmartBInteraction.forceState(MmdEditor.getState().mode === 'addEdge' ? 'add-edge' : 'idle');
-            return;
-        }
-        if ((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey) && e.shiftKey) { e.preventDefault(); MmdEditor.redo(); return; }
-        if (e.key === 'y' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); MmdEditor.redo(); return; }
-        if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) { e.preventDefault(); MmdEditor.undo(); return; }
+        if (target === editor) return;
+
+        // Modifier shortcuts (Ctrl/Cmd+key) always work, even in typing contexts
+        var hasModifier = e.ctrlKey || e.metaKey;
+
+        // Escape always works (close overlays, exit modes)
         if (e.key === 'Escape') {
-            SmartBAnnotations.closePopover(); MmdEditor.closeEditorPopover(); MmdEditor.setMode(null); SmartBSearch.close();
-            if (window.SmartBSelection) SmartBSelection.deselectAll();
-            if (window.SmartBContextMenu) SmartBContextMenu.close();
-            if (window.SmartBInlineEdit) SmartBInlineEdit.cancel();
-            if (window.SmartBInteraction && SmartBInteraction.getState() !== 'idle') {
-                SmartBInteraction.forceState('idle');
+            SmartCodeAnnotations.closePopover(); MmdEditor.closeEditorPopover(); MmdEditor.setMode(null); SmartCodeSearch.close();
+            if (window.SmartCodeSelection) SmartCodeSelection.deselectAll();
+            if (window.SmartCodeContextMenu) SmartCodeContextMenu.close();
+            if (window.SmartCodeInlineEdit) SmartCodeInlineEdit.cancel();
+            if (window.SmartCodeInteraction && SmartCodeInteraction.getState() !== 'idle') {
+                SmartCodeInteraction.forceState('idle');
             }
+            return;
         }
-        if (e.key === '?' && !e.ctrlKey) showHelp();
-        if (e.key === 'e' && (e.ctrlKey || e.metaKey)) {
+
+        // Block single-key shortcuts when typing in inputs/textareas/contenteditable
+        var typing = isTypingContext(target);
+
+        // Modifier shortcuts work regardless of typing context
+        if (e.key === 'f' && hasModifier) { e.preventDefault(); SmartCodeSearch.open(); return; }
+        if ((e.key === 'z' || e.key === 'Z') && hasModifier && e.shiftKey) { e.preventDefault(); MmdEditor.redo(); return; }
+        if (e.key === 'y' && hasModifier) { e.preventDefault(); MmdEditor.redo(); return; }
+        if (e.key === 'z' && hasModifier && !e.shiftKey) { e.preventDefault(); MmdEditor.undo(); return; }
+        if (e.key === 'e' && hasModifier) {
             e.preventDefault();
             document.getElementById('toggleEditor').click();
+            return;
         }
-        if (e.key === 'b' && (e.ctrlKey || e.metaKey)) {
+        if (e.key === 'b' && hasModifier) {
             e.preventDefault();
             document.getElementById('toggleSidebar').click();
+            return;
         }
-        if ((e.key === '=' || e.key === '+') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); zoomIn(); }
-        if (e.key === '-' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); zoomOut(); }
-        if (e.key === '0' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); zoomFit(); }
-        if (e.key === 'c' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
-            if (window.SmartBClipboard && SmartBClipboard.copy()) {
+        if ((e.key === '=' || e.key === '+') && hasModifier) { e.preventDefault(); zoomIn(); return; }
+        if (e.key === '-' && hasModifier) { e.preventDefault(); zoomOut(); return; }
+        if (e.key === '0' && hasModifier) { e.preventDefault(); zoomFit(); return; }
+        if (e.key === 'c' && hasModifier && !e.shiftKey) {
+            if (window.SmartCodeClipboard && SmartCodeClipboard.copy()) {
                 e.preventDefault();
                 if (window.toast) toast('Node copied');
             }
             return;
         }
-        if (e.key === 'v' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
-            if (window.SmartBClipboard && SmartBClipboard.hasContent()) {
+        if (e.key === 'v' && hasModifier && !e.shiftKey) {
+            if (window.SmartCodeClipboard && SmartCodeClipboard.hasContent()) {
                 e.preventDefault();
-                SmartBClipboard.paste();
+                SmartCodeClipboard.paste();
                 if (window.toast) toast('Node pasted');
             }
             return;
         }
-        if (e.key === 'd' && (e.ctrlKey || e.metaKey)) {
+        if (e.key === 'd' && hasModifier) {
             e.preventDefault();
-            if (window.SmartBClipboard && SmartBClipboard.duplicate()) {
+            if (window.SmartCodeClipboard && SmartCodeClipboard.duplicate()) {
                 if (window.toast) toast('Node duplicated');
             }
             return;
         }
-        if (e.key === ' ' && window.SmartBSessionPlayer && SmartBSessionPlayer.isVisible()) {
+
+        // Everything below is single-key shortcuts -- block when typing
+        if (typing) return;
+
+        if (target.closest('.flag-popover')) return;
+        if (target.closest('.search-bar')) return;
+
+        if (e.key === 'f') {
+            if (window.SmartCodeInteraction && SmartCodeInteraction.isBlocking()) return;
+            SmartCodeAnnotations.toggleFlagMode();
+            if (window.SmartCodeInteraction) SmartCodeInteraction.forceState(SmartCodeAnnotations.getState().flagMode ? 'flagging' : 'idle');
+            return;
+        }
+        if (e.key === 'n') {
+            if (window.SmartCodeInteraction && SmartCodeInteraction.isBlocking()) return;
+            MmdEditor.toggleAddNode();
+            if (window.SmartCodeInteraction) SmartCodeInteraction.forceState(MmdEditor.getState().mode === 'addNode' ? 'add-node' : 'idle');
+            return;
+        }
+        if (e.key === 'a') {
+            if (window.SmartCodeInteraction && SmartCodeInteraction.isBlocking()) return;
+            MmdEditor.toggleAddEdge();
+            if (window.SmartCodeInteraction) SmartCodeInteraction.forceState(MmdEditor.getState().mode === 'addEdge' ? 'add-edge' : 'idle');
+            return;
+        }
+        if (e.key === '?') { showHelp(); return; }
+        if (e.key === ' ' && window.SmartCodeSessionPlayer && SmartCodeSessionPlayer.isVisible()) {
             e.preventDefault();
-            SmartBSessionPlayer.isPlaying() ? SmartBSessionPlayer.pause() : SmartBSessionPlayer.play();
+            SmartCodeSessionPlayer.isPlaying() ? SmartCodeSessionPlayer.pause() : SmartCodeSessionPlayer.play();
             return;
         }
-        if (e.key === 'ArrowLeft' && window.SmartBSessionPlayer && SmartBSessionPlayer.isVisible()) {
-            e.preventDefault(); SmartBSessionPlayer.seekTo(SmartBSessionPlayer.getIndex() - 1); return;
+        if (e.key === 'ArrowLeft' && window.SmartCodeSessionPlayer && SmartCodeSessionPlayer.isVisible()) {
+            e.preventDefault(); SmartCodeSessionPlayer.seekTo(SmartCodeSessionPlayer.getIndex() - 1); return;
         }
-        if (e.key === 'ArrowRight' && window.SmartBSessionPlayer && SmartBSessionPlayer.isVisible()) {
-            e.preventDefault(); SmartBSessionPlayer.seekTo(SmartBSessionPlayer.getIndex() + 1); return;
+        if (e.key === 'ArrowRight' && window.SmartCodeSessionPlayer && SmartCodeSessionPlayer.isVisible()) {
+            e.preventDefault(); SmartCodeSessionPlayer.seekTo(SmartCodeSessionPlayer.getIndex() + 1); return;
         }
-        if (e.key === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            if (window.SmartBGhostPaths) SmartBGhostPaths.toggle();
+        if (e.key === 'g' && !e.altKey) {
+            if (window.SmartCodeGhostPaths) SmartCodeGhostPaths.toggle();
             return;
         }
-        if (e.key === 'h' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            if (window.SmartBHeatmap) SmartBHeatmap.toggle();
+        if (e.key === 'h' && !e.altKey) {
+            if (window.SmartCodeHeatmap) SmartCodeHeatmap.toggle();
             return;
         }
-        if (e.key === 'b' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            if (window.SmartBBreakpoints && window.SmartBSelection) {
-                var sel = SmartBSelection.getSelected();
+        if (e.key === 'b' && !e.altKey) {
+            if (window.SmartCodeBreakpoints && window.SmartCodeSelection) {
+                var sel = SmartCodeSelection.getSelected();
                 if (sel && sel.type === 'node') {
-                    SmartBBreakpoints.toggleBreakpoint(sel.id);
+                    SmartCodeBreakpoints.toggleBreakpoint(sel.id);
                 }
             }
+            return;
         }
     });
 
@@ -202,86 +223,86 @@
     // ── Init Hooks for annotations, editor, search, collapse ──
     var _initHooks = {
         getEditor: function() { return document.getElementById('editor'); },
-        getCurrentFile: function() { return SmartBFileTree.getCurrentFile(); },
-        getLastContent: function() { return SmartBFileTree.getLastContent(); },
-        setLastContent: function(v) { SmartBFileTree.setLastContent(v); },
-        saveFile: function() { SmartBFileTree.saveCurrentFile(); },
+        getCurrentFile: function() { return SmartCodeFileTree.getCurrentFile(); },
+        getLastContent: function() { return SmartCodeFileTree.getLastContent(); },
+        setLastContent: function(v) { SmartCodeFileTree.setLastContent(v); },
+        saveFile: function() { SmartCodeFileTree.saveCurrentFile(); },
         renderDiagram: renderWithType,
-        getPan: function() { return SmartBPanZoom.getPan(); },
-        setPan: function(px, py) { SmartBPanZoom.setPan(px, py); },
+        getPan: function() { return SmartCodePanZoom.getPan(); },
+        setPan: function(px, py) { SmartCodePanZoom.setPan(px, py); },
     };
 
-    // ── Set sidebar action button icons (safe: SmartBIcons are static SVG strings) ──
+    // ── Set sidebar action button icons (safe: SmartCodeIcons are static SVG strings) ──
     var _nf = document.getElementById('btnNewFolder');
-    if (_nf) _nf.innerHTML = SmartBIcons.folder;
+    if (_nf) _nf.innerHTML = SmartCodeIcons.folder;
     var _nd = document.getElementById('btnNewFile');
-    if (_nd) _nd.innerHTML = SmartBIcons.file;
+    if (_nd) _nd.innerHTML = SmartCodeIcons.file;
     var _sv = document.getElementById('btnSaveFile');
-    if (_sv) _sv.innerHTML = SmartBIcons.save;
+    if (_sv) _sv.innerHTML = SmartCodeIcons.save;
 
     // ── Inject toolbar icons from data-icon attributes ──
-    // Safe: SmartBIcons contains only static SVG strings from icons.js (trusted source)
+    // Safe: SmartCodeIcons contains only static SVG strings from icons.js (trusted source)
     document.querySelectorAll('.toolbar-icon[data-icon]').forEach(function(span) {
         var iconName = span.getAttribute('data-icon');
-        if (iconName && SmartBIcons[iconName]) {
-            span.innerHTML = SmartBIcons[iconName];
+        if (iconName && SmartCodeIcons[iconName]) {
+            span.innerHTML = SmartCodeIcons[iconName];
         }
     });
 
-    SmartBAnnotations.init(_initHooks);
+    SmartCodeAnnotations.init(_initHooks);
     MmdEditor.init(_initHooks);
-    SmartBSearch.init(_initHooks);
+    SmartCodeSearch.init(_initHooks);
 
     // ── Init Phase 13: Canvas Interaction Modules ──
-    if (window.SmartBSelection) SmartBSelection.init();
-    if (window.SmartBNodeDrag) SmartBNodeDrag.init();
-    if (window.SmartBContextMenu) SmartBContextMenu.init();
-    if (window.SmartBInlineEdit) SmartBInlineEdit.init();
+    if (window.SmartCodeSelection) SmartCodeSelection.init();
+    if (window.SmartCodeNodeDrag) SmartCodeNodeDrag.init();
+    if (window.SmartCodeContextMenu) SmartCodeContextMenu.init();
+    if (window.SmartCodeInlineEdit) SmartCodeInlineEdit.init();
 
     // ── Init Phase 15: Breakpoints & Ghost Paths ──
-    if (window.SmartBBreakpoints) SmartBBreakpoints.init();
-    if (window.SmartBGhostPaths) SmartBGhostPaths.init();
+    if (window.SmartCodeBreakpoints) SmartCodeBreakpoints.init();
+    if (window.SmartCodeGhostPaths) SmartCodeGhostPaths.init();
 
     // ── Init Phase 16: Heatmap & Session Player ──
-    if (window.SmartBHeatmap) SmartBHeatmap.init();
-    if (window.SmartBInteractionTracker) SmartBInteractionTracker.init();
-    if (window.SmartBSessionPlayer) SmartBSessionPlayer.init();
+    if (window.SmartCodeHeatmap) SmartCodeHeatmap.init();
+    if (window.SmartCodeInteractionTracker) SmartCodeInteractionTracker.init();
+    if (window.SmartCodeSessionPlayer) SmartCodeSessionPlayer.init();
 
     // ── Init MCP Sessions view ──
-    if (window.SmartBMcpSessions) SmartBMcpSessions.init();
+    if (window.SmartCodeMcpSessions) SmartCodeMcpSessions.init();
 
     // ── Init Collapse UI ──
-    if (window.SmartBCollapseUI) {
-        SmartBCollapseUI.init({
+    if (window.SmartCodeCollapseUI) {
+        SmartCodeCollapseUI.init({
             onToggle: async function(collapsedIds) {
                 try {
                     var toggleParams = new URLSearchParams();
                     if (collapsedIds.length > 0) {
                         toggleParams.set('collapsed', JSON.stringify(collapsedIds));
                     }
-                    var currentFile = SmartBFileTree.getCurrentFile();
+                    var currentFile = SmartCodeFileTree.getCurrentFile();
                     var url = baseUrl('/api/diagrams/' + encodeURIComponent(currentFile) + '?' + toggleParams.toString());
                     var resp = await fetch(url);
                     if (!resp.ok) return;
                     var data = await resp.json();
                     if (data.collapse) {
-                        SmartBCollapseUI.setConfig(data.collapse.config);
-                        SmartBCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed || []);
+                        SmartCodeCollapseUI.setConfig(data.collapse.config);
+                        SmartCodeCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed || []);
                     }
                     if (data.mermaidContent) {
                         await renderWithType(data.mermaidContent);
                     }
-                } catch (e) { console.warn('[SmartB] Collapse toggle error:', e); }
+                } catch (e) { console.warn('[SmartCode] Collapse toggle error:', e); }
             }
         });
 
-        SmartBCollapseUI.initFocusMode({
+        SmartCodeCollapseUI.initFocusMode({
             onFocusChange: async function(event) {
                 try {
-                    var currentFile = SmartBFileTree.getCurrentFile();
+                    var currentFile = SmartCodeFileTree.getCurrentFile();
                     if (event.action === 'focus') {
                         var focusParams = new URLSearchParams({ focus: event.nodeId });
-                        var collapsed = SmartBCollapseUI.getCollapsed();
+                        var collapsed = SmartCodeCollapseUI.getCollapsed();
                         if (collapsed.length > 0) {
                             focusParams.set('collapsed', JSON.stringify(collapsed));
                         }
@@ -289,10 +310,10 @@
                         if (!resp.ok) return;
                         var data = await resp.json();
                         if (data.collapse) {
-                            SmartBCollapseUI.setBreadcrumbs(data.collapse.breadcrumbs, data.collapse.focusedSubgraph);
-                            SmartBCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed || []);
+                            SmartCodeCollapseUI.setBreadcrumbs(data.collapse.breadcrumbs, data.collapse.focusedSubgraph);
+                            SmartCodeCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed || []);
                             if (data.collapse.manualCollapsed) {
-                                SmartBCollapseUI.setCollapsed(data.collapse.manualCollapsed);
+                                SmartCodeCollapseUI.setCollapsed(data.collapse.manualCollapsed);
                             }
                         }
                         if (data.mermaidContent) {
@@ -305,8 +326,8 @@
                         if (!navResp.ok) return;
                         var navData = await navResp.json();
                         if (navData.collapse) {
-                            SmartBCollapseUI.setBreadcrumbs(navData.collapse.breadcrumbs, navData.collapse.focusedSubgraph);
-                            SmartBCollapseUI.setAutoCollapsed(navData.collapse.autoCollapsed || []);
+                            SmartCodeCollapseUI.setBreadcrumbs(navData.collapse.breadcrumbs, navData.collapse.focusedSubgraph);
+                            SmartCodeCollapseUI.setAutoCollapsed(navData.collapse.autoCollapsed || []);
                         }
                         if (navData.mermaidContent) {
                             await renderWithType(navData.mermaidContent);
@@ -315,23 +336,23 @@
                         var exitResp = await fetch(baseUrl('/api/diagrams/' + encodeURIComponent(currentFile)));
                         if (!exitResp.ok) return;
                         var exitData = await exitResp.json();
-                        SmartBCollapseUI.setBreadcrumbs([], null);
-                        SmartBCollapseUI.setAutoCollapsed(exitData.collapse ? exitData.collapse.autoCollapsed || [] : []);
+                        SmartCodeCollapseUI.setBreadcrumbs([], null);
+                        SmartCodeCollapseUI.setAutoCollapsed(exitData.collapse ? exitData.collapse.autoCollapsed || [] : []);
                         if (exitData.mermaidContent) {
                             await renderWithType(exitData.mermaidContent);
                             document.getElementById('preview').classList.remove('diagram-focus-mode');
                         }
                     }
-                } catch (e) { console.warn('[SmartB] Focus mode error:', e); }
+                } catch (e) { console.warn('[SmartCode] Focus mode error:', e); }
             }
         });
     }
 
     // ── Helper: resolve URL with workspace base ──
     function baseUrl(path) {
-        return (window.SmartBBaseUrl || '') + path;
+        return (window.SmartCodeBaseUrl || '') + path;
     }
-    window.SmartBUrl = baseUrl;
+    window.SmartCodeUrl = baseUrl;
 
     // ── WebSocket context for ws-handler ──
     var wsCtx = {
@@ -358,12 +379,12 @@
         if (activeWs) activeWs.close();
         var wsUrl = buildWsUrl(newBaseUrl);
         activeWs = createReconnectingWebSocket(wsUrl,
-            function(msg) { SmartBWsHandler.handleMessage(msg, wsCtx); },
-            function(status) { SmartBWsHandler.handleStatus(status); }
+            function(msg) { SmartCodeWsHandler.handleMessage(msg, wsCtx); },
+            function(status) { SmartCodeWsHandler.handleStatus(status); }
         );
     }
 
-    window.SmartBWsReconnect = reconnectWebSocket;
+    window.SmartCodeWsReconnect = reconnectWebSocket;
 
     // ── Bootstrap: load initial file, connect WebSocket ──
     (async function() {
@@ -371,7 +392,7 @@
         hint.classList.add('show');
         setTimeout(function() { hint.classList.remove('show'); }, 4000);
 
-        var currentFile = SmartBFileTree.getCurrentFile();
+        var currentFile = SmartCodeFileTree.getCurrentFile();
         var editor = document.getElementById('editor');
 
         try {
@@ -379,12 +400,12 @@
             if (resp.ok) {
                 var text = await resp.text();
                 editor.value = text;
-                SmartBFileTree.setLastContent(text);
+                SmartCodeFileTree.setLastContent(text);
                 await renderWithType(text);
             }
-        } catch (e) { console.warn('[SmartB] Initial file load error:', e); }
+        } catch (e) { console.warn('[SmartCode] Initial file load error:', e); }
 
-        if (!SmartBFileTree.getLastContent() && editor.value.trim()) {
+        if (!SmartCodeFileTree.getLastContent() && editor.value.trim()) {
             await renderWithType(editor.value);
         }
 
@@ -396,51 +417,51 @@
                     if (data.validation && data.validation.diagramType) {
                         effectiveRendererType = selectRendererType(data.validation.diagramType);
                         if (effectiveRendererType === 'custom') {
-                            await SmartBCustomRenderer.fetchAndRender(currentFile);
+                            await SmartCodeCustomRenderer.fetchAndRender(currentFile);
                         }
                         updateRendererIndicator();
                     }
-                    if (window.SmartBCollapseUI && data.collapse) {
-                        SmartBCollapseUI.setConfig(data.collapse.config);
+                    if (window.SmartCodeCollapseUI && data.collapse) {
+                        SmartCodeCollapseUI.setConfig(data.collapse.config);
                         if (data.collapse.autoCollapsed && data.collapse.autoCollapsed.length > 0) {
-                            SmartBCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed);
+                            SmartCodeCollapseUI.setAutoCollapsed(data.collapse.autoCollapsed);
                             if (data.mermaidContent) await renderWithType(data.mermaidContent);
                         }
                     }
                 }
             } catch (e) { /* keep Mermaid as fallback */ }
 
-            if (window.SmartBGhostPaths) {
+            if (window.SmartCodeGhostPaths) {
                 try {
                     var gpResp = await fetch(baseUrl('/api/ghost-paths/' + encodeURIComponent(currentFile)));
                     if (gpResp.ok) {
                         var gpData = await gpResp.json();
-                        SmartBGhostPaths.updateGhostPaths(currentFile, gpData.ghostPaths || []);
+                        SmartCodeGhostPaths.updateGhostPaths(currentFile, gpData.ghostPaths || []);
                     }
                 } catch (e) {}
             }
 
-            if (window.SmartBHeatmap) {
+            if (window.SmartCodeHeatmap) {
                 fetch(baseUrl('/api/heatmap/' + encodeURIComponent(currentFile)))
                     .then(function(r) { return r.ok ? r.json() : null; })
-                    .then(function(data) { if (data) SmartBHeatmap.updateVisitCounts(data); })
+                    .then(function(data) { if (data) SmartCodeHeatmap.updateVisitCounts(data); })
                     .catch(function() {});
             }
 
-            if (window.SmartBSessionPlayer) SmartBSessionPlayer.fetchSessionList(currentFile);
+            if (window.SmartCodeSessionPlayer) SmartCodeSessionPlayer.fetchSessionList(currentFile);
         }
 
         // WebSocket real-time sync
-        var wsUrl = buildWsUrl(window.SmartBBaseUrl);
+        var wsUrl = buildWsUrl(window.SmartCodeBaseUrl);
         activeWs = createReconnectingWebSocket(wsUrl,
-            function(msg) { SmartBWsHandler.handleMessage(msg, wsCtx); },
-            function(status) { SmartBWsHandler.handleStatus(status); }
+            function(msg) { SmartCodeWsHandler.handleMessage(msg, wsCtx); },
+            function(status) { SmartCodeWsHandler.handleStatus(status); }
         );
 
         updateRendererIndicator();
     })();
 
-    SmartBFileTree.refreshFileList();
+    SmartCodeFileTree.refreshFileList();
 
     var resizeTimer = null;
     window.addEventListener('resize', function() {
@@ -457,15 +478,15 @@
         var text = await file.text();
         var editor = document.getElementById('editor');
         editor.value = text;
-        SmartBFileTree.setLastContent(text);
-        SmartBFileTree.setCurrentFile(file.name);
+        SmartCodeFileTree.setLastContent(text);
+        SmartCodeFileTree.setCurrentFile(file.name);
         document.getElementById('currentFileName').textContent = file.name;
-        SmartBFileTree.refreshFileList();
+        SmartCodeFileTree.refreshFileList();
         renderWithType(text);
     });
 
     // ── Public API ──
-    window.SmartBApp = {
+    window.SmartCodeApp = {
         toast: toast,
         showHelp: showHelp,
         get rendererType() { return effectiveRendererType; },
