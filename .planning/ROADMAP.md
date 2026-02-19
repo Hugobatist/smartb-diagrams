@@ -41,7 +41,7 @@ All 8 phases completed. Custom interactive canvas (dagre + SVG), node selection/
 - Integer phases (17, 18, 19, 20): Planned milestone work
 - Decimal phases (e.g., 17.1): Urgent insertions if needed (marked with INSERTED)
 
-- [ ] **Phase 17: Critical Fixes + Write Safety** - Fix data-destroying MCP bugs and race conditions so every tool call preserves existing data
+- [x] **Phase 17: Critical Fixes + Write Safety** - Fix data-destroying MCP bugs and race conditions so every tool call preserves existing data (completed 2026-02-19)
 - [ ] **Phase 18: Ghost Paths Functional** - Ghost paths persist in .mmd files, are fully manageable from UI, and visible to AI via MCP
 - [ ] **Phase 19: Heatmap Practical** - Heatmap shows useful data without MCP setup, updates in real-time, and supports mode toggling
 - [ ] **Phase 20: Polish** - Code quality compliance, keyboard shortcut fixes, complete exports
@@ -117,7 +117,7 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Critical Fixes + Write Safety | 1/2 | In Progress|  |
+| 17. Critical Fixes + Write Safety | 2/2 | Complete   | 2026-02-19 |
 | 18. Ghost Paths Functional | 0/2 | Not started | - |
 | 19. Heatmap Practical | 0/2 | Not started | - |
 | 20. Polish | 0/1 | Not started | - |

@@ -5,29 +5,29 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Developers can see what their AI is thinking and intervene surgically before it finishes
-**Current focus:** Phase 17 - Critical Fixes + Write Safety
+**Current focus:** Phase 18 - Ghost Paths Functional
 
 ## Current Position
 
-Phase: 17 of 20 (Critical Fixes + Write Safety)
+Phase: 18 of 20 (Ghost Paths Functional)
 Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-02-19 — Completed 17-01 (Write Safety: annotation preservation + write lock + modal fix)
+Status: Ready
+Last activity: 2026-02-19 — Completed 17-02 (MCP context completeness + FileWatcher reliability + watcher cleanup)
 
-Progress: [##░░░░░░░░] 14% (1/7 plans across 4 phases)
+Progress: [###░░░░░░░] 29% (2/7 plans across 4 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1 (v2.1) | 50 (lifetime: 23 v1.0 + 26 v2.0 + 1 v2.1)
-- Average duration: 3min (v2.1)
-- Total execution time: 3min (v2.1)
+- Total plans completed: 2 (v2.1) | 51 (lifetime: 23 v1.0 + 26 v2.0 + 2 v2.1)
+- Average duration: 3.5min (v2.1)
+- Total execution time: 7min (v2.1)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 17. Critical Fixes + Write Safety | 1/2 | 3min | 3min |
+| 17. Critical Fixes + Write Safety | 2/2 | 7min | 3.5min |
 | 18. Ghost Paths Functional | 0/2 | - | - |
 | 19. Heatmap Practical | 0/2 | - | - |
 | 20. Polish | 0/1 | - | - |
@@ -46,6 +46,9 @@ Recent decisions affecting current work:
 - [17-01]: writeDiagramPreserving uses read-merge-write pattern to unconditionally preserve flags/breakpoints
 - [17-01]: writeRaw provides raw write under lock for /save (no annotation processing)
 - [17-01]: allowEmpty for modal prompt is opt-in (default false) to protect existing callers
+- [17-02]: DiagramContent extended with breakpoints/risks to match parseAllAnnotations output
+- [17-02]: FileWatcher ready-gate pattern: discoverMmdFiles resolves before first handleEvent
+- [17-02]: closeAllWatchers iterates all watchers (default + named projects) for leak-free shutdown
 
 ### Pending Todos
 
@@ -59,5 +62,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 17-01-PLAN.md
+Stopped at: Completed 17-02-PLAN.md (Phase 17 complete)
 Resume file: None

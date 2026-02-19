@@ -12,15 +12,15 @@ Requirements for stability and usability release. Each maps to roadmap phases.
 ### Critical MCP Fixes
 
 - [x] **MCP-01**: `update_diagram` preserves existing flags and breakpoints instead of destroying them
-- [ ] **MCP-02**: `get_diagram_context` returns ghost paths, breakpoints, and risk annotations
-- [ ] **MCP-03**: `DiagramContent` type includes breakpoints and risks fields
+- [x] **MCP-02**: `get_diagram_context` returns ghost paths, breakpoints, and risk annotations
+- [x] **MCP-03**: `DiagramContent` type includes breakpoints and risks fields
 - [x] **MCP-04**: Modal prompt allows empty/optional input (fixes ghost path creation from UI)
 
 ### Write Safety
 
 - [x] **SAFE-01**: `/save` endpoint routes through DiagramService write lock (prevents race with MCP)
-- [ ] **SAFE-02**: FileWatcher pre-populates `knownFiles` on startup (fixes first-event misclassification)
-- [ ] **SAFE-03**: Additional project watchers are closed on server shutdown
+- [x] **SAFE-02**: FileWatcher pre-populates `knownFiles` on startup (fixes first-event misclassification)
+- [x] **SAFE-03**: Additional project watchers are closed on server shutdown
 
 ### Ghost Path Usability
 
@@ -76,12 +76,12 @@ Requirements for stability and usability release. Each maps to roadmap phases.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | MCP-01 | Phase 17 | Complete |
-| MCP-02 | Phase 17 | Pending |
-| MCP-03 | Phase 17 | Pending |
+| MCP-02 | Phase 17 | Complete |
+| MCP-03 | Phase 17 | Complete |
 | MCP-04 | Phase 17 | Complete |
 | SAFE-01 | Phase 17 | Complete |
-| SAFE-02 | Phase 17 | Pending |
-| SAFE-03 | Phase 17 | Pending |
+| SAFE-02 | Phase 17 | Complete |
+| SAFE-03 | Phase 17 | Complete |
 | GHOST-01 | Phase 18 | Pending |
 | GHOST-02 | Phase 18 | Pending |
 | GHOST-03 | Phase 18 | Pending |
