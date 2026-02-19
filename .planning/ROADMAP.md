@@ -42,7 +42,7 @@ All 8 phases completed. Custom interactive canvas (dagre + SVG), node selection/
 - Decimal phases (e.g., 17.1): Urgent insertions if needed (marked with INSERTED)
 
 - [x] **Phase 17: Critical Fixes + Write Safety** - Fix data-destroying MCP bugs and race conditions so every tool call preserves existing data (completed 2026-02-19)
-- [ ] **Phase 18: Ghost Paths Functional** - Ghost paths persist in .mmd files, are fully manageable from UI, and visible to AI via MCP
+- [x] **Phase 18: Ghost Paths Functional** - Ghost paths persist in .mmd files, are fully manageable from UI, and visible to AI via MCP (completed 2026-02-19)
 - [ ] **Phase 19: Heatmap Practical** - Heatmap shows useful data without MCP setup, updates in real-time, and supports mode toggling
 - [ ] **Phase 20: Polish** - Code quality compliance, keyboard shortcut fixes, complete exports
 
@@ -74,11 +74,11 @@ Plans:
   3. A "Clear All" button removes all ghost paths for the current file, and individual ghost paths can be deleted via context menu or list panel
   4. The ghost path toggle (G key) respects the user's preference -- if the user explicitly hid ghost paths, auto-show from new data does not override their choice
   5. Both the backend (annotations.ts) and frontend (annotations.js) correctly parse and serialize @ghost annotations without destroying each other's output
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 18-01: Backend @ghost annotation parsing, serialization, and persistence (annotations.ts, DiagramService)
-- [ ] 18-02: Frontend @ghost parsing, load-on-open, clear/delete UI, toggle preference, G shortcut (annotations.js, ghost-paths.js)
+- [x] 18-01-PLAN.md -- Backend @ghost annotation parsing, serialization, and persistence (annotations.ts, DiagramService)
+- [x] 18-02-PLAN.md -- Frontend @ghost parsing, load-on-open, clear/delete UI, toggle preference, G shortcut (annotations.js, ghost-paths.js)
 
 ### Phase 19: Heatmap Practical
 **Goal**: The heatmap shows useful data from the moment a user starts clicking on nodes -- no MCP session setup required. During active sessions, data updates in real-time. Users can switch between risk and frequency views.
@@ -118,6 +118,6 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 17. Critical Fixes + Write Safety | 2/2 | Complete    | 2026-02-19 |
-| 18. Ghost Paths Functional | 0/2 | Not started | - |
+| 18. Ghost Paths Functional | 2/2 | Complete    | 2026-02-19 |
 | 19. Heatmap Practical | 0/2 | Not started | - |
 | 20. Polish | 0/1 | Not started | - |

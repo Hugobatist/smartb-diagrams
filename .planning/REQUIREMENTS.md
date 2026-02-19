@@ -24,13 +24,13 @@ Requirements for stability and usability release. Each maps to roadmap phases.
 
 ### Ghost Path Usability
 
-- [ ] **GHOST-01**: Ghost paths persist as `@ghost FROM TO "label"` annotations in .mmd files
-- [ ] **GHOST-02**: Both backend (annotations.ts) and frontend (annotations.js) parse/serialize @ghost
-- [ ] **GHOST-03**: Ghost paths load from file on page load and file switch
-- [ ] **GHOST-04**: UI button to clear all ghost paths for current file
-- [ ] **GHOST-05**: Individual ghost path deletion via context menu or list panel
-- [ ] **GHOST-06**: Auto-show respects user's explicit hide preference (no forced visibility)
-- [ ] **GHOST-07**: Keyboard shortcut (G key) for ghost path toggle
+- [x] **GHOST-01**: Ghost paths persist as `@ghost FROM TO "label"` annotations in .mmd files
+- [x] **GHOST-02**: Both backend (annotations.ts) and frontend (annotations.js) parse/serialize @ghost
+- [x] **GHOST-03**: Ghost paths load from file on page load and file switch
+- [x] **GHOST-04**: UI button to clear all ghost paths for current file
+- [x] **GHOST-05**: Individual ghost path deletion via context menu or list panel
+- [x] **GHOST-06**: Auto-show respects user's explicit hide preference (no forced visibility)
+- [x] **GHOST-07**: Keyboard shortcut (G key) for ghost path toggle
 
 ### Heatmap Usability
 
@@ -82,13 +82,13 @@ Requirements for stability and usability release. Each maps to roadmap phases.
 | SAFE-01 | Phase 17 | Complete |
 | SAFE-02 | Phase 17 | Complete |
 | SAFE-03 | Phase 17 | Complete |
-| GHOST-01 | Phase 18 | Pending |
-| GHOST-02 | Phase 18 | Pending |
-| GHOST-03 | Phase 18 | Pending |
-| GHOST-04 | Phase 18 | Pending |
-| GHOST-05 | Phase 18 | Pending |
-| GHOST-06 | Phase 18 | Pending |
-| GHOST-07 | Phase 18 | Pending |
+| GHOST-01 | Phase 18 | Complete |
+| GHOST-02 | Phase 18 | Complete |
+| GHOST-03 | Phase 18 | Complete |
+| GHOST-04 | Phase 18 | Complete |
+| GHOST-05 | Phase 18 | Complete |
+| GHOST-06 | Phase 18 | Complete |
+| GHOST-07 | Phase 18 | Complete |
 | HEAT-01 | Phase 19 | Pending |
 | HEAT-02 | Phase 19 | Pending |
 | HEAT-03 | Phase 19 | Pending |
