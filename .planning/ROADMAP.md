@@ -117,7 +117,7 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Critical Fixes + Write Safety | 0/2 | Not started | - |
+| 17. Critical Fixes + Write Safety | 1/2 | In Progress|  |
 | 18. Ghost Paths Functional | 0/2 | Not started | - |
 | 19. Heatmap Practical | 0/2 | Not started | - |
 | 20. Polish | 0/1 | Not started | - |

@@ -10,24 +10,24 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 17 of 20 (Critical Fixes + Write Safety)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-02-19 — Roadmap created for v2.1 Stability & Usability milestone
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-02-19 — Completed 17-01 (Write Safety: annotation preservation + write lock + modal fix)
 
-Progress: [░░░░░░░░░░] 0% (0/7 plans across 4 phases)
+Progress: [##░░░░░░░░] 14% (1/7 plans across 4 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (v2.1) | 49 (lifetime: 23 v1.0 + 26 v2.0)
-- Average duration: TBD
-- Total execution time: TBD
+- Total plans completed: 1 (v2.1) | 50 (lifetime: 23 v1.0 + 26 v2.0 + 1 v2.1)
+- Average duration: 3min (v2.1)
+- Total execution time: 3min (v2.1)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 17. Critical Fixes + Write Safety | 0/2 | - | - |
+| 17. Critical Fixes + Write Safety | 1/2 | 3min | 3min |
 | 18. Ghost Paths Functional | 0/2 | - | - |
 | 19. Heatmap Practical | 0/2 | - | - |
 | 20. Polish | 0/1 | - | - |
@@ -43,6 +43,9 @@ Recent decisions affecting current work:
 - [v2.1]: Both parsers (backend annotations.ts + frontend annotations.js) must be updated atomically for @ghost
 - [v2.1]: Heatmap auto-tracking via browser clicks (PointerEvent delegation on #preview)
 - [v2.1]: Phase 18 (ghost paths) is highest risk due to dual-parser destruction potential
+- [17-01]: writeDiagramPreserving uses read-merge-write pattern to unconditionally preserve flags/breakpoints
+- [17-01]: writeRaw provides raw write under lock for /save (no annotation processing)
+- [17-01]: allowEmpty for modal prompt is opt-in (default false) to protect existing callers
 
 ### Pending Todos
 
@@ -56,5 +59,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Roadmap and state initialized for v2.1 milestone
+Stopped at: Completed 17-01-PLAN.md
 Resume file: None
