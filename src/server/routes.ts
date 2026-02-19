@@ -17,11 +17,13 @@ import {
 } from '../diagram/collapser.js';
 import { serializeGraphModel } from '../diagram/graph-serializer.js';
 import { GhostPathStore } from './ghost-store.js';
-import type { GhostPath } from '../diagram/types.js';
 import type { SessionStore } from '../session/session-store.js';
 import { registerSessionRoutes } from './session-routes.js';
 import { registerFileRoutes } from './file-routes.js';
 import { registerBreakpointRoutes } from './breakpoint-routes.js';
+import { registerGhostPathRoutes } from './ghost-path-routes.js';
+import { registerAnnotationRoutes } from './annotation-routes.js';
+import { registerMcpSessionRoutes } from './mcp-session-routes.js';
 import { list as listWorkspaces } from '../registry/workspace-registry.js';
 
 /**
@@ -199,28 +201,19 @@ export function registerRoutes(
   // ── Breakpoint routes ──
   registerBreakpointRoutes(routes, service, wsManager, breakpointContinueSignals);
 
-  // -------------------------------------------------------
-  // GET /api/ghost-paths/:file -- Get ghost paths for a file
-  // -------------------------------------------------------
-  routes.push({
-    method: 'GET',
-    pattern: new RegExp('^/api/ghost-paths/(?<file>.+)$'),
-    handler: async (_req: IncomingMessage, res: ServerResponse, params: Record<string, string>) => {
-      try {
-        const file = decodeURIComponent(params['file']!);
-        const ghosts: GhostPath[] = ghostStore ? ghostStore.get(file) : [];
-        sendJson(res, { ghostPaths: ghosts });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        sendJson(res, { error: message }, 500);
-      }
-    },
-  });
+  // ── Ghost path routes ──
+  registerGhostPathRoutes(routes, ghostStore, wsManager);
+
+  // ── Annotation routes (risk levels) ──
+  registerAnnotationRoutes(routes, service);
 
   // ── Session + Heatmap routes ──
   if (sessionStore) {
     registerSessionRoutes(routes, sessionStore);
   }
+
+  // ── MCP Session discovery routes ──
+  registerMcpSessionRoutes(routes, projectDir, wsManager);
 
   // -------------------------------------------------------
   // GET /api/workspaces -- List all registered workspace instances

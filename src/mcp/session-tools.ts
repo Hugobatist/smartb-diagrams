@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { DiagramService } from '../diagram/service.js';
 import type { SessionStore } from '../session/session-store.js';
 import type { WebSocketManager } from '../server/websocket.js';
+import type { McpSessionRegistry } from '../registry/mcp-session-registry.js';
 import type { SessionEvent } from '../session/session-types.js';
 import {
   StartSessionInput,
@@ -25,6 +26,7 @@ export function registerSessionTools(
   options?: {
     sessionStore?: SessionStore;
     wsManager?: WebSocketManager;
+    mcpSessionRegistry?: McpSessionRegistry;
   },
 ): void {
   // Tool 8: start_session (Phase 16)
@@ -52,6 +54,13 @@ export function registerSessionTools(
         }
 
         const sessionId = await sessionStore.startSession(filePath);
+
+        if (options?.mcpSessionRegistry) {
+          options.mcpSessionRegistry.trackDiagram(filePath).catch(() => {});
+          if (options?.wsManager) {
+            options.wsManager.broadcastAll({ type: 'mcp-session:updated' });
+          }
+        }
 
         return {
           content: [
@@ -196,6 +205,13 @@ export function registerSessionTools(
     async ({ filePath, nodeId, level, reason }) => {
       try {
         await service.setRisk(filePath, nodeId, level, reason);
+
+        if (options?.mcpSessionRegistry) {
+          options.mcpSessionRegistry.trackDiagram(filePath).catch(() => {});
+          if (options?.wsManager) {
+            options.wsManager.broadcastAll({ type: 'mcp-session:updated' });
+          }
+        }
 
         return {
           content: [

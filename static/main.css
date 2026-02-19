@@ -84,6 +84,17 @@ body {
     font-weight: 400;
 }
 
+/* -- Toolbar icon spans -- */
+.toolbar-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.toolbar-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
 .toolbar-badge {
     font-size: 10px;
     font-weight: 600;
@@ -444,8 +455,123 @@ kbd {
 .context-menu-item.danger { color: var(--status-problem); }
 .context-menu-item.danger:hover { background: rgba(239,68,68,0.15); }
 .context-menu-separator { height: 1px; background: var(--border-default); margin: 4px 0; }
+.context-menu-submenu { font-size: 12px; padding-left: 24px; }
+.context-menu-item.risk-high { color: var(--status-problem); }
+.context-menu-item.risk-medium { color: var(--status-progress); }
+.context-menu-item.risk-low { color: var(--status-ok); }
 
 /* -- Selection -- */
 .selected-edge path { stroke: var(--accent) !important; stroke-width: 3 !important; }
 .selected-edge .smartb-edge-path { stroke: var(--accent) !important; stroke-width: 3 !important; }
 .selection-indicator { pointer-events: none; }
+
+/* -- Sidebar Tabs (Files / Sessions) -- */
+.sidebar-tabs {
+    display: flex;
+    gap: 2px;
+}
+.sidebar-tab {
+    padding: 4px 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+.sidebar-tab:hover { color: var(--text-secondary); background: var(--surface-3); }
+.sidebar-tab.active { color: var(--text-primary); background: var(--surface-3); }
+
+/* -- MCP Session Cards -- */
+.mcp-session-card {
+    margin: 4px 6px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.mcp-session-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: var(--surface-2);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.mcp-session-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.mcp-session-dot.active { background: var(--status-ok); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+.mcp-session-dot.inactive { background: var(--text-tertiary); }
+.mcp-session-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcp-session-time { font-size: 10px; color: var(--text-tertiary); font-weight: 400; white-space: nowrap; }
+.mcp-session-rename-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 0;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+.mcp-session-header:hover .mcp-session-rename-btn { opacity: 1; }
+.mcp-session-rename-btn:hover { background: var(--surface-3); color: var(--text-primary); }
+.mcp-session-nofiles { padding: 6px 10px; font-size: 11px; color: var(--text-tertiary); }
+.mcp-session-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 18px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: background 0.1s;
+}
+.mcp-session-file:hover { background: var(--surface-3); color: var(--text-primary); }
+.mcp-session-file.active { background: var(--accent-muted); color: var(--accent); }
+.mcp-session-file-icon { display: flex; align-items: center; flex-shrink: 0; }
+.mcp-session-file-icon svg { width: 13px; height: 13px; }
+.mcp-session-file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcp-session-divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 10px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.mcp-session-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+}
+.mcp-sessions-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.mcp-sessions-empty-icon { margin-bottom: 8px; opacity: 0.5; }
+.mcp-sessions-empty-icon svg { width: 24px; height: 24px; }

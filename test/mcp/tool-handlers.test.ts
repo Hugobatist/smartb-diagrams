@@ -617,7 +617,7 @@ describe('MCP tool handlers', () => {
   // All 11 tools are registered
   // -------------------------------------------------------------------
 
-  it('registers all 11 expected tools', () => {
+  it('registers all 12 expected tools', () => {
     const expected = [
       'update_diagram',
       'read_flags',
@@ -626,6 +626,7 @@ describe('MCP tool handlers', () => {
       'get_correction_context',
       'check_breakpoints',
       'record_ghost_path',
+      'create_mcp_session',
       'start_session',
       'record_step',
       'end_session',
@@ -635,6 +636,6 @@ describe('MCP tool handlers', () => {
     for (const name of expected) {
       expect(tools.has(name), `Tool "${name}" should be registered`).toBe(true);
     }
-    expect(tools.size).toBe(11);
+    expect(tools.size).toBe(12);
   });
 });

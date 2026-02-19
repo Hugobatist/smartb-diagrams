@@ -112,6 +112,16 @@ export const RecordGhostPathInput = {
     .describe('Optional reason for discarding this path'),
 };
 
+// Tool 12: create_mcp_session
+export const CreateMcpSessionInput = {
+  label: z
+    .string()
+    .optional()
+    .describe(
+      'Human-readable label for this session (e.g., "Debug auth bug"). Auto-generated if not provided.',
+    ),
+};
+
 // Phase 16: Session recording + risk annotation schemas
 
 export const StartSessionInput = {

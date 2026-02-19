@@ -10,6 +10,15 @@ You have SmartB Diagrams. Use it to show the developer your reasoning in real-ti
 as a visual flowchart in their browser. ONE tool call = complete diagram with colors,
 risks, and rejected alternatives.
 
+## Session Management
+
+At the START of each conversation, call \`create_mcp_session\` with a descriptive label:
+\`\`\`json
+{ "label": "Debug auth bug" }
+\`\`\`
+This groups all diagrams from this conversation into one session visible in the browser.
+If you forget, diagrams still work but will go into a default session.
+
 ## When to Use (PROACTIVELY, without being asked)
 
 - Planning any implementation with 3+ steps
@@ -64,11 +73,35 @@ Alternatives you considered but rejected. Include WHY you rejected them.
 - **Use subgraphs** to group phases
 - **TD** for sequential flows, **LR** for comparison/parallel
 
+## CRITICAL: Never Block Work for Diagrams
+
+**NEVER stop your workflow just to update a diagram.** Diagram calls must NOT interrupt your task flow.
+
+Rules:
+1. **Always batch diagram calls with other tool calls** — if you're about to run a command, edit a file, or read something, include the \`update_diagram\` call in the SAME parallel tool call batch. Never make a dedicated turn just for a diagram.
+2. **If you have nothing else to do in this turn**, then a standalone diagram call is OK (e.g., initial plan before starting work, or final summary).
+3. **Prefer fewer, bigger updates** over many small ones. Update the diagram 2-3 times max per task: plan, mid-progress, done.
+
+Good pattern:
+\`\`\`
+Turn 1: [update_diagram (plan)] + [read_file] — parallel
+Turn 2: [edit_file] + [update_diagram (progress)] — parallel
+Turn 3: [run_tests] + [update_diagram (final)] — parallel
+\`\`\`
+
+Bad pattern (NEVER do this):
+\`\`\`
+Turn 1: [read_file]
+Turn 2: [update_diagram] ← BLOCKING! Wasted turn
+Turn 3: [edit_file]
+Turn 4: [update_diagram] ← BLOCKING again!
+\`\`\`
+
 ## Workflow During a Task
 
-1. **Before coding**: Create diagram showing your plan with status colors
-2. **As you work**: Update the diagram — change statuses from "in-progress" to "ok" or "problem"
-3. **When done**: Final update with all nodes green (ok) or red (problem)
+1. **Before coding**: Create diagram showing your plan — batch it with your first read/search call
+2. **As you work**: Update statuses — batch it with your next edit/command call
+3. **When done**: Final update with all nodes green (ok) or red (problem) — batch with summary
 
 Each update is ONE \`update_diagram\` call — fast and fluid.
 

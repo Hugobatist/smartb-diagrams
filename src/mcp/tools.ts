@@ -3,6 +3,7 @@ import type { DiagramService } from '../diagram/service.js';
 import type { GhostPathStore } from '../server/ghost-store.js';
 import type { WebSocketManager } from '../server/websocket.js';
 import type { SessionStore } from '../session/session-store.js';
+import type { McpSessionRegistry } from '../registry/mcp-session-registry.js';
 import {
   UpdateDiagramInput,
   ReadFlagsInput,
@@ -11,6 +12,7 @@ import {
   GetCorrectionContextInput,
   CheckBreakpointsInput,
   RecordGhostPathInput,
+  CreateMcpSessionInput,
 } from './schemas.js';
 import { registerSessionTools } from './session-tools.js';
 
@@ -26,6 +28,9 @@ import { registerSessionTools } from './session-tools.js';
  * - check_breakpoints: Check if a node has a breakpoint, returns 'pause' or 'continue'
  * - record_ghost_path: Record a discarded reasoning branch as a ghost path
  *
+ * Tool 12:
+ * - create_mcp_session: Start a new MCP session to group diagrams per conversation
+ *
  * Tools 8-11 (Phase 16, registered via session-tools.ts):
  * - start_session: Start a new JSONL recording session
  * - record_step: Record a node visit event in a session
@@ -40,6 +45,7 @@ export function registerTools(
     wsManager?: WebSocketManager;
     breakpointContinueSignals?: Map<string, boolean>;
     sessionStore?: SessionStore;
+    mcpSessionRegistry?: McpSessionRegistry;
   },
 ): void {
   // Tool 1: update_diagram (MCP-02) — all-in-one: diagram + statuses + risks + ghost paths
@@ -72,6 +78,14 @@ export function registerTools(
 
         // Write diagram with all annotations in a single atomic write
         await service.writeDiagram(filePath, content, undefined, statusMap, undefined, riskMap);
+
+        // Track diagram in MCP session registry and notify browsers
+        if (options?.mcpSessionRegistry) {
+          options.mcpSessionRegistry.trackDiagram(filePath).catch(() => {});
+          if (options?.wsManager) {
+            options.wsManager.broadcastAll({ type: 'mcp-session:updated' });
+          }
+        }
 
         // Process ghost paths (in-memory store, broadcast via WebSocket)
         const ghostStore = options?.ghostStore;
@@ -207,6 +221,12 @@ export function registerTools(
     async ({ filePath, nodeId, status }) => {
       try {
         await service.setStatus(filePath, nodeId, status);
+        if (options?.mcpSessionRegistry) {
+          options.mcpSessionRegistry.trackDiagram(filePath).catch(() => {});
+          if (options?.wsManager) {
+            options.wsManager.broadcastAll({ type: 'mcp-session:updated' });
+          }
+        }
         return {
           content: [
             {
@@ -356,6 +376,12 @@ export function registerTools(
     },
     async ({ filePath, fromNodeId, toNodeId, label }) => {
       try {
+        if (options?.mcpSessionRegistry) {
+          options.mcpSessionRegistry.trackDiagram(filePath).catch(() => {});
+          if (options?.wsManager) {
+            options.wsManager.broadcastAll({ type: 'mcp-session:updated' });
+          }
+        }
         const ghostStore = options?.ghostStore;
 
         if (ghostStore) {
@@ -409,9 +435,44 @@ export function registerTools(
     },
   );
 
+  // Tool 12: create_mcp_session -- Start a new session per conversation
+  server.registerTool(
+    'create_mcp_session',
+    {
+      description:
+        'Start a new MCP session to group diagrams for this conversation. ' +
+        'Call at the start of each conversation to keep diagrams organized.',
+      inputSchema: CreateMcpSessionInput,
+    },
+    async ({ label }) => {
+      try {
+        if (!options?.mcpSessionRegistry) {
+          return {
+            content: [{ type: 'text' as const, text: 'MCP sessions require --serve mode' }],
+            isError: true,
+          };
+        }
+        const sessionId = await options.mcpSessionRegistry.createSession(label);
+        if (options?.wsManager) {
+          options.wsManager.broadcastAll({ type: 'mcp-session:updated' });
+        }
+        return {
+          content: [{ type: 'text' as const, text: `Session created: ${sessionId} (label: ${label || 'auto'})` }],
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return {
+          content: [{ type: 'text' as const, text: message }],
+          isError: true,
+        };
+      }
+    },
+  );
+
   // Tools 8-11: Session recording + risk annotation (Phase 16)
   registerSessionTools(server, service, {
     sessionStore: options?.sessionStore,
     wsManager: options?.wsManager,
+    mcpSessionRegistry: options?.mcpSessionRegistry,
   });
 }
