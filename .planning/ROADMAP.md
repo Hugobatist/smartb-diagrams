@@ -58,11 +58,11 @@ All 8 phases completed. Custom interactive canvas (dagre + SVG), node selection/
   3. The modal prompt for ghost path creation accepts empty/blank label input without blocking -- developers can create ghost paths with optional labels from the UI
   4. Saving a file via /save while an MCP tool is writing to the same file does not corrupt either write -- the write lock serializes access
   5. The first file change after server startup triggers a correct "change" event (not "add") for files that already existed when the server started
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 17-01: MCP write safety (update_diagram annotation preservation, /save write lock routing)
-- [ ] 17-02: MCP read completeness (get_diagram_context, DiagramContent types, modal fix, FileWatcher init, watcher cleanup)
+- [ ] 17-01-PLAN.md -- MCP write safety (update_diagram annotation preservation, /save write lock, modal empty input)
+- [ ] 17-02-PLAN.md -- MCP read completeness (get_diagram_context, DiagramContent types, FileWatcher init, watcher cleanup)
 
 ### Phase 18: Ghost Paths Functional
 **Goal**: Ghost paths survive server restarts by persisting as @ghost annotations in .mmd files, load automatically on page open, and can be managed (created, deleted individually or in bulk) entirely from the browser UI
