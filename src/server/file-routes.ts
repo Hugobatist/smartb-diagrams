@@ -1,4 +1,4 @@
-import { writeFile, mkdir, unlink, rename, rm } from 'node:fs/promises';
+import { mkdir, unlink, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { DiagramService } from '../diagram/service.js';
@@ -46,9 +46,7 @@ export function registerFileRoutes(
           sendJson(res, { error: 'Missing filename or content' }, 400);
           return;
         }
-        const resolved = resolveProjectPath(projectDir, body.filename);
-        await mkdir(path.dirname(resolved), { recursive: true });
-        await writeFile(resolved, body.content, 'utf-8');
+        await service.writeRaw(body.filename, body.content);
         sendJson(res, { ok: true });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';

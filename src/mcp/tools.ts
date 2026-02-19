@@ -76,8 +76,8 @@ export function registerTools(
             )
           : undefined;
 
-        // Write diagram with all annotations in a single atomic write
-        await service.writeDiagram(filePath, content, undefined, statusMap, undefined, riskMap);
+        // Write diagram preserving existing flags/breakpoints (developer-owned annotations)
+        await service.writeDiagramPreserving(filePath, content, statusMap, riskMap);
 
         // Track diagram in MCP session registry and notify browsers
         if (options?.mcpSessionRegistry) {
