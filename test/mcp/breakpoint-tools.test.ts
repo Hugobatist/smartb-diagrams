@@ -3,7 +3,6 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { DiagramService } from '../../src/diagram/service.js';
-import { GhostPathStore } from '../../src/server/ghost-store.js';
 
 /**
  * Tests for the check_breakpoints and record_ghost_path MCP tools.
@@ -67,79 +66,55 @@ describe('check_breakpoints', () => {
   });
 });
 
-describe('ghost store', () => {
-  let store: GhostPathStore;
+describe('DiagramService ghost CRUD', () => {
+  let tmpDir: string;
+  let service: DiagramService;
+
+  const SIMPLE_DIAGRAM = 'flowchart LR\n    A --> B --> C\n';
 
   beforeEach(() => {
-    store = new GhostPathStore();
+    tmpDir = mkdtempSync(join(tmpdir(), 'smartb-ghost-crud-'));
+    service = new DiagramService(tmpDir);
+    writeFileSync(join(tmpDir, 'diagram.mmd'), SIMPLE_DIAGRAM, 'utf-8');
   });
 
-  it('add and get ghost paths', () => {
-    store.add('diagram.mmd', {
-      fromNodeId: 'A',
-      toNodeId: 'B',
-      label: 'rejected approach',
-      timestamp: 1000,
-    });
-
-    store.add('diagram.mmd', {
-      fromNodeId: 'B',
-      toNodeId: 'C',
-      timestamp: 2000,
-    });
-
-    const paths = store.get('diagram.mmd');
-    expect(paths).toHaveLength(2);
-    expect(paths[0]).toEqual({
-      fromNodeId: 'A',
-      toNodeId: 'B',
-      label: 'rejected approach',
-      timestamp: 1000,
-    });
-    expect(paths[1]).toEqual({
-      fromNodeId: 'B',
-      toNodeId: 'C',
-      timestamp: 2000,
-    });
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('clear removes ghost paths for a specific file', () => {
-    store.add('file1.mmd', {
-      fromNodeId: 'A',
-      toNodeId: 'B',
-      timestamp: 1000,
-    });
-    store.add('file2.mmd', {
-      fromNodeId: 'X',
-      toNodeId: 'Y',
-      timestamp: 2000,
-    });
+  it('addGhost and getGhosts persist ghost paths in file', async () => {
+    await service.addGhost('diagram.mmd', 'A', 'B', 'rejected approach');
+    await service.addGhost('diagram.mmd', 'B', 'C', '');
 
-    store.clear('file1.mmd');
-
-    expect(store.get('file1.mmd')).toHaveLength(0);
-    expect(store.get('file2.mmd')).toHaveLength(1);
+    const ghosts = await service.getGhosts('diagram.mmd');
+    expect(ghosts).toHaveLength(2);
+    expect(ghosts[0]).toEqual({ fromNodeId: 'A', toNodeId: 'B', label: 'rejected approach' });
+    expect(ghosts[1]).toEqual({ fromNodeId: 'B', toNodeId: 'C', label: '' });
   });
 
-  it('clearAll removes all ghost paths', () => {
-    store.add('file1.mmd', {
-      fromNodeId: 'A',
-      toNodeId: 'B',
-      timestamp: 1000,
-    });
-    store.add('file2.mmd', {
-      fromNodeId: 'X',
-      toNodeId: 'Y',
-      timestamp: 2000,
-    });
+  it('removeGhost removes a specific ghost path by from+to', async () => {
+    await service.addGhost('diagram.mmd', 'A', 'B', 'path 1');
+    await service.addGhost('diagram.mmd', 'B', 'C', 'path 2');
 
-    store.clearAll();
+    await service.removeGhost('diagram.mmd', 'A', 'B');
 
-    expect(store.get('file1.mmd')).toHaveLength(0);
-    expect(store.get('file2.mmd')).toHaveLength(0);
+    const ghosts = await service.getGhosts('diagram.mmd');
+    expect(ghosts).toHaveLength(1);
+    expect(ghosts[0]!.fromNodeId).toBe('B');
   });
 
-  it('get returns empty array for unknown file', () => {
-    expect(store.get('nonexistent.mmd')).toHaveLength(0);
+  it('clearGhosts removes all ghost paths from a file', async () => {
+    await service.addGhost('diagram.mmd', 'A', 'B', 'path 1');
+    await service.addGhost('diagram.mmd', 'B', 'C', 'path 2');
+
+    await service.clearGhosts('diagram.mmd');
+
+    const ghosts = await service.getGhosts('diagram.mmd');
+    expect(ghosts).toHaveLength(0);
+  });
+
+  it('getGhosts returns empty array when no ghosts exist', async () => {
+    const ghosts = await service.getGhosts('diagram.mmd');
+    expect(ghosts).toHaveLength(0);
   });
 });

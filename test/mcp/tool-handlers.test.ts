@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { z } from 'zod';
 import { DiagramService } from '../../src/diagram/service.js';
-import { GhostPathStore } from '../../src/server/ghost-store.js';
 import { SessionStore } from '../../src/session/session-store.js';
 import { registerTools } from '../../src/mcp/tools.js';
 
@@ -60,21 +59,18 @@ const FLAGGED_DIAGRAM = [
 describe('MCP tool handlers', () => {
   let tmpDir: string;
   let service: DiagramService;
-  let ghostStore: GhostPathStore;
   let sessionStore: SessionStore;
   let tools: Map<string, ToolHandler>;
 
   beforeEach(async () => {
     tmpDir = mkdtempSync(join(tmpdir(), 'smartb-tool-handlers-'));
     service = new DiagramService(tmpDir);
-    ghostStore = new GhostPathStore();
     sessionStore = new SessionStore(tmpDir);
 
     const mock = createMockMcpServer();
     tools = mock.tools;
 
     registerTools(mock.server, service, {
-      ghostStore,
       sessionStore,
       breakpointContinueSignals: new Map(),
     });
@@ -138,7 +134,7 @@ describe('MCP tool handlers', () => {
       expect(risks.get('B')?.reason).toBe('Complex logic');
     });
 
-    it('stores ghostPaths in the ghost store', async () => {
+    it('persists ghostPaths as @ghost annotations in the .mmd file', async () => {
       const handler = tools.get('update_diagram')!;
       const result = await handler({
         filePath: 'ghosts.mmd',
@@ -152,10 +148,10 @@ describe('MCP tool handlers', () => {
       expect(result.isError).toBeUndefined();
       expect(result.content[0]!.text).toContain('2 ghost paths recorded');
 
-      const paths = ghostStore.get('ghosts.mmd');
-      expect(paths).toHaveLength(2);
-      expect(paths[0]!.fromNodeId).toBe('A');
-      expect(paths[0]!.label).toBe('Skipped: too risky');
+      const ghosts = await service.getGhosts('ghosts.mmd');
+      expect(ghosts).toHaveLength(2);
+      expect(ghosts[0]!.fromNodeId).toBe('A');
+      expect(ghosts[0]!.label).toBe('Skipped: too risky');
     });
 
     it('handles all annotations in a single call', async () => {
@@ -318,7 +314,6 @@ describe('MCP tool handlers', () => {
 
       const mock2 = createMockMcpServer();
       registerTools(mock2.server, service, {
-        ghostStore,
         breakpointContinueSignals: signals,
       });
 
@@ -336,7 +331,9 @@ describe('MCP tool handlers', () => {
   // -------------------------------------------------------------------
 
   describe('record_ghost_path', () => {
-    it('records a ghost path when ghostStore is available', async () => {
+    it('persists a ghost path as @ghost annotation in .mmd file', async () => {
+      // Create the file first so addGhost can read it
+      writeFileSync(join(tmpDir, 'ghost.mmd'), SIMPLE_DIAGRAM, 'utf-8');
       const handler = tools.get('record_ghost_path')!;
       const result = await handler({
         filePath: 'ghost.mmd',
@@ -348,29 +345,31 @@ describe('MCP tool handlers', () => {
       expect(result.isError).toBeUndefined();
       expect(result.content[0]!.text).toContain('A -> B');
 
-      const paths = ghostStore.get('ghost.mmd');
-      expect(paths).toHaveLength(1);
-      expect(paths[0]!.fromNodeId).toBe('A');
-      expect(paths[0]!.toNodeId).toBe('B');
-      expect(paths[0]!.label).toBe('Too complex');
+      const ghosts = await service.getGhosts('ghost.mmd');
+      expect(ghosts).toHaveLength(1);
+      expect(ghosts[0]!.fromNodeId).toBe('A');
+      expect(ghosts[0]!.toNodeId).toBe('B');
+      expect(ghosts[0]!.label).toBe('Too complex');
     });
 
-    it('returns success message without ghostStore (MCP-only mode)', async () => {
+    it('works in MCP-only mode (no wsManager)', async () => {
+      writeFileSync(join(tmpDir, 'ghost2.mmd'), SIMPLE_DIAGRAM, 'utf-8');
       const mock2 = createMockMcpServer();
-      registerTools(mock2.server, service, {
-        // no ghostStore
-      });
+      registerTools(mock2.server, service, {});
 
       const handler = mock2.tools.get('record_ghost_path')!;
       const result = await handler({
-        filePath: 'ghost.mmd',
+        filePath: 'ghost2.mmd',
         fromNodeId: 'X',
         toNodeId: 'Y',
       });
 
       expect(result.isError).toBeUndefined();
       expect(result.content[0]!.text).toContain('X -> Y');
-      expect(result.content[0]!.text).toContain('browser visualization unavailable');
+
+      // Ghost should still be persisted in the file
+      const ghosts = await service.getGhosts('ghost2.mmd');
+      expect(ghosts).toHaveLength(1);
     });
   });
 

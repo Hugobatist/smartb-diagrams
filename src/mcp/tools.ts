@@ -1,6 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { DiagramService } from '../diagram/service.js';
-import type { GhostPathStore } from '../server/ghost-store.js';
 import type { WebSocketManager } from '../server/websocket.js';
 import type { SessionStore } from '../session/session-store.js';
 import type { McpSessionRegistry } from '../registry/mcp-session-registry.js';
@@ -41,7 +40,6 @@ export function registerTools(
   server: McpServer,
   service: DiagramService,
   options?: {
-    ghostStore?: GhostPathStore;
     wsManager?: WebSocketManager;
     breakpointContinueSignals?: Map<string, boolean>;
     sessionStore?: SessionStore;
@@ -76,8 +74,17 @@ export function registerTools(
             )
           : undefined;
 
+        // Build ghost path annotations from input
+        const ghostAnnotations = ghostPaths && ghostPaths.length > 0
+          ? ghostPaths.map((gp) => ({
+              fromNodeId: gp.from,
+              toNodeId: gp.to,
+              label: gp.label ?? '',
+            }))
+          : undefined;
+
         // Write diagram preserving existing flags/breakpoints (developer-owned annotations)
-        await service.writeDiagramPreserving(filePath, content, statusMap, riskMap);
+        await service.writeDiagramPreserving(filePath, content, statusMap, riskMap, ghostAnnotations);
 
         // Track diagram in MCP session registry and notify browsers
         if (options?.mcpSessionRegistry) {
@@ -87,29 +94,14 @@ export function registerTools(
           }
         }
 
-        // Process ghost paths (in-memory store, broadcast via WebSocket)
-        const ghostStore = options?.ghostStore;
-        if (ghostPaths && ghostPaths.length > 0 && ghostStore) {
-          for (const gp of ghostPaths) {
-            ghostStore.add(filePath, {
-              fromNodeId: gp.from,
-              toNodeId: gp.to,
-              label: gp.label,
-              timestamp: Date.now(),
-            });
-          }
-          if (options?.wsManager) {
-            const allPaths = ghostStore.get(filePath);
-            options.wsManager.broadcastAll({
-              type: 'ghost:update',
-              file: filePath,
-              ghostPaths: allPaths.map((p) => ({
-                fromNodeId: p.fromNodeId,
-                toNodeId: p.toNodeId,
-                label: p.label,
-              })),
-            });
-          }
+        // Broadcast ghost path update to browsers
+        if (ghostAnnotations && ghostAnnotations.length > 0 && options?.wsManager) {
+          const allGhosts = await service.getGhosts(filePath);
+          options.wsManager.broadcastAll({
+            type: 'ghost:update',
+            file: filePath,
+            ghostPaths: allGhosts,
+          });
         }
 
         // Build summary response
@@ -177,7 +169,6 @@ export function registerTools(
     async ({ filePath }) => {
       try {
         const diagram = await service.readDiagram(filePath);
-        const ghostPaths = options?.ghostStore?.get(filePath) ?? [];
 
         const context = {
           filePath: diagram.filePath,
@@ -193,7 +184,7 @@ export function registerTools(
             level: r.level,
             reason: r.reason,
           })),
-          ghostPaths: ghostPaths.map((gp) => ({
+          ghostPaths: diagram.ghosts.map((gp) => ({
             fromNodeId: gp.fromNodeId,
             toNodeId: gp.toNodeId,
             label: gp.label,
@@ -395,45 +386,25 @@ export function registerTools(
             options.wsManager.broadcastAll({ type: 'mcp-session:updated' });
           }
         }
-        const ghostStore = options?.ghostStore;
 
-        if (ghostStore) {
-          ghostStore.add(filePath, {
-            fromNodeId,
-            toNodeId,
-            label,
-            timestamp: Date.now(),
+        // Persist ghost path as @ghost annotation in the .mmd file
+        await service.addGhost(filePath, fromNodeId, toNodeId, label ?? '');
+
+        // Broadcast updated ghost paths to browsers
+        if (options?.wsManager) {
+          const allGhosts = await service.getGhosts(filePath);
+          options.wsManager.broadcastAll({
+            type: 'ghost:update',
+            file: filePath,
+            ghostPaths: allGhosts,
           });
-
-          if (options?.wsManager) {
-            const allPaths = ghostStore.get(filePath);
-            options.wsManager.broadcastAll({
-              type: 'ghost:update',
-              file: filePath,
-              ghostPaths: allPaths.map((p) => ({
-                fromNodeId: p.fromNodeId,
-                toNodeId: p.toNodeId,
-                label: p.label,
-              })),
-            });
-          }
-
-          return {
-            content: [
-              {
-                type: 'text' as const,
-                text: `Ghost path recorded: ${fromNodeId} -> ${toNodeId}`,
-              },
-            ],
-          };
         }
 
-        // MCP-only mode without --serve
         return {
           content: [
             {
               type: 'text' as const,
-              text: `Ghost path recorded: ${fromNodeId} -> ${toNodeId} (browser visualization unavailable without --serve mode)`,
+              text: `Ghost path recorded: ${fromNodeId} -> ${toNodeId}`,
             },
           ],
         };

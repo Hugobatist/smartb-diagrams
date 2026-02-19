@@ -3,7 +3,6 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { DiagramService } from '../../src/diagram/service.js';
-import { GhostPathStore } from '../../src/server/ghost-store.js';
 import { SessionStore } from '../../src/session/session-store.js';
 import { registerTools } from '../../src/mcp/tools.js';
 
@@ -42,21 +41,18 @@ const SIMPLE_DIAGRAM = [
 describe('get_diagram_context completeness', () => {
   let tmpDir: string;
   let service: DiagramService;
-  let ghostStore: GhostPathStore;
   let sessionStore: SessionStore;
   let tools: Map<string, ToolHandler>;
 
   beforeEach(async () => {
     tmpDir = mkdtempSync(join(tmpdir(), 'smartb-ctx-completeness-'));
     service = new DiagramService(tmpDir);
-    ghostStore = new GhostPathStore();
     sessionStore = new SessionStore(tmpDir);
 
     const mock = createMockMcpServer();
     tools = mock.tools;
 
     registerTools(mock.server, service, {
-      ghostStore,
       sessionStore,
       breakpointContinueSignals: new Map(),
     });
@@ -99,15 +95,10 @@ describe('get_diagram_context completeness', () => {
     });
   });
 
-  it('includes ghost paths from store in get_diagram_context response', async () => {
-    // Create diagram and add a ghost path to the store
+  it('includes ghost paths from file annotations in get_diagram_context response', async () => {
+    // Create diagram and add a ghost path via DiagramService
     writeFileSync(join(tmpDir, 'ghost-ctx.mmd'), SIMPLE_DIAGRAM, 'utf-8');
-    ghostStore.add('ghost-ctx.mmd', {
-      fromNodeId: 'A',
-      toNodeId: 'C',
-      label: 'Skipped step',
-      timestamp: Date.now(),
-    });
+    await service.addGhost('ghost-ctx.mmd', 'A', 'C', 'Skipped step');
 
     const handler = tools.get('get_diagram_context')!;
     const result = await handler({ filePath: 'ghost-ctx.mmd' });
@@ -137,7 +128,7 @@ describe('get_diagram_context completeness', () => {
   });
 
   it('includes all data together: flags, statuses, breakpoints, risks, ghostPaths', async () => {
-    // Create diagram with annotations
+    // Create diagram with annotations including a ghost path
     const annotatedDiagram = [
       'flowchart LR',
       '    A["Start"] --> B["Process"]',
@@ -148,17 +139,12 @@ describe('get_diagram_context completeness', () => {
       '%% @status A ok',
       '%% @breakpoint B',
       '%% @risk C high "Data loss risk"',
+      '%% @ghost A C "Rejected path"',
       '%% --- END ANNOTATIONS ---',
       '',
     ].join('\n');
 
     writeFileSync(join(tmpDir, 'full-ctx.mmd'), annotatedDiagram, 'utf-8');
-    ghostStore.add('full-ctx.mmd', {
-      fromNodeId: 'A',
-      toNodeId: 'C',
-      label: 'Rejected path',
-      timestamp: Date.now(),
-    });
 
     const handler = tools.get('get_diagram_context')!;
     const result = await handler({ filePath: 'full-ctx.mmd' });

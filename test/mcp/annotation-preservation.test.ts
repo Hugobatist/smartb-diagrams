@@ -3,7 +3,6 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { DiagramService } from '../../src/diagram/service.js';
-import { GhostPathStore } from '../../src/server/ghost-store.js';
 import { SessionStore } from '../../src/session/session-store.js';
 import { registerTools } from '../../src/mcp/tools.js';
 
@@ -51,14 +50,12 @@ describe('annotation preservation (writeDiagramPreserving)', () => {
   beforeEach(async () => {
     tmpDir = mkdtempSync(join(tmpdir(), 'smartb-annot-preserve-'));
     service = new DiagramService(tmpDir);
-    const ghostStore = new GhostPathStore();
     const sessionStore = new SessionStore(tmpDir);
 
     const mock = createMockMcpServer();
     tools = mock.tools;
 
     registerTools(mock.server, service, {
-      ghostStore,
       sessionStore,
       breakpointContinueSignals: new Map(),
     });

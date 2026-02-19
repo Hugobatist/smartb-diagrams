@@ -1,7 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import type { DiagramService } from '../diagram/service.js';
-import type { GhostPathStore } from '../server/ghost-store.js';
 import type { WebSocketManager } from '../server/websocket.js';
 import type { SessionStore } from '../session/session-store.js';
 import { registerTools } from './tools.js';
@@ -19,9 +18,8 @@ export interface McpServerOptions {
   port?: number;
 }
 
-/** Optional dependencies for breakpoint/ghost path/session features */
+/** Optional dependencies for breakpoint/session features */
 export interface McpToolDependencies {
-  ghostStore?: GhostPathStore;
   wsManager?: WebSocketManager;
   breakpointContinueSignals?: Map<string, boolean>;
   sessionStore?: SessionStore;
@@ -84,10 +82,10 @@ export async function startMcpServer(options: McpServerOptions): Promise<void> {
     }
 
     // Share the SAME DiagramService between MCP and HTTP servers
-    const { httpServer, wsManager, ghostStore, breakpointContinueSignals, sessionStore, closeAllWatchers } =
+    const { httpServer, wsManager, breakpointContinueSignals, sessionStore, closeAllWatchers } =
       createHttpServer(resolvedDir, service);
 
-    deps = { ghostStore, wsManager, breakpointContinueSignals, sessionStore };
+    deps = { wsManager, breakpointContinueSignals, sessionStore };
 
     await new Promise<void>((resolvePromise) => {
       httpServer.listen(actualPort, () => {

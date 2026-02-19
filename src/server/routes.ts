@@ -16,7 +16,6 @@ import {
   type CollapseState,
 } from '../diagram/collapser.js';
 import { serializeGraphModel } from '../diagram/graph-serializer.js';
-import { GhostPathStore } from './ghost-store.js';
 import type { SessionStore } from '../session/session-store.js';
 import { registerSessionRoutes } from './session-routes.js';
 import { registerFileRoutes } from './file-routes.js';
@@ -34,7 +33,6 @@ export function registerRoutes(
   service: DiagramService,
   projectDir: string,
   wsManager?: WebSocketManager,
-  ghostStore?: GhostPathStore,
   breakpointContinueSignals?: Map<string, boolean>,
   sessionStore?: SessionStore,
 ): Route[] {
@@ -202,7 +200,7 @@ export function registerRoutes(
   registerBreakpointRoutes(routes, service, wsManager, breakpointContinueSignals);
 
   // ── Ghost path routes ──
-  registerGhostPathRoutes(routes, ghostStore, wsManager);
+  registerGhostPathRoutes(routes, service, wsManager);
 
   // ── Annotation routes (risk levels) ──
   registerAnnotationRoutes(routes, service);
