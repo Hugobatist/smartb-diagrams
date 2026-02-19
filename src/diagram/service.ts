@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import type { DiagramContent, Flag, NodeStatus, RiskAnnotation, RiskLevel, ValidationResult } from './types.js';
+import type { DiagramContent, Flag, GhostPathAnnotation, NodeStatus, RiskAnnotation, RiskLevel, ValidationResult } from './types.js';
 import type { GraphModel } from './graph-types.js';
 import { parseDiagramContent } from './parser.js';
 import { injectAnnotations, parseAllAnnotations } from './annotations.js';
@@ -17,6 +17,7 @@ interface AnnotationData {
   statuses: Map<string, NodeStatus>;
   breakpoints: Set<string>;
   risks: Map<string, RiskAnnotation>;
+  ghosts: GhostPathAnnotation[];
 }
 
 /**
@@ -54,8 +55,8 @@ export class DiagramService {
     const resolved = this.resolvePath(filePath);
     const raw = await readFile(resolved, 'utf-8');
     const { mermaidContent } = parseDiagramContent(raw);
-    const { flags, statuses, breakpoints, risks } = parseAllAnnotations(raw);
-    return { raw, mermaidContent, flags, statuses, breakpoints, risks };
+    const { flags, statuses, breakpoints, risks, ghosts } = parseAllAnnotations(raw);
+    return { raw, mermaidContent, flags, statuses, breakpoints, risks, ghosts };
   }
 
   /**
@@ -71,7 +72,7 @@ export class DiagramService {
       const data = await this.readAllAnnotations(filePath);
       modifyFn(data);
       await this._writeDiagramInternal(
-        filePath, data.mermaidContent, data.flags, data.statuses, data.breakpoints, data.risks,
+        filePath, data.mermaidContent, data.flags, data.statuses, data.breakpoints, data.risks, data.ghosts,
       );
     });
   }
@@ -84,7 +85,7 @@ export class DiagramService {
     const resolved = this.resolvePath(filePath);
     const raw = await readFile(resolved, 'utf-8');
     const { mermaidContent, diagramType } = parseDiagramContent(raw);
-    const { flags, statuses, breakpoints, risks } = parseAllAnnotations(raw);
+    const { flags, statuses, breakpoints, risks, ghosts } = parseAllAnnotations(raw);
     const validation = validateMermaidSyntax(mermaidContent);
 
     // Ensure diagramType from parser is reflected in validation result
@@ -92,7 +93,7 @@ export class DiagramService {
       validation.diagramType = diagramType;
     }
 
-    return { raw, mermaidContent, flags, statuses, breakpoints, risks, validation, filePath };
+    return { raw, mermaidContent, flags, statuses, breakpoints, risks, ghosts, validation, filePath };
   }
 
   /**
@@ -115,21 +116,23 @@ export class DiagramService {
     statuses?: Map<string, NodeStatus>,
     breakpoints?: Set<string>,
     risks?: Map<string, RiskAnnotation>,
+    ghosts?: GhostPathAnnotation[],
   ): Promise<void> {
     return this.withWriteLock(filePath, () =>
-      this._writeDiagramInternal(filePath, content, flags, statuses, breakpoints, risks),
+      this._writeDiagramInternal(filePath, content, flags, statuses, breakpoints, risks, ghosts),
     );
   }
 
   /**
    * Write diagram content while preserving existing developer-owned annotations (flags, breakpoints).
-   * Reads existing annotations first, merges caller-provided statuses/risks on top, preserves flags
+   * Reads existing annotations first, merges caller-provided statuses/risks/ghosts on top, preserves flags
    * and breakpoints unconditionally, then writes the merged result atomically under the write lock.
    *
    * Merge semantics:
    * - `content`: always replaces the Mermaid diagram body
    * - `statuses`: if provided, replaces all statuses; if undefined, preserves existing
    * - `risks`: if provided, replaces all risks; if undefined, preserves existing
+   * - `ghosts`: if provided, replaces all ghosts; if undefined, preserves existing
    * - `flags`: always preserved from the file (developer-owned, never touched by MCP)
    * - `breakpoints`: always preserved from the file (developer-owned, never touched by MCP)
    */
@@ -138,6 +141,7 @@ export class DiagramService {
     content: string,
     statuses?: Map<string, NodeStatus>,
     risks?: Map<string, RiskAnnotation>,
+    ghosts?: GhostPathAnnotation[],
   ): Promise<void> {
     return this.withWriteLock(filePath, async () => {
       // Read existing annotations (if file exists)
@@ -145,12 +149,14 @@ export class DiagramService {
       let existingBreakpoints = new Set<string>();
       let existingStatuses = new Map<string, NodeStatus>();
       let existingRisks = new Map<string, RiskAnnotation>();
+      let existingGhosts: GhostPathAnnotation[] = [];
       try {
         const data = await this.readAllAnnotations(filePath);
         existingFlags = data.flags;
         existingBreakpoints = data.breakpoints;
         existingStatuses = data.statuses;
         existingRisks = data.risks;
+        existingGhosts = data.ghosts;
       } catch {
         // File doesn't exist yet -- empty defaults are fine
       }
@@ -162,6 +168,7 @@ export class DiagramService {
         statuses ?? existingStatuses,     // replace if provided, else preserve
         existingBreakpoints,              // always preserve
         risks ?? existingRisks,           // replace if provided, else preserve
+        ghosts ?? existingGhosts,         // replace if provided, else preserve
       );
     });
   }
@@ -190,12 +197,13 @@ export class DiagramService {
     statuses?: Map<string, NodeStatus>,
     breakpoints?: Set<string>,
     risks?: Map<string, RiskAnnotation>,
+    ghosts?: GhostPathAnnotation[],
   ): Promise<void> {
     const resolved = this.resolvePath(filePath);
     let output = content;
 
-    if (flags || statuses || breakpoints || risks) {
-      output = injectAnnotations(content, flags ?? new Map(), statuses, breakpoints, risks);
+    if (flags || statuses || breakpoints || risks || (ghosts && ghosts.length > 0)) {
+      output = injectAnnotations(content, flags ?? new Map(), statuses, breakpoints, risks, ghosts);
     }
 
     await mkdir(dirname(resolved), { recursive: true });
@@ -281,6 +289,36 @@ export class DiagramService {
   async removeRisk(filePath: string, nodeId: string): Promise<void> {
     return this.modifyAnnotation(filePath, (data) => {
       data.risks.delete(nodeId);
+    });
+  }
+
+  /** Get all ghost path annotations from a .mmd file. */
+  async getGhosts(filePath: string): Promise<GhostPathAnnotation[]> {
+    const resolved = this.resolvePath(filePath);
+    const raw = await readFile(resolved, 'utf-8');
+    return parseAllAnnotations(raw).ghosts;
+  }
+
+  /** Add a ghost path annotation to a .mmd file. */
+  async addGhost(filePath: string, fromNodeId: string, toNodeId: string, label: string): Promise<void> {
+    return this.modifyAnnotation(filePath, (data) => {
+      data.ghosts.push({ fromNodeId, toNodeId, label });
+    });
+  }
+
+  /** Remove a specific ghost path annotation (by from+to+label exact match). */
+  async removeGhost(filePath: string, fromNodeId: string, toNodeId: string): Promise<void> {
+    return this.modifyAnnotation(filePath, (data) => {
+      data.ghosts = data.ghosts.filter(
+        (g) => !(g.fromNodeId === fromNodeId && g.toNodeId === toNodeId),
+      );
+    });
+  }
+
+  /** Clear all ghost path annotations from a .mmd file. */
+  async clearGhosts(filePath: string): Promise<void> {
+    return this.modifyAnnotation(filePath, (data) => {
+      data.ghosts = [];
     });
   }
 
