@@ -8,21 +8,16 @@ An AI observability layer that visualizes how AI coding agents think in real-tim
 
 Developers can see what their AI is thinking and intervene surgically before it finishes — turning black-box AI coding into a transparent, collaborative process.
 
-## Current Milestone: v2.0 Interactive Canvas + Advanced Features
+## Current Milestone: v2.1 Stability & Usability
 
-**Goal:** Replace the static Mermaid SVG renderer with a custom interactive canvas, enabling direct manipulation of diagram elements (drag, select, edit inline, context menu), and build advanced AI observability features (breakpoints, ghost paths, session replay) on top of this new foundation.
+**Goal:** Fix all critical bugs found in deep 4-agent audit of v2.0 features. Ghost Paths, Heatmap, and core MCP tools are broken or unusable in practice. Make every shipped feature actually work end-to-end for real users.
 
-**Target features:**
-- Custom interactive canvas renderer (ELK.js/Dagre layout + custom SVG)
-- Direct node manipulation (select, drag, resize, inline edit)
-- Context menu, property panel, undo/redo, copy/paste
-- Folder management (delete, rename)
-- AI Breakpoints — pause AI reasoning at specific nodes
-- Ghost Paths — visualize discarded reasoning branches
-- Risk Heatmap — cost/impact overlay per node
-- Session Replay — rewind AI reasoning timeline
-- Pattern Memory — learn from historical flags
-- Diagram as executable contract
+**Target fixes:**
+- Ghost Paths: modal blocks creation, no persistence, not in get_diagram_context, no clear/delete UI
+- Heatmap: no automatic tracking, only updates on session end, no mode toggle UI, stale on file switch
+- Core MCP: update_diagram destroys flags/breakpoints, get_diagram_context missing data
+- Infrastructure: FileWatcher race condition, /save bypasses write lock, broadcastAll leaks between projects
+- Polish: keyboard shortcut conflicts, CSS file over 500 lines, PNG export loses ghost paths, missing type exports
 
 ## Requirements
 
@@ -44,21 +39,24 @@ Developers can see what their AI is thinking and intervene surgically before it 
 
 ### Active
 
-<!-- Current scope: v2.0 Interactive Canvas + Advanced Features -->
+<!-- Current scope: v2.1 Stability & Usability -->
 
-- [ ] Custom interactive canvas renderer replacing Mermaid static SVG
-- [ ] Node selection, drag-and-drop positioning, inline text editing
-- [ ] Context menu (right-click) on nodes, edges, and canvas
-- [ ] Property panel for node styling (color, shape, border)
-- [ ] Undo/Redo system
-- [ ] Copy/paste/duplicate diagram elements
-- [ ] Folder delete and rename in sidebar
-- [ ] AI Breakpoints — pause reasoning at flagged nodes
-- [ ] Ghost Paths — visualize discarded AI reasoning branches
-- [ ] Risk Heatmap — cost/impact visual overlay per node
-- [ ] Session Replay — rewind AI reasoning timeline
-- [ ] Pattern Memory — learn correction patterns from flag history
-- [ ] Diagram as executable contract — validate AI output against diagram structure
+- [ ] Fix modal.js to allow empty ghost path labels (critical UX bug)
+- [ ] Preserve existing flags/breakpoints when update_diagram is called
+- [ ] Persist ghost paths as @ghost annotations in .mmd files
+- [ ] Include ghost paths, breakpoints, and risks in get_diagram_context
+- [ ] Add automatic heatmap tracking (clicks, edits, status changes)
+- [ ] Real-time heatmap updates during session recording
+- [ ] Heatmap mode toggle UI (risk vs frequency)
+- [ ] Fix FileWatcher first-event race condition
+- [ ] Route /save through DiagramService write lock
+- [ ] Ghost path clear/delete UI and individual deletion
+- [ ] Use project-scoped broadcast for ghost paths
+- [ ] Re-fetch heatmap data on file switch
+- [ ] Fix keyboard shortcut 'B' firing in unexpected contexts
+- [ ] Split main.css (577 lines, exceeds 500-line limit)
+- [ ] Fix PNG export to include ghost paths
+- [ ] Export missing types (RiskLevel, RiskAnnotation, GhostPath)
 
 ### Out of Scope
 
@@ -73,11 +71,11 @@ Developers can see what their AI is thinking and intervene surgically before it 
 
 **v1.0 delivered:** TypeScript npm package with HTTP server, WebSocket real-time sync, browser UI with pan/zoom/flags/search/export, MCP server for AI tools, VS Code extension, and partial subgraph collapse/expand. 8 phases completed.
 
-**v2.0 motivation:** The Mermaid.js renderer produces static SVG — nodes can't be selected, dragged, or directly manipulated. The UI feels "rigid" compared to modern diagram tools. Replacing the renderer with an interactive canvas unlocks both UX improvements and advanced AI observability features that require fine-grained element control.
+**v2.0 delivered:** Custom interactive canvas (dagre + SVG), node selection/drag/inline-edit, context menu, undo/redo, copy/paste, folder management, AI breakpoints, ghost paths, risk heatmap, session replay. 8 phases (9-16) completed.
 
-**Architecture pivot:** v1 used Mermaid.js as a black-box renderer (text in → SVG out). v2 will parse .mmd files into an internal graph model, use ELK.js or Dagre for layout computation, and render custom interactive SVG where each element is individually addressable and manipulable.
+**v2.1 motivation:** Deep 4-agent audit revealed that v2.0's advanced features (Ghost Paths, Heatmap, Session Recording) were structurally built but practically broken. The modal blocks ghost path creation, heatmap has zero data without explicit MCP sessions, update_diagram silently destroys developer flags, and several race conditions exist. Users cannot effectively use the features they see in the UI.
 
-**Market context:** AI coding tools (Cursor $400M+, GitHub Copilot, Claude Code, Devin) are exploding but none offer visual reasoning transparency. The interactive canvas makes SmartB the "Datadog for AI reasoning" with a UX that matches modern expectations.
+**Audit methodology:** 4 parallel Opus agents conducted exhaustive code review: (1) Ghost Paths end-to-end, (2) Heatmap/Sessions end-to-end, (3) Full MCP-to-Browser data flow, (4) Code quality and bug hunting. Found 18+ issues across critical/high/medium severity.
 
 ## Constraints
 
@@ -100,8 +98,10 @@ Developers can see what their AI is thinking and intervene surgically before it 
 | Plugin approach over standalone product | Compete on niche (observability) not platform (IDE) | ✓ Good |
 | Mermaid-only input format (.mmd) | Widely known, text-based (git-friendly), AI tools can generate it | ✓ Good |
 | Local-first architecture | Privacy, speed, no cloud dependency | ✓ Good |
-| Replace Mermaid renderer with custom canvas | Mermaid SVG is static — can't select/drag/manipulate nodes. Custom renderer unlocks interactive UX and advanced features | — Pending |
-| ELK.js or Dagre for layout engine | Same engines Mermaid uses internally, proven for directed graphs | — Pending |
+| Replace Mermaid renderer with custom canvas | Mermaid SVG is static — can't select/drag/manipulate nodes. Custom renderer unlocks interactive UX and advanced features | ✓ Good |
+| Dagre for layout engine | Same engine Mermaid uses internally, proven for directed graphs | ✓ Good |
+| Ghost paths in-memory only (v2.0) | Session-scoped data, simpler than file persistence | ⚠️ Revisit — users lose data on restart |
+| Heatmap dependent on MCP sessions only (v2.0) | Clean separation, explicit recording | ⚠️ Revisit — unusable without auto-tracking |
 
 ---
-*Last updated: 2026-02-15 after v2.0 milestone initialization*
+*Last updated: 2026-02-19 after v2.1 milestone initialization (deep audit)*

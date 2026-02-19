@@ -8,12 +8,12 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-Phase: 16-heatmap-session-recording
-Plan: 04 of 04 complete
-Status: Phase 16 complete -- all plans executed (backend, MCP tools, heatmap, session replay)
-Last activity: 2026-02-16 -- Plan 04 executed (2 tasks, 4min), 251 tests passing
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v2.1 Stability & Usability
+Last activity: 2026-02-19 — Milestone v2.1 started after deep 4-agent audit
 
-Progress: [██████████] v1.0 100% | Phase 16: [==========] 4/4 plans complete
+Progress: v2.0 100% complete | v2.1: defining requirements
 
 ## v1.0 Performance Metrics
 
