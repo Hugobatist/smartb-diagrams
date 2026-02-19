@@ -34,6 +34,10 @@ export interface DiagramContent {
   flags: Map<string, Flag>;
   /** Parsed status annotations */
   statuses: Map<string, NodeStatus>;
+  /** Parsed breakpoint annotations (node IDs with active breakpoints) */
+  breakpoints: Set<string>;
+  /** Parsed risk annotations */
+  risks: Map<string, RiskAnnotation>;
   /** Validation result for the Mermaid syntax */
   validation: ValidationResult;
   /** Relative file path within the project */

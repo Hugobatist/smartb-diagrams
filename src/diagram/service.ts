@@ -84,7 +84,7 @@ export class DiagramService {
     const resolved = this.resolvePath(filePath);
     const raw = await readFile(resolved, 'utf-8');
     const { mermaidContent, diagramType } = parseDiagramContent(raw);
-    const { flags, statuses } = parseAllAnnotations(raw);
+    const { flags, statuses, breakpoints, risks } = parseAllAnnotations(raw);
     const validation = validateMermaidSyntax(mermaidContent);
 
     // Ensure diagramType from parser is reflected in validation result
@@ -92,7 +92,7 @@ export class DiagramService {
       validation.diagramType = diagramType;
     }
 
-    return { raw, mermaidContent, flags, statuses, validation, filePath };
+    return { raw, mermaidContent, flags, statuses, breakpoints, risks, validation, filePath };
   }
 
   /**

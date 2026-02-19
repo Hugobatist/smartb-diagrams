@@ -177,6 +177,8 @@ export function registerTools(
     async ({ filePath }) => {
       try {
         const diagram = await service.readDiagram(filePath);
+        const ghostPaths = options?.ghostStore?.get(filePath) ?? [];
+
         const context = {
           filePath: diagram.filePath,
           mermaidContent: diagram.mermaidContent,
@@ -185,6 +187,17 @@ export function registerTools(
             message: f.message,
           })),
           statuses: Object.fromEntries(diagram.statuses),
+          breakpoints: Array.from(diagram.breakpoints),
+          risks: Array.from(diagram.risks.values()).map((r) => ({
+            nodeId: r.nodeId,
+            level: r.level,
+            reason: r.reason,
+          })),
+          ghostPaths: ghostPaths.map((gp) => ({
+            fromNodeId: gp.fromNodeId,
+            toNodeId: gp.toNodeId,
+            label: gp.label,
+          })),
           validation: {
             valid: diagram.validation.valid,
             errors: diagram.validation.errors,
