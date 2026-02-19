@@ -173,6 +173,8 @@ export interface ServerInstance {
   sessionStore: SessionStore;
   /** Add a new project directory with its own FileWatcher and WebSocket namespace */
   addProject: (name: string, dir: string) => void;
+  /** Close all FileWatcher instances (default + named projects) */
+  closeAllWatchers: () => Promise<void>;
 }
 
 /**
@@ -255,7 +257,15 @@ export function createHttpServer(projectDir: string, existingService?: DiagramSe
     watchers.set(name, createProjectWatcher(name, resolvedProjectDir, projectService));
   }
 
-  return { httpServer, wsManager, fileWatcher, ghostStore, breakpointContinueSignals, sessionStore, addProject };
+  /** Close all FileWatcher instances (default + named projects) */
+  async function closeAllWatchers(): Promise<void> {
+    for (const w of watchers.values()) {
+      await w.close();
+    }
+    watchers.clear();
+  }
+
+  return { httpServer, wsManager, fileWatcher, ghostStore, breakpointContinueSignals, sessionStore, addProject, closeAllWatchers };
 }
 
 /**
@@ -277,7 +287,7 @@ export async function startServer(options: ServerOptions): Promise<void> {
   }
 
   const service = new DiagramService(projectDir);
-  const { httpServer, wsManager, fileWatcher } = createHttpServer(projectDir, service);
+  const { httpServer, wsManager, closeAllWatchers } = createHttpServer(projectDir, service);
 
   // Check for .mmd files and warn if none found
   const mmdFiles = await service.listFiles();
@@ -311,7 +321,7 @@ export async function startServer(options: ServerOptions): Promise<void> {
     }, 5000);
     try {
       await deregisterWorkspace(actualPort).catch(() => {});
-      await fileWatcher.close().catch(() => {});
+      await closeAllWatchers().catch(() => {});
       wsManager.close();
       await new Promise<void>((resolve) => httpServer.close(() => resolve()));
     } finally {

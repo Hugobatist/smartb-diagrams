@@ -9,6 +9,7 @@ import { registerResources } from './resources.js';
 import { MCP_INSTRUCTIONS } from './instructions.js';
 import { log } from '../utils/logger.js';
 import { register as registerWorkspace, deregister as deregisterWorkspace } from '../registry/workspace-registry.js';
+import { McpSessionRegistry } from '../registry/mcp-session-registry.js';
 import { getVersion } from '../utils/version.js';
 
 /** Options for starting the MCP server */
@@ -24,6 +25,7 @@ export interface McpToolDependencies {
   wsManager?: WebSocketManager;
   breakpointContinueSignals?: Map<string, boolean>;
   sessionStore?: SessionStore;
+  mcpSessionRegistry?: McpSessionRegistry;
 }
 
 /**
@@ -82,7 +84,7 @@ export async function startMcpServer(options: McpServerOptions): Promise<void> {
     }
 
     // Share the SAME DiagramService between MCP and HTTP servers
-    const { httpServer, wsManager, fileWatcher, ghostStore, breakpointContinueSignals, sessionStore } =
+    const { httpServer, wsManager, ghostStore, breakpointContinueSignals, sessionStore, closeAllWatchers } =
       createHttpServer(resolvedDir, service);
 
     deps = { ghostStore, wsManager, breakpointContinueSignals, sessionStore };
@@ -99,10 +101,20 @@ export async function startMcpServer(options: McpServerOptions): Promise<void> {
       log.warn('Failed to register workspace:', err instanceof Error ? err.message : err);
     });
 
+    // Register MCP session for AI session tracking
+    const mcpRegistry = new McpSessionRegistry(resolvedDir);
+    await mcpRegistry.register().catch((err) => {
+      log.warn('Failed to register MCP session:', err instanceof Error ? err.message : err);
+    });
+    deps.mcpSessionRegistry = mcpRegistry;
+
     httpCleanup = async () => {
       log.info('Shutting down HTTP+WS server...');
       await deregisterWorkspace(actualPort).catch(() => {});
-      await fileWatcher.close();
+      if (deps?.mcpSessionRegistry) {
+        await deps.mcpSessionRegistry.deregister().catch(() => {});
+      }
+      await closeAllWatchers();
       wsManager.close();
       await new Promise<void>((resolveClose) => {
         httpServer.close(() => resolveClose());

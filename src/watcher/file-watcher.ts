@@ -1,11 +1,15 @@
 import { watch, existsSync, type FSWatcher } from 'node:fs';
 import path from 'node:path';
+import { discoverMmdFiles } from '../project/discovery.js';
 import { log } from '../utils/logger.js';
 
 /**
  * Watches a project directory for .mmd file changes using Node.js native fs.watch.
  * Uses recursive mode (supported on macOS and Windows with Node >= 22).
  * Fires callbacks with normalized forward-slash relative paths.
+ *
+ * Pre-populates knownFiles from discoverMmdFiles so the first event for existing
+ * files is classified as "change" rather than "add".
  *
  * Replaces chokidar which has known issues with directory watching on macOS (Darwin 25+).
  */
@@ -14,6 +18,10 @@ export class FileWatcher {
   /** Debounce map to avoid duplicate events for the same file */
   private debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private static readonly DEBOUNCE_MS = 80;
+  /** Tracks known files so we can distinguish adds from changes */
+  private knownFiles = new Set<string>();
+  /** Resolves when initial file discovery is complete */
+  private ready: Promise<void>;
 
   constructor(
     private projectDir: string,
@@ -21,6 +29,14 @@ export class FileWatcher {
     private onFileAdded: (relativePath: string) => void,
     private onFileRemoved: (relativePath: string) => void,
   ) {
+    // Pre-populate knownFiles so the first event for existing files is "change" not "add"
+    this.ready = discoverMmdFiles(projectDir).then(files => {
+      for (const f of files) this.knownFiles.add(f);
+      log.debug(`FileWatcher pre-populated ${files.length} known files`);
+    }).catch(() => {
+      log.warn('FileWatcher: failed to discover existing files, first events may misclassify');
+    });
+
     this.watcher = watch(
       projectDir,
       { recursive: true },
@@ -42,16 +58,14 @@ export class FileWatcher {
 
         this.debounceTimers.set(relative, setTimeout(() => {
           this.debounceTimers.delete(relative);
-          this.handleEvent(relative);
+          // Gate on ready promise to ensure knownFiles is populated before classification
+          this.ready.then(() => this.handleEvent(relative));
         }, FileWatcher.DEBOUNCE_MS));
       },
     );
 
     log.debug(`FileWatcher started for ${projectDir} (native fs.watch recursive)`);
   }
-
-  /** Tracks known files so we can distinguish adds from changes */
-  private knownFiles = new Set<string>();
 
   /** Check if file exists and route to appropriate callback */
   private handleEvent(relative: string): void {
@@ -72,6 +86,11 @@ export class FileWatcher {
       this.knownFiles.delete(relative);
       this.onFileRemoved(relative);
     }
+  }
+
+  /** Wait for initial file discovery to complete. Useful for tests. */
+  whenReady(): Promise<void> {
+    return this.ready;
   }
 
   /** Close the file watcher and release OS file handles */
