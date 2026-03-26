@@ -1,5 +1,5 @@
 {
-  "name": "smartcode",
+  "name": "@hugobatist/smartcode",
   "version": "0.1.0",
   "description": "Visual debugger for AI reasoning -- see what your AI is thinking, set breakpoints, flag mistakes, replay sessions",
   "type": "module",
