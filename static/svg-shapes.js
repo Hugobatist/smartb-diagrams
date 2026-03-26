@@ -1,12 +1,12 @@
 /**
- * SmartB SVG Shapes -- SVG element factories for all 13 Mermaid node shapes.
+ * SmartCode SVG Shapes -- SVG element factories for all 13 Mermaid node shapes.
  * Each shape function takes (w, h) and returns an SVG element centered at (0, 0).
  *
  * Dependencies: none (standalone)
- * Dependents: svg-renderer.js (calls SmartBSvgShapes.render)
+ * Dependents: svg-renderer.js (calls SmartCodeSvgShapes.render)
  *
  * Usage:
- *   var el = SmartBSvgShapes.render('diamond', 120, 60);
+ *   var el = SmartCodeSvgShapes.render('diamond', 120, 60);
  *   // Returns an SVG element ready for translate(x,y) positioning
  */
 (function() {
@@ -214,5 +214,5 @@
     }
 
     // ── Public API ──
-    window.SmartBSvgShapes = { render: render };
+    window.SmartCodeSvgShapes = { render: render };
 })();

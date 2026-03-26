@@ -22,7 +22,7 @@ describe('get_correction_context', () => {
     '    A["Load data"] --> B["Process"]',
     '    B --> C["Save results"]',
     '',
-    '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---',
+    '%% --- ANNOTATIONS (auto-managed by SmartCode) ---',
     '%% @flag B "This step is too slow, consider batching"',
     '%% @flag C "Output format should be JSON not CSV"',
     '%% @status A ok',
@@ -31,7 +31,7 @@ describe('get_correction_context', () => {
   ].join('\n');
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'smartb-mcp-test-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-mcp-test-'));
     service = new DiagramService(tmpDir);
   });
 

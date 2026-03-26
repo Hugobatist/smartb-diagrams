@@ -1,8 +1,15 @@
 import type { Flag, GhostPathAnnotation, NodeStatus, RiskAnnotation, RiskLevel } from './types.js';
 import { log } from '../utils/logger.js';
 
-export const ANNOTATION_START = '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---';
+export const ANNOTATION_START = '%% --- ANNOTATIONS (auto-managed by SmartCode) ---';
+/** Legacy start marker for backward compat with existing .mmd files */
+const ANNOTATION_START_LEGACY = '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---';
 export const ANNOTATION_END = '%% --- END ANNOTATIONS ---';
+
+/** Check if a line matches either the current or legacy annotation start marker */
+function isAnnotationStart(line: string): boolean {
+  return line === ANNOTATION_START || line === ANNOTATION_START_LEGACY;
+}
 const FLAG_REGEX = /^%%\s*@flag\s+(\S+)\s+"([^"]*)"$/;
 const STATUS_REGEX = /^%%\s*@status\s+(\S+)\s+(\S+)$/;
 export const BREAKPOINT_REGEX = /^%%\s*@breakpoint\s+(\S+)$/;
@@ -37,7 +44,7 @@ export function parseAllAnnotations(content: string): AllAnnotations {
   for (const line of lines) {
     const trimmed = line.trim();
 
-    if (trimmed === ANNOTATION_START) {
+    if (isAnnotationStart(trimmed)) {
       inBlock = true;
       continue;
     }
@@ -127,7 +134,7 @@ export function stripAnnotations(content: string): string {
   for (const line of lines) {
     const trimmed = line.trim();
 
-    if (trimmed === ANNOTATION_START) {
+    if (isAnnotationStart(trimmed)) {
       inBlock = true;
       continue;
     }

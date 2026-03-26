@@ -1,5 +1,5 @@
 /**
- * SmartB Diagrams - Mermaid to GraphModel Parser
+ * SmartCode - Mermaid to GraphModel Parser
  * Multi-pass parser that converts raw .mmd content into a structured GraphModel.
  */
 

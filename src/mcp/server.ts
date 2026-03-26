@@ -36,7 +36,7 @@ export function createMcpServer(
   deps?: McpToolDependencies,
 ): McpServer {
   const server = new McpServer(
-    { name: 'smartb-diagrams', version: getVersion() },
+    { name: 'smartcode', version: getVersion() },
     { instructions: MCP_INSTRUCTIONS },
   );
 

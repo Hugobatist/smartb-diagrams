@@ -1,12 +1,12 @@
 /**
- * SmartB MCP Sessions -- sidebar view showing AI sessions and their diagrams.
+ * SmartCode MCP Sessions -- sidebar view showing AI sessions and their diagrams.
  * Fetches data from GET /api/mcp-sessions and renders grouped by session.
  * Supports renaming sessions via PATCH /api/mcp-sessions/:id.
  *
- * Dependencies: file-tree.js (SmartBFileTree), renderer.js (SmartBRenderer), modal.js (SmartBModal)
+ * Dependencies: file-tree.js (SmartCodeFileTree), renderer.js (SmartCodeRenderer), modal.js (SmartCodeModal)
  *
  * Note: innerHTML usage is safe here -- all dynamic values pass through
- * SmartBRenderer.escapeHtml() before interpolation, preventing XSS.
+ * SmartCodeRenderer.escapeHtml() before interpolation, preventing XSS.
  * This follows the same pattern established in file-tree.js.
  */
 (function() {
@@ -15,10 +15,10 @@
     var viewMode = 'files'; // 'files' | 'sessions'
     var sessionsData = [];
 
-    function bUrl(path) { return (window.SmartBBaseUrl || '') + path; }
+    function bUrl(path) { return (window.SmartCodeBaseUrl || '') + path; }
 
     function escapeHtml(str) {
-        return SmartBRenderer.escapeHtml(str);
+        return SmartCodeRenderer.escapeHtml(str);
     }
 
     function prettyName(fname) {
@@ -76,7 +76,7 @@
         if (sessionsData.length === 0) {
             container.innerHTML =
                 '<div class="mcp-sessions-empty">' +
-                    '<div class="mcp-sessions-empty-icon">' + (window.SmartBIcons ? SmartBIcons.eye : '') + '</div>' +
+                    '<div class="mcp-sessions-empty-icon">' + (window.SmartCodeIcons ? SmartCodeIcons.eye : '') + '</div>' +
                     '<div>No active AI sessions</div>' +
                     '<div style="font-size:11px;margin-top:4px;color:var(--text-tertiary)">Start an MCP session with Claude to see diagrams grouped here</div>' +
                 '</div>';
@@ -106,9 +106,9 @@
                 html += '<div class="mcp-session-nofiles">No diagrams yet</div>';
             } else {
                 diagrams.forEach(function(d) {
-                    var isCurrentFile = d.filePath === (window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : '');
+                    var isCurrentFile = d.filePath === (window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : '');
                     html += '<div class="mcp-session-file ' + (isCurrentFile ? 'active' : '') + '" data-action="load-session-file" data-path="' + escapeHtml(d.filePath) + '">';
-                    html += '<span class="mcp-session-file-icon">' + (window.SmartBIcons ? SmartBIcons.file : '') + '</span>';
+                    html += '<span class="mcp-session-file-icon">' + (window.SmartCodeIcons ? SmartCodeIcons.file : '') + '</span>';
                     html += '<span class="mcp-session-file-name">' + escapeHtml(prettyName(d.filePath)) + '</span>';
                     html += '</div>';
                 });
@@ -134,7 +134,7 @@
         if (mode === 'sessions') {
             fetchSessions();
         } else {
-            SmartBFileTree.refreshFileList();
+            SmartCodeFileTree.refreshFileList();
         }
     }
 
@@ -149,8 +149,8 @@
             e.stopPropagation();
             var sessionId = renameBtn.getAttribute('data-session-id');
             var currentLabel = renameBtn.getAttribute('data-current-label');
-            if (window.SmartBModal) {
-                SmartBModal.prompt({
+            if (window.SmartCodeModal) {
+                SmartCodeModal.prompt({
                     title: 'Rename Session',
                     placeholder: 'Session name',
                     defaultValue: currentLabel || '',
@@ -166,8 +166,8 @@
         var target = e.target.closest('[data-action="load-session-file"]');
         if (!target) return;
         var path = target.getAttribute('data-path');
-        if (path && window.SmartBFileTree) {
-            SmartBFileTree.loadFile(path);
+        if (path && window.SmartCodeFileTree) {
+            SmartCodeFileTree.loadFile(path);
             // Re-render to update active state
             if (viewMode === 'sessions') {
                 setTimeout(renderSessionsView, 50);
@@ -191,7 +191,7 @@
     }
 
     // ── Public API ──
-    window.SmartBMcpSessions = {
+    window.SmartCodeMcpSessions = {
         init: init,
         refresh: refresh,
         fetchSessions: fetchSessions,

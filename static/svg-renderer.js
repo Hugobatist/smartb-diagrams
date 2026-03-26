@@ -1,12 +1,12 @@
 /**
- * SmartB SVG Renderer -- assembles complete SVG DOM from a LayoutResult.
+ * SmartCode SVG Renderer -- assembles complete SVG DOM from a LayoutResult.
  * Renders nodes (with shapes), edges (with arrows), and subgraphs.
  *
- * Dependencies: svg-shapes.js (SmartBSvgShapes)
+ * Dependencies: svg-shapes.js (SmartCodeSvgShapes)
  * Dependents: (future) custom-renderer-bridge.js
  *
  * Usage:
- *   var svgEl = SmartBSvgRenderer.createSVG(layout);
+ *   var svgEl = SmartCodeSvgRenderer.createSVG(layout);
  *   container.appendChild(svgEl);
  */
 (function() {
@@ -136,12 +136,12 @@
     function renderNode(node) {
         var g = el('g');
         g.setAttribute('data-node-id', node.id);
-        g.setAttribute('class', 'smartb-node');
+        g.setAttribute('class', 'smartcode-node');
         var nx = isFinite(node.x) ? node.x : 0;
         var ny = isFinite(node.y) ? node.y : 0;
         g.setAttribute('transform', 'translate(' + nx + ',' + ny + ')');
 
-        var shapeEl = window.SmartBSvgShapes.render(node.shape, node.width, node.height);
+        var shapeEl = window.SmartCodeSvgShapes.render(node.shape, node.width, node.height);
         attrs(shapeEl, { fill: THEME.nodeFill, stroke: THEME.nodeStroke, 'stroke-width': THEME.nodeStrokeWidth });
 
         // For subroutine <g>, apply styles to child elements individually
@@ -203,7 +203,7 @@
     function renderEdge(edge, nodesMap) {
         var g = el('g');
         g.setAttribute('data-edge-id', edge.id);
-        g.setAttribute('class', 'smartb-edge');
+        g.setAttribute('class', 'smartcode-edge');
 
         var targetNode = nodesMap[edge.to];
         var points = targetNode ? shortenPathToNodeBoundary(edge.points, targetNode) : edge.points;
@@ -242,7 +242,7 @@
     function renderSubgraph(sg) {
         var g = el('g');
         g.setAttribute('data-subgraph-id', sg.id);
-        g.setAttribute('class', 'smartb-subgraph');
+        g.setAttribute('class', 'smartcode-subgraph');
 
         // Guard against NaN/undefined positions from dagre compound layout
         var sx = isFinite(sg.x) ? sg.x : 0;
@@ -283,7 +283,7 @@
         svg.appendChild(defs);
 
         var root = el('g');
-        root.setAttribute('class', 'smartb-diagram');
+        root.setAttribute('class', 'smartcode-diagram');
 
         // Build nodes map for edge boundary calculations
         var nodesMap = {};
@@ -309,5 +309,5 @@
     }
 
     // ── Public API ──
-    window.SmartBSvgRenderer = { createSVG: createSVG };
+    window.SmartCodeSvgRenderer = { createSVG: createSVG };
 })();

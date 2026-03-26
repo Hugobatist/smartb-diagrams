@@ -1,6 +1,6 @@
 /**
  * DiagramDOM — abstraction layer for SVG DOM queries.
- * Supports both Mermaid-rendered SVGs and custom SmartB SVGs.
+ * Supports both Mermaid-rendered SVGs and custom SmartCode SVGs.
  * Consolidates SVG element lookups duplicated across annotations.js,
  * collapse-ui.js, search.js, and diagram-editor.js.
  *
@@ -30,13 +30,13 @@
 
         /**
          * Detects whether the current SVG is from the custom renderer.
-         * Checks for the `.smartb-diagram` class on the root <g> element.
+         * Checks for the `.smartcode-diagram` class on the root <g> element.
          * @returns {'custom'|'mermaid'}
          */
         getRendererType: function() {
             var svg = this.getSVG();
             if (!svg) return 'mermaid';
-            return svg.querySelector('.smartb-diagram') ? 'custom' : 'mermaid';
+            return svg.querySelector('.smartcode-diagram') ? 'custom' : 'mermaid';
         },
 
         /**
@@ -142,20 +142,20 @@
 
         /**
          * Returns all node label elements from the SVG.
-         * Custom renderer: <text> children of .smartb-node
+         * Custom renderer: <text> children of .smartcode-node
          * Mermaid: .nodeLabel elements
          */
         getAllNodeLabels: function() {
             var svg = this.getSVG();
             if (!svg) return [];
             if (this.getRendererType() === 'custom') {
-                return Array.from(svg.querySelectorAll('.smartb-node > text'));
+                return Array.from(svg.querySelectorAll('.smartcode-node > text'));
             }
             return Array.from(svg.querySelectorAll('.nodeLabel'));
         },
 
         /**
-         * Walks up to find .node, .cluster, or .smartb-edge parent element.
+         * Walks up to find .node, .cluster, or .smartcode-edge parent element.
          */
         findMatchParent: function(element) {
             var current = element;
@@ -163,9 +163,9 @@
                 if (current.classList &&
                     (current.classList.contains('node') ||
                      current.classList.contains('cluster') ||
-                     current.classList.contains('smartb-node') ||
-                     current.classList.contains('smartb-subgraph') ||
-                     current.classList.contains('smartb-edge'))) {
+                     current.classList.contains('smartcode-node') ||
+                     current.classList.contains('smartcode-subgraph') ||
+                     current.classList.contains('smartcode-edge'))) {
                     return current;
                 }
                 current = current.parentElement;
@@ -216,13 +216,13 @@
 
         /**
          * Returns all node elements from the SVG.
-         * Custom: .smartb-node elements; Mermaid: .node elements
+         * Custom: .smartcode-node elements; Mermaid: .node elements
          */
         getAllNodeElements: function() {
             var svg = this.getSVG();
             if (!svg) return [];
             if (this.getRendererType() === 'custom') {
-                return Array.from(svg.querySelectorAll('.smartb-node'));
+                return Array.from(svg.querySelectorAll('.smartcode-node'));
             }
             return Array.from(svg.querySelectorAll('.node'));
         },

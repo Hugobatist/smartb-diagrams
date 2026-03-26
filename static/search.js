@@ -1,9 +1,9 @@
 /**
- * SmartB Diagrams — Node Search (Ctrl+F)
+ * SmartCode — Node Search (Ctrl+F)
  * Find and highlight matching nodes in the current SVG diagram.
- * Exposed as window.SmartBSearch
+ * Exposed as window.SmartCodeSearch
  *
- * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartBEventBus)
+ * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartCodeEventBus)
  */
 (function () {
     'use strict';
@@ -34,7 +34,7 @@
 
         var input = document.createElement('input');
         input.type = 'text';
-        input.placeholder = 'Buscar nodo...';
+        input.placeholder = 'Search node...';
         input.setAttribute('autocomplete', 'off');
         input.setAttribute('spellcheck', 'false');
 
@@ -44,20 +44,20 @@
 
         var btnPrev = document.createElement('button');
         btnPrev.className = 'search-nav-btn';
-        btnPrev.innerHTML = SmartBIcons.arrowUp; /* safe: static SVG */
-        btnPrev.title = 'Anterior (Shift+Enter)';
+        btnPrev.innerHTML = SmartCodeIcons.arrowUp; /* safe: static SVG */
+        btnPrev.title = 'Previous (Shift+Enter)';
         btnPrev.addEventListener('click', function () { navigatePrev(); });
 
         var btnNext = document.createElement('button');
         btnNext.className = 'search-nav-btn';
-        btnNext.innerHTML = SmartBIcons.arrowDown; /* safe: static SVG */
-        btnNext.title = 'Proximo (Enter)';
+        btnNext.innerHTML = SmartCodeIcons.arrowDown; /* safe: static SVG */
+        btnNext.title = 'Next (Enter)';
         btnNext.addEventListener('click', function () { navigateNext(); });
 
         var btnClose = document.createElement('button');
         btnClose.className = 'search-close-btn';
-        btnClose.innerHTML = SmartBIcons.close; /* safe: static SVG */
-        btnClose.title = 'Fechar (Esc)';
+        btnClose.innerHTML = SmartCodeIcons.close; /* safe: static SVG */
+        btnClose.title = 'Close (Esc)';
         btnClose.addEventListener('click', function () { close(); });
 
         bar.appendChild(input);
@@ -172,8 +172,8 @@
         }
 
         // Emit search event via event bus
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('search:results', { query: query, matchCount: state.matches.length });
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('search:results', { query: query, matchCount: state.matches.length });
         }
     }
 
@@ -217,8 +217,8 @@
         scrollToMatch(state.currentIndex);
         updateCount();
         // Emit match navigation event
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('search:match-selected', { index: state.currentIndex });
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('search:match-selected', { index: state.currentIndex });
         }
     }
 
@@ -229,8 +229,8 @@
         scrollToMatch(state.currentIndex);
         updateCount();
         // Emit match navigation event
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('search:match-selected', { index: state.currentIndex });
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('search:match-selected', { index: state.currentIndex });
         }
     }
 
@@ -267,10 +267,10 @@
     function updateCount() {
         if (!countEl) return;
         if (state.matches.length === 0) {
-            countEl.textContent = state.query ? 'Nenhum' : '';
+            countEl.textContent = state.query ? 'No matches' : '';
             countEl.classList.toggle('no-match', !!state.query);
         } else {
-            countEl.textContent = (state.currentIndex + 1) + ' de ' + state.matches.length;
+            countEl.textContent = (state.currentIndex + 1) + ' of ' + state.matches.length;
             countEl.classList.remove('no-match');
         }
     }
@@ -284,8 +284,8 @@
         }
 
         // Subscribe to event bus: refresh search results after diagram re-render
-        if (window.SmartBEventBus) {
-            SmartBEventBus.on('diagram:rendered', function() {
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.on('diagram:rendered', function() {
                 if (state.isOpen && state.query) {
                     search(state.query);
                 }
@@ -295,7 +295,7 @@
 
     // ── Public API ──
 
-    window.SmartBSearch = {
+    window.SmartCodeSearch = {
         init: init,
         open: open,
         close: close,

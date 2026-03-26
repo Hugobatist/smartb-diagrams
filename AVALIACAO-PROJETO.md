@@ -1,6 +1,6 @@
-# Avaliacao Consolidada — SmartB Diagrams
+# Avaliacao Consolidada — SmartCode
 
-**Projeto**: SmartB Diagrams v0.1.0
+**Projeto**: SmartCode v0.1.0
 **Data**: 16 de Fevereiro de 2026
 **Avaliador**: Juiz Final (engenheiro senior, analise independente com revisao de codigo)
 **Metodologia**: Consolidacao de 4 avaliacoes de painel + analise direta do codigo-fonte
@@ -9,7 +9,7 @@
 
 ## 1. Resumo Executivo
 
-O SmartB Diagrams e um projeto genuinamente inovador que cria uma nova categoria de ferramental: observabilidade visual do raciocinio de AI em tempo real. A arquitetura tecnica e competente — processo unico compartilhando DiagramService entre MCP, HTTP e WebSocket, com TypeScript strict e apenas 7 dependencias de producao. Porem, o projeto sofre de uma contradicao fundamental: foi construido em ~3 dias com assistencia pesada de AI, resultando em ~15.000 linhas de codigo com zero testes (49 arquivos de teste deletados) e zero usuarios reais. A ideia tem merito real e timing favoravel, mas precisa urgentemente de estabilizacao (testes, CI) e validacao de mercado antes de poder ser avaliado como produto viavel.
+O SmartCode e um projeto genuinamente inovador que cria uma nova categoria de ferramental: observabilidade visual do raciocinio de AI em tempo real. A arquitetura tecnica e competente — processo unico compartilhando DiagramService entre MCP, HTTP e WebSocket, com TypeScript strict e apenas 7 dependencias de producao. Porem, o projeto sofre de uma contradicao fundamental: foi construido em ~3 dias com assistencia pesada de AI, resultando em ~15.000 linhas de codigo com zero testes (49 arquivos de teste deletados) e zero usuarios reais. A ideia tem merito real e timing favoravel, mas precisa urgentemente de estabilizacao (testes, CI) e validacao de mercado antes de poder ser avaliado como produto viavel.
 
 ---
 
@@ -77,13 +77,13 @@ O `DiagramService` implementa serializacao de escritas por arquivo via promises 
 
 **Fato verificado em `src/diagram/validator.ts`**: A validacao se limita a checar brackets desbalanceados e setas soltas. O comentario no proprio codigo admite: *"We use a heuristic validator that catches obvious syntax errors."* Mermaid tem dezenas de edge cases de sintaxe que passam despercebidos.
 
-**Impacto**: Usuarios vao encontrar diagramas que "validam" no SmartB mas quebram no Mermaid, ou vice-versa. Isso erode confianca rapidamente.
+**Impacto**: Usuarios vao encontrar diagramas que "validam" no SmartCode mas quebram no Mermaid, ou vice-versa. Isso erode confianca rapidamente.
 
 **Atenuante**: O codigo delega a validacao real ao Mermaid.js no browser. O validador backend e apenas first-pass. Isso e aceitavel como estrategia temporaria, mas precisa ser documentado claramente.
 
 ### P1 — Frontend com globals e sem modularizacao ES Modules
 
-**Fato verificado**: 37 arquivos JS no `static/` totalizando ~7.800 linhas, todos usando `window.SmartB*` como namespace global. Nenhum usa `import/export`. Exemplos: `window.SmartBAnnotations`, `window.SmartBGhostPaths`, `window.SmartBHeatmap`.
+**Fato verificado**: 37 arquivos JS no `static/` totalizando ~7.800 linhas, todos usando `window.SmartCode*` como namespace global. Nenhum usa `import/export`. Exemplos: `window.SmartCodeAnnotations`, `window.SmartCodeGhostPaths`, `window.SmartCodeHeatmap`.
 
 **Impacto**: Dependencias implicitas entre modulos, ordem de carregamento fragil, impossivel fazer tree-shaking ou testes unitarios do frontend. Com 37 arquivos, a complexidade de manter esse padrao cresce quadraticamente.
 
@@ -147,7 +147,7 @@ O `DiagramService` implementa serializacao de escritas por arquivo via promises 
 
 ### 5. Migrar frontend para ES Modules
 
-**O que**: Converter os 37 arquivos JS de globals (`window.SmartB*`) para `import/export` nativo do browser. Usar `<script type="module">`.
+**O que**: Converter os 37 arquivos JS de globals (`window.SmartCode*`) para `import/export` nativo do browser. Usar `<script type="module">`.
 
 **Por que**: Habilita testabilidade do frontend, elimina dependencias implicitas, e prepara o terreno para contribuicoes. A conversao e mecanica (nao precisa mudar logica, apenas a forma de expor/consumir).
 
@@ -161,9 +161,9 @@ O `DiagramService` implementa serializacao de escritas por arquivo via promises 
 
 **Fato**: O mercado de AI coding tools esta em crescimento explosivo. Cursor, Windsurf, Claude Code, GitHub Copilot, e dezenas de outros competem por desenvolvedores. O MCP (Model Context Protocol) esta se consolidando como padrao de extensibilidade.
 
-**Analise**: O SmartB resolve um problema real — desenvolvedores que usam AI para tarefas complexas nao conseguem ver o "raciocinio" por tras das decisoes. E analogo a como o Chrome DevTools revolucionou debugging web: voce nao sabia que precisava ate ter.
+**Analise**: O SmartCode resolve um problema real — desenvolvedores que usam AI para tarefas complexas nao conseguem ver o "raciocinio" por tras das decisoes. E analogo a como o Chrome DevTools revolucionou debugging web: voce nao sabia que precisava ate ter.
 
-**Risco**: O mercado de "AI reasoning observability" nao existe formalmente. O SmartB precisa **criar** essa categoria, o que exige evangelismo alem de codigo. E possivel que incumbentes (Cursor, Claude) incorporem features similares nativamente. Porem, a vantagem de ser open-source e local-first e que o SmartB pode operar **entre** ferramentas, nao **dentro** de uma.
+**Risco**: O mercado de "AI reasoning observability" nao existe formalmente. O SmartCode precisa **criar** essa categoria, o que exige evangelismo alem de codigo. E possivel que incumbentes (Cursor, Claude) incorporem features similares nativamente. Porem, a vantagem de ser open-source e local-first e que o SmartCode pode operar **entre** ferramentas, nao **dentro** de uma.
 
 **Veredicto**: Mercado promissor mas nao validado. O timing e favoravel. A aposta e legítima.
 
@@ -174,7 +174,7 @@ O `DiagramService` implementa serializacao de escritas por arquivo via promises 
 - Cursor pode implementar um "reasoning panel" nativo
 - Um concorrente com mais recursos pode clonar a ideia com melhor execucao
 
-**Defesas do SmartB**:
+**Defesas do SmartCode**:
 - Open-source (comunidade pode contribuir e criar ecossistema)
 - Local-first (sem vendor lock-in, funciona com qualquer AI tool via MCP)
 - Mermaid como formato (padrao aberto, ja amplamente adotado)
@@ -224,13 +224,13 @@ A nota reflete um projeto que esta significativamente acima da media em **concep
 
 ## 8. Veredicto Final
 
-O SmartB Diagrams e o tipo de projeto que, se tivesse nascido em uma startup com 3-5 engenheiros, estaria no caminho certo para se tornar uma ferramenta relevante no ecossistema de AI developer tools. A visao e clara, a arquitetura e competente, e o timing e favoravel. O conceito de "visual debugger para raciocinio de AI" resolve uma dor real que os desenvolvedores ainda nao sabem articular — mas vao reconhecer no instante que virem funcionando.
+O SmartCode e o tipo de projeto que, se tivesse nascido em uma startup com 3-5 engenheiros, estaria no caminho certo para se tornar uma ferramenta relevante no ecossistema de AI developer tools. A visao e clara, a arquitetura e competente, e o timing e favoravel. O conceito de "visual debugger para raciocinio de AI" resolve uma dor real que os desenvolvedores ainda nao sabem articular — mas vao reconhecer no instante que virem funcionando.
 
 Porem, o projeto carrega as marcas classicas de um prototipo acelerado por AI: muito codigo em pouco tempo, sem a infraestrutura de qualidade (testes, CI, linting) que transforma prototipo em produto. A decisao de deletar 49 arquivos de teste e particularmente preocupante — sugere priorizacao de velocidade sobre sustentabilidade.
 
-O caminho para frente e claro: **parar de adicionar features, restaurar testes, publicar no npm, e colocar na frente de usuarios reais**. Se 10 desenvolvedores experimentarem o SmartB e voltarem para usar de novo no dia seguinte, o projeto tem futuro. Se nao voltarem, nenhuma quantidade de features adicionais vai salvar.
+O caminho para frente e claro: **parar de adicionar features, restaurar testes, publicar no npm, e colocar na frente de usuarios reais**. Se 10 desenvolvedores experimentarem o SmartCode e voltarem para usar de novo no dia seguinte, o projeto tem futuro. Se nao voltarem, nenhuma quantidade de features adicionais vai salvar.
 
-A aposta central do SmartB — que desenvolvedores querem **ver** o raciocinio da AI, nao apenas o resultado — e uma aposta que eu pessoalmente considero correta. Mas apostas precisam ser validadas, e este projeto ainda nao passou por esse teste.
+A aposta central do SmartCode — que desenvolvedores querem **ver** o raciocinio da AI, nao apenas o resultado — e uma aposta que eu pessoalmente considero correta. Mas apostas precisam ser validadas, e este projeto ainda nao passou por esse teste.
 
 **Potencial: 8.5/10. Estado atual: 4.5/10. Media ponderada com vies para potencial realizavel: 6.0/10.**
 

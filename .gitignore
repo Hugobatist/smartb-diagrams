@@ -17,8 +17,8 @@ dist/
 *.swo
 *~
 
-# SmartB session data (local-only)
-.smartb/sessions/
+# SmartCode session data (local-only)
+.smartcode/sessions/
 
 # OS
 Thumbs.db

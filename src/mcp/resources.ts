@@ -19,7 +19,7 @@ export function registerResources(
   // Fixed resource that lists all available .mmd files
   server.registerResource(
     'diagram-list',
-    'smartb://diagrams',
+    'smartcode://diagrams',
     {
       title: 'Available Diagrams',
       description: 'List of all .mmd diagram files in the project',
@@ -42,13 +42,13 @@ export function registerResources(
   // Resource 2: diagram-content (MCP-07)
   // Template resource for reading individual diagram content
   const diagramTemplate = new ResourceTemplate(
-    'smartb://diagrams/{filePath}',
+    'smartcode://diagrams/{filePath}',
     {
       list: async () => {
         const files = await service.listFiles();
         return {
           resources: files.map((f) => ({
-            uri: `smartb://diagrams/${encodeURIComponent(f)}`,
+            uri: `smartcode://diagrams/${encodeURIComponent(f)}`,
             name: f,
           })),
         };

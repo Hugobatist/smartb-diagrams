@@ -1,15 +1,15 @@
 /**
- * SmartB Editor Panel -- editor textarea events, panel toggles, resize handle.
+ * SmartCode Editor Panel -- editor textarea events, panel toggles, resize handle.
  * Extracted from live.html (Phase 9 Plan 03).
  *
  * Dependencies: renderer.js (render), pan-zoom.js (zoomFit)
  * Dependents: app-init.js
  *
  * Usage:
- *   SmartBEditorPanel.isAutoSync();
- *   SmartBEditorPanel.setAutoSync(v);
- *   SmartBEditorPanel.toggleEditor();
- *   SmartBEditorPanel.toggleSidebar();
+ *   SmartCodeEditorPanel.isAutoSync();
+ *   SmartCodeEditorPanel.setAutoSync(v);
+ *   SmartCodeEditorPanel.toggleEditor();
+ *   SmartCodeEditorPanel.toggleSidebar();
  */
 (function() {
     'use strict';
@@ -98,7 +98,7 @@
     }
 
     // ── Public API ──
-    window.SmartBEditorPanel = {
+    window.SmartCodeEditorPanel = {
         isAutoSync: function() { return autoSync; },
         setAutoSync: function(v) { autoSync = v; window.autoSync = v; updateSyncUI(); },
         toggleEditor: toggleEditor,

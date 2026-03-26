@@ -3,13 +3,13 @@ import { join } from 'node:path';
 
 /** Directories excluded from .mmd file discovery */
 const EXCLUDED_DIRS = new Set([
-  'node_modules', '.git', 'test', 'dist', '.planning', '.smartb',
+  'node_modules', '.git', 'test', 'dist', '.planning', '.smartcode',
 ]);
 
 /**
  * Discover all .mmd files recursively under the given directory.
  * Returns relative paths (relative to the directory).
- * Excludes node_modules, .git, test, dist, .planning, and .smartb directories.
+ * Excludes node_modules, .git, test, dist, .planning, and .smartcode directories.
  * Results are sorted alphabetically for deterministic output.
  *
  * Uses recursive readdir (Node 18.17+) with post-filtering to avoid

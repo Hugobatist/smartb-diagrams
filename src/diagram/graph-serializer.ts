@@ -1,5 +1,5 @@
 /**
- * SmartB Diagrams - GraphModel to Mermaid Serializer
+ * SmartCode - GraphModel to Mermaid Serializer
  * Converts a structured GraphModel back into valid Mermaid flowchart text.
  * Counterpart to graph-parser.ts — together they enable round-trip fidelity.
  */

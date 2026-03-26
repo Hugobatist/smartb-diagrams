@@ -1,16 +1,16 @@
 /**
- * SmartB Ghost Paths -- renders discarded reasoning branches as
+ * SmartCode Ghost Paths -- renders discarded reasoning branches as
  * curved dashed lines on the diagram SVG. Toggle visibility via button.
  *
  * Dependencies:
  *   - diagram-dom.js (DiagramDOM)
- *   - event-bus.js (SmartBEventBus)
+ *   - event-bus.js (SmartCodeEventBus)
  */
 (function() {
     'use strict';
 
     var SVG_NS = 'http://www.w3.org/2000/svg';
-    var LS_KEY = 'smartb-ghost-paths-visible';
+    var LS_KEY = 'smartcode-ghost-paths-visible';
 
     // Visual config
     var GHOST_COLOR = '#8b5cf6';      // matches --ghost-path token
@@ -45,7 +45,7 @@
 
     /** Get ghost paths for the currently viewed file */
     function getCurrentPaths() {
-        var file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : null;
+        var file = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : null;
         if (!file) return [];
         return ghostPathsByFile[file] || [];
     }
@@ -210,7 +210,7 @@
         createArrowMarker(svg);
 
         var unique = dedupPaths(paths);
-        var diagramGroup = svg.querySelector('.smartb-diagram');
+        var diagramGroup = svg.querySelector('.smartcode-diagram');
         var container = diagramGroup || svg;
 
         for (var i = 0; i < unique.length; i++) {
@@ -218,7 +218,7 @@
             var fromPt = getNodeBottom(gp.fromNodeId) || getNodeCenter(gp.fromNodeId);
             var toPt = getNodeTop(gp.toNodeId) || getNodeCenter(gp.toNodeId);
             if (!fromPt || !toPt) {
-                console.warn('[SmartB GhostPaths] Node not found in SVG:',
+                console.warn('[SmartCode GhostPaths] Node not found in SVG:',
                     !fromPt ? gp.fromNodeId : gp.toNodeId,
                     '— ghost path skipped:', gp.fromNodeId, '->', gp.toNodeId);
                 continue;
@@ -298,7 +298,7 @@
         // Support legacy call without file: updateGhostPaths(paths)
         if (Array.isArray(file)) {
             paths = file;
-            file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : 'unknown';
+            file = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : 'unknown';
         }
         var list = Array.isArray(paths) ? paths : [];
         if (file) {
@@ -307,7 +307,7 @@
         updateBadge();
 
         // Auto-show ghost paths when new ones arrive -- but respect user choice
-        var currentFile = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : null;
+        var currentFile = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : null;
         if (list.length > 0 && file === currentFile && !visible && !userExplicitlyHid) {
             visible = true;
             saveVisibility();
@@ -329,19 +329,19 @@
         updateBadge();
 
         // Re-render ghost paths after each diagram render
-        if (window.SmartBEventBus) {
-            SmartBEventBus.on('diagram:rendered', renderGhostPaths);
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.on('diagram:rendered', renderGhostPaths);
         }
 
         renderGhostPaths();
     }
 
     // ── URL helper ──
-    function bUrl(path) { return (window.SmartBBaseUrl || '') + path; }
+    function bUrl(path) { return (window.SmartCodeBaseUrl || '') + path; }
 
     /** Create a ghost path via REST API and update UI */
     function createGhostPath(fromNodeId, toNodeId, label) {
-        var file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : null;
+        var file = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : null;
         if (!file) return;
         var encoded = encodeURIComponent(file);
         fetch(bUrl('/api/ghost-paths/' + encoded), {
@@ -363,7 +363,7 @@
 
     /** Clear all ghost paths for the current file via REST API */
     function clearAllGhostPaths() {
-        var file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : null;
+        var file = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : null;
         if (!file) return;
         var encoded = encodeURIComponent(file);
         fetch(bUrl('/api/ghost-paths/' + encoded), {
@@ -383,7 +383,7 @@
     }
 
     // ── Public API ──
-    window.SmartBGhostPaths = {
+    window.SmartCodeGhostPaths = {
         init: init,
         toggle: toggle,
         isVisible: isVisibleFn,

@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
  * Replaces the old WebviewViewProvider (sidebar) approach.
  */
 export class DiagramPanelManager {
-  public static readonly viewType = 'smartb.diagramPanel';
+  public static readonly viewType = 'smartcode.diagramPanel';
 
   private panel?: vscode.WebviewPanel;
   private disposables: vscode.Disposable[] = [];
@@ -27,7 +27,7 @@ export class DiagramPanelManager {
 
     const panel = vscode.window.createWebviewPanel(
       DiagramPanelManager.viewType,
-      'SmartB Diagrams',
+      'SmartCode',
       column ?? vscode.ViewColumn.Beside,
       {
         enableScripts: true,
@@ -129,7 +129,7 @@ export class DiagramPanelManager {
   <meta http-equiv="Content-Security-Policy" content="${csp}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="${mediaUri('webview.css')}" rel="stylesheet">
-  <title>SmartB Diagrams</title>
+  <title>SmartCode</title>
 </head>
 <body>
   <div id="header">
@@ -143,7 +143,7 @@ export class DiagramPanelManager {
   </div>
   <div id="diagram-container">
     <div id="diagram">
-      <p class="status-message">Waiting for SmartB server connection...</p>
+      <p class="status-message">Waiting for SmartCode server connection...</p>
     </div>
   </div>
   <div id="zoom-controls">

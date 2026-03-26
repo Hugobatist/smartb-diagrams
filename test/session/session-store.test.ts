@@ -10,7 +10,7 @@ describe('SessionStore', () => {
   let store: SessionStore;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'smartb-session-test-'));
+    tempDir = await mkdtemp(join(tmpdir(), 'smartcode-session-test-'));
     store = new SessionStore(tempDir);
   });
 
@@ -18,14 +18,14 @@ describe('SessionStore', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it('startSession creates .smartb/sessions/ directory and JSONL file', async () => {
+  it('startSession creates .smartcode/sessions/ directory and JSONL file', async () => {
     const sessionId = await store.startSession('test.mmd');
 
     expect(sessionId).toBeTruthy();
     expect(typeof sessionId).toBe('string');
 
     // Verify JSONL file exists and first line is session:start event
-    const filePath = join(tempDir, '.smartb', 'sessions', `${sessionId}.jsonl`);
+    const filePath = join(tempDir, '.smartcode', 'sessions', `${sessionId}.jsonl`);
     const content = await readFile(filePath, 'utf-8');
     const lines = content.trim().split('\n');
     expect(lines.length).toBe(1);

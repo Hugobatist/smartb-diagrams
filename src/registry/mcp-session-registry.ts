@@ -2,7 +2,7 @@
  * MCP Session Registry -- tracks active MCP/AI sessions via filesystem manifests.
  *
  * Supports MULTIPLE sessions per MCP process (one per conversation).
- * Each session writes a JSON manifest to .smartb/mcp-sessions/<sessionId>.json.
+ * Each session writes a JSON manifest to .smartcode/mcp-sessions/<sessionId>.json.
  * Any HTTP server can read these files to discover which AI sessions are active
  * and which diagrams each session has touched.
  *
@@ -52,7 +52,7 @@ export class McpSessionRegistry {
 
   constructor(projectRoot: string) {
     this.projectRoot = projectRoot;
-    this.manifestDir = join(projectRoot, '.smartb', 'mcp-sessions');
+    this.manifestDir = join(projectRoot, '.smartcode', 'mcp-sessions');
   }
 
   /** Register the registry by ensuring the manifest directory exists */
@@ -164,7 +164,7 @@ export class McpSessionRegistry {
 
   /** List all active MCP sessions for a project (filters out dead PIDs, cleans stale) */
   static async listActive(projectRoot: string): Promise<McpSessionManifest[]> {
-    const dir = join(projectRoot, '.smartb', 'mcp-sessions');
+    const dir = join(projectRoot, '.smartcode', 'mcp-sessions');
     let entries: string[];
     try {
       entries = await readdir(dir);
@@ -200,7 +200,7 @@ export class McpSessionRegistry {
 
   /** Get a specific session manifest by ID */
   static async getSession(projectRoot: string, sessionId: string): Promise<McpSessionManifest | null> {
-    const filePath = join(projectRoot, '.smartb', 'mcp-sessions', `${sessionId}.json`);
+    const filePath = join(projectRoot, '.smartcode', 'mcp-sessions', `${sessionId}.json`);
     try {
       const raw = await readFile(filePath, 'utf-8');
       const manifest = JSON.parse(raw) as McpSessionManifest;
@@ -212,13 +212,13 @@ export class McpSessionRegistry {
 
   /** Rename a session on disk (works for any process's sessions) */
   static async renameOnDisk(projectRoot: string, sessionId: string, label: string): Promise<boolean> {
-    const filePath = join(projectRoot, '.smartb', 'mcp-sessions', `${sessionId}.json`);
+    const filePath = join(projectRoot, '.smartcode', 'mcp-sessions', `${sessionId}.json`);
     try {
       const raw = await readFile(filePath, 'utf-8');
       const manifest = JSON.parse(raw) as McpSessionManifest;
       manifest.label = label;
       const data = JSON.stringify(manifest, null, 2);
-      const tempPath = join(tmpdir(), `smartb-mcp-${randomBytes(4).toString('hex')}.json`);
+      const tempPath = join(tmpdir(), `smartcode-mcp-${randomBytes(4).toString('hex')}.json`);
       await writeFile(tempPath, data, 'utf-8');
       try {
         await rename(tempPath, filePath);
@@ -251,7 +251,7 @@ export class McpSessionRegistry {
   /** Atomically write manifest (temp file + rename) */
   private async writeManifest(session: SessionData): Promise<void> {
     const data = JSON.stringify(this.buildManifest(session), null, 2);
-    const tempPath = join(tmpdir(), `smartb-mcp-${randomBytes(4).toString('hex')}.json`);
+    const tempPath = join(tmpdir(), `smartcode-mcp-${randomBytes(4).toString('hex')}.json`);
     await writeFile(tempPath, data, 'utf-8');
     try {
       await rename(tempPath, this.manifestPath(session.sessionId));

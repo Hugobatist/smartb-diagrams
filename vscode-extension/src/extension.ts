@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { DiagramPanelManager } from './diagram-provider.js';
 import { getHttpBaseUrl, httpGet, httpPost } from './http-client.js';
 import { StatusBarManager } from './status-bar.js';
-import { SmartBWsClient } from './ws-client.js';
+import { SmartCodeWsClient } from './ws-client.js';
 
 export function activate(context: vscode.ExtensionContext): void {
   // Track current file, file list, and cached contents from WebSocket messages
@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Register command to show the diagram panel
   context.subscriptions.push(
-    vscode.commands.registerCommand('smartb.showDiagram', () => {
+    vscode.commands.registerCommand('smartcode.showDiagram', () => {
       provider.show(vscode.ViewColumn.Beside);
     }),
   );
@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(statusBar);
 
   // 3. Read configuration
-  const config = vscode.workspace.getConfiguration('smartb');
+  const config = vscode.workspace.getConfiguration('smartcode');
   let serverUrl = config.get<string>('serverUrl', 'ws://localhost:3333/ws');
   const autoConnect = config.get<boolean>('autoConnect', true);
 
@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // 5. Create WebSocket client with callbacks that relay to the webview
   let hasConnectedOnce = false; // Only auto-show panel on first connection
-  const wsClient = new SmartBWsClient(serverUrl, {
+  const wsClient = new SmartCodeWsClient(serverUrl, {
     onMessage: (msg) => {
       const wsMsg = msg as Record<string, unknown>;
 
@@ -144,14 +144,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // 7. Register commands
   context.subscriptions.push(
-    vscode.commands.registerCommand('smartb.reconnect', () => {
+    vscode.commands.registerCommand('smartcode.reconnect', () => {
       wsClient.reconnect();
     }),
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('smartb.openBrowser', () => {
-      const wsUrl = vscode.workspace.getConfiguration('smartb').get<string>('serverUrl', 'ws://localhost:3333/ws');
+    vscode.commands.registerCommand('smartcode.openBrowser', () => {
+      const wsUrl = vscode.workspace.getConfiguration('smartcode').get<string>('serverUrl', 'ws://localhost:3333/ws');
       const httpUrl = getHttpBaseUrl(wsUrl);
       vscode.env.openExternal(vscode.Uri.parse(httpUrl));
     }),
@@ -160,8 +160,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // 8. Listen for configuration changes
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('smartb.serverUrl')) {
-        serverUrl = vscode.workspace.getConfiguration('smartb').get<string>('serverUrl', 'ws://localhost:3333/ws');
+      if (e.affectsConfiguration('smartcode.serverUrl')) {
+        serverUrl = vscode.workspace.getConfiguration('smartcode').get<string>('serverUrl', 'ws://localhost:3333/ws');
         wsClient.updateUrl(serverUrl);
       }
     }),
@@ -221,7 +221,7 @@ export function activate(context: vscode.ExtensionContext): void {
     } catch (err) {
       if (gen !== selectFileGeneration) return; // Stale request, ignore error
       const errMsg = err instanceof Error ? err.message : 'Unknown error';
-      vscode.window.showErrorMessage(`SmartB: Failed to load diagram "${file}" - ${errMsg}`);
+      vscode.window.showErrorMessage(`SmartCode: Failed to load diagram "${file}" - ${errMsg}`);
       provider.postMessage({
         type: 'diagram:update',
         file,
@@ -293,13 +293,13 @@ export function activate(context: vscode.ExtensionContext): void {
    */
   async function saveFlag(nodeId: string, message: string): Promise<void> {
     if (!currentFile) {
-      vscode.window.showErrorMessage('SmartB: No diagram file is currently active.');
+      vscode.window.showErrorMessage('SmartCode: No diagram file is currently active.');
       return;
     }
 
     const content = fileContents.get(currentFile);
     if (!content) {
-      vscode.window.showErrorMessage('SmartB: No cached content for the current diagram.');
+      vscode.window.showErrorMessage('SmartCode: No cached content for the current diagram.');
       return;
     }
 
@@ -328,7 +328,7 @@ export function activate(context: vscode.ExtensionContext): void {
       fileContents.set(currentFile, updatedContent);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Unknown error';
-      vscode.window.showErrorMessage(`SmartB: Failed to save flag - ${errMsg}`);
+      vscode.window.showErrorMessage(`SmartCode: Failed to save flag - ${errMsg}`);
     }
   }
 }

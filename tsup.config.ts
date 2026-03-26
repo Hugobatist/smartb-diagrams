@@ -4,7 +4,7 @@ import { cpSync } from 'node:fs';
 export default defineConfig({
   entry: ['src/cli.ts', 'src/index.ts'],
   format: ['esm'],
-  target: 'node22',
+  target: 'node18',
   platform: 'node',
   dts: { entry: 'src/index.ts' },
   clean: true,

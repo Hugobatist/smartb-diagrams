@@ -8,7 +8,7 @@ import { McpSessionRegistry } from '../../src/registry/mcp-session-registry.js';
 let tmpDir: string;
 
 beforeEach(async () => {
-  tmpDir = mkdtempSync(join(tmpdir(), 'smartb-mcp-session-test-'));
+  tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-mcp-session-test-'));
 });
 
 afterEach(async () => {
@@ -20,7 +20,7 @@ describe('McpSessionRegistry', () => {
     const registry = new McpSessionRegistry(tmpDir);
     await registry.register();
 
-    const dir = join(tmpDir, '.smartb', 'mcp-sessions');
+    const dir = join(tmpDir, '.smartcode', 'mcp-sessions');
     const files = await readdir(dir);
     expect(files.length).toBe(1);
 
@@ -67,7 +67,7 @@ describe('McpSessionRegistry', () => {
     await registry.createSession('extra');
     await registry.deregister();
 
-    const dir = join(tmpDir, '.smartb', 'mcp-sessions');
+    const dir = join(tmpDir, '.smartcode', 'mcp-sessions');
     const files = await readdir(dir);
     expect(files.length).toBe(0);
   });
@@ -125,7 +125,7 @@ describe('McpSessionRegistry', () => {
     expect(secondId).not.toBe(firstId);
     expect(registry.getActiveSessionId()).toBe(secondId);
 
-    const dir = join(tmpDir, '.smartb', 'mcp-sessions');
+    const dir = join(tmpDir, '.smartcode', 'mcp-sessions');
     const files = await readdir(dir);
     // register() creates 1 default + createSession() creates 1 more
     expect(files.length).toBe(2);

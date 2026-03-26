@@ -1,5 +1,5 @@
 /**
- * SmartB Dagre Layout -- graph layout computation using dagre.
+ * SmartCode Dagre Layout -- graph layout computation using dagre.
  * Converts a GraphModel JSON (from /api/graph/:file) into positioned nodes,
  * edges with routed points, and subgraph bounding boxes.
  *
@@ -7,7 +7,7 @@
  * Dependents: canvas-renderer.js (Plan 02)
  *
  * Usage:
- *   var result = SmartBDagreLayout.computeLayout(graphModel);
+ *   var result = SmartCodeDagreLayout.computeLayout(graphModel);
  *   // result => { width, height, nodes[], edges[], subgraphs[] }
  */
 (function() {
@@ -284,7 +284,7 @@
     }
 
     // ── Public API ──
-    window.SmartBDagreLayout = {
+    window.SmartCodeDagreLayout = {
         computeLayout: computeLayout,
     };
 

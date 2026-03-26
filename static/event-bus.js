@@ -1,12 +1,12 @@
 /**
- * SmartB Event Bus — lightweight pub/sub using native EventTarget API.
+ * SmartCode Event Bus — lightweight pub/sub using native EventTarget API.
  * All inter-module communication flows through this bus.
  *
  * Usage:
- *   SmartBEventBus.on('diagram:rendered', (data) => { ... });
- *   SmartBEventBus.emit('diagram:rendered', { svg });
- *   SmartBEventBus.off('diagram:rendered', handler);
- *   SmartBEventBus.once('diagram:rendered', (data) => { ... });
+ *   SmartCodeEventBus.on('diagram:rendered', (data) => { ... });
+ *   SmartCodeEventBus.emit('diagram:rendered', { svg });
+ *   SmartCodeEventBus.off('diagram:rendered', handler);
+ *   SmartCodeEventBus.once('diagram:rendered', (data) => { ... });
  */
 (function() {
     'use strict';
@@ -32,7 +32,7 @@
         byEvent.set(event, wrapped);
     }
 
-    var SmartBEventBus = {
+    var SmartCodeEventBus = {
         on: function(event, handler) {
             var wrapped = function(e) { handler(e.detail); };
             setWrapped(event, handler, wrapped);
@@ -53,5 +53,5 @@
         }
     };
 
-    window.SmartBEventBus = SmartBEventBus;
+    window.SmartCodeEventBus = SmartCodeEventBus;
 })();

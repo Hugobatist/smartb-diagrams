@@ -48,7 +48,7 @@ describe('annotation preservation (writeDiagramPreserving)', () => {
   let tools: Map<string, ToolHandler>;
 
   beforeEach(async () => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'smartb-annot-preserve-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-annot-preserve-'));
     service = new DiagramService(tmpDir);
     const sessionStore = new SessionStore(tmpDir);
 
@@ -186,7 +186,7 @@ describe('annotation preservation (writeDiagramPreserving)', () => {
       'flowchart LR',
       '    X["Raw"] --> Y["Content"]',
       '',
-      '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---',
+      '%% --- ANNOTATIONS (auto-managed by SmartCode) ---',
       '%% @flag X "manually written"',
       '%% --- END ANNOTATIONS ---',
       '',

@@ -17,7 +17,9 @@ export type WsMessage =
   | { type: 'ghost:update'; file: string; ghostPaths: Array<{ fromNodeId: string; toNodeId: string; label?: string }> }
   // Phase 16: Heatmap + Session Recording
   | { type: 'session:event'; sessionId: string; event: Record<string, unknown> }
-  | { type: 'heatmap:update'; file: string; data: Record<string, number> };
+  | { type: 'heatmap:update'; file: string; data: Record<string, number> }
+  // MCP Session tracking
+  | { type: 'mcp-session:updated' };
 
 /**
  * Manages WebSocket servers using noServer mode for multi-project namespacing.

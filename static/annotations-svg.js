@@ -1,6 +1,6 @@
 /**
- * SmartB Annotations SVG -- SVG overlay rendering for flags.
- * Extracted from annotations.js. Exposed as window.SmartBAnnotationsSVG.
+ * SmartCode Annotations SVG -- SVG overlay rendering for flags.
+ * Extracted from annotations.js. Exposed as window.SmartCodeAnnotationsSVG.
  * Dependencies: diagram-dom.js
  */
 (function () {
@@ -100,7 +100,7 @@
         });
     }
 
-    window.SmartBAnnotationsSVG = {
+    window.SmartCodeAnnotationsSVG = {
         applyFlagsToSVG: applyFlagsToSVG,
         addBadge: addBadge,
         svgEl: svgEl,

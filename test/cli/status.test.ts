@@ -49,7 +49,7 @@ describe('showStatus against real /api/status', () => {
 
   it('connects to running server and retrieves status', async () => {
     // Create temp project with a .mmd file
-    tempDir = await mkdtemp(path.join(tmpdir(), 'smartb-status-'));
+    tempDir = await mkdtemp(path.join(tmpdir(), 'smartcode-status-'));
     await writeFile(
       path.join(tempDir, 'test.mmd'),
       'flowchart LR\n    A --> B\n',

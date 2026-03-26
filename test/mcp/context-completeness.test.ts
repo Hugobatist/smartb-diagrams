@@ -45,7 +45,7 @@ describe('get_diagram_context completeness', () => {
   let tools: Map<string, ToolHandler>;
 
   beforeEach(async () => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'smartb-ctx-completeness-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-ctx-completeness-'));
     service = new DiagramService(tmpDir);
     sessionStore = new SessionStore(tmpDir);
 
@@ -134,7 +134,7 @@ describe('get_diagram_context completeness', () => {
       '    A["Start"] --> B["Process"]',
       '    B --> C["End"]',
       '',
-      '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---',
+      '%% --- ANNOTATIONS (auto-managed by SmartCode) ---',
       '%% @flag B "Needs review"',
       '%% @status A ok',
       '%% @breakpoint B',

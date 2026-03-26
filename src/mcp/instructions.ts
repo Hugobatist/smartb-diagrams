@@ -1,12 +1,12 @@
 /**
  * MCP server instructions sent to AI clients on connection.
- * Teaches the AI HOW to use SmartB Diagrams effectively —
+ * Teaches the AI HOW to use SmartCode effectively —
  * optimized for minimal tool calls and maximum proactive usage.
  */
 export const MCP_INSTRUCTIONS = `
-# SmartB Diagrams — Show Your Reasoning Visually
+# SmartCode — Show Your Reasoning Visually
 
-You have SmartB Diagrams. Use it to show the developer your reasoning in real-time
+You have SmartCode. Use it to show the developer your reasoning in real-time
 as a visual flowchart in their browser. ONE tool call = complete diagram with colors,
 risks, and rejected alternatives.
 

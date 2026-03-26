@@ -1,25 +1,25 @@
 /**
- * SmartB Interaction State Machine -- FSM for coordinating all UI interaction modes.
+ * SmartCode Interaction State Machine -- FSM for coordinating all UI interaction modes.
  * Prevents conflicting interactions by defining valid states and transitions.
  *
- * Dependencies: event-bus.js (SmartBEventBus)
+ * Dependencies: event-bus.js (SmartCodeEventBus)
  *
  * States:
  *   idle         - Default. Click selects, right-click opens menu, double-click edits, drag pans.
  *   selected     - A node/edge is selected. Click elsewhere deselects, Delete removes.
  *   editing      - Inline edit overlay is open. All other interactions blocked.
  *   context-menu - Context menu is open. Click outside or Escape closes.
- *   flagging     - Flag mode is active (existing SmartBAnnotations behavior).
+ *   flagging     - Flag mode is active (existing SmartCodeAnnotations behavior).
  *   add-node     - Add node mode (existing MmdEditor behavior).
  *   add-edge     - Add edge mode (existing MmdEditor behavior).
  *   panning      - Active drag-pan in progress.
  *
  * Usage:
- *   SmartBInteraction.getState();           // 'idle'
- *   SmartBInteraction.transition('click_node', { id: 'A' }); // true if valid
- *   SmartBInteraction.getSelection();       // { id: 'A', type: 'node' }
- *   SmartBInteraction.isIdle();             // false
- *   SmartBInteraction.isBlocking();         // false
+ *   SmartCodeInteraction.getState();           // 'idle'
+ *   SmartCodeInteraction.transition('click_node', { id: 'A' }); // true if valid
+ *   SmartCodeInteraction.getSelection();       // { id: 'A', type: 'node' }
+ *   SmartCodeInteraction.isIdle();             // false
+ *   SmartCodeInteraction.isBlocking();         // false
  */
 (function() {
     'use strict';
@@ -59,8 +59,8 @@
         currentState = to;
 
         // Emit transition event on the event bus
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('interaction:transition', {
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('interaction:transition', {
                 from: from,
                 to: to,
                 event: event,
@@ -114,8 +114,8 @@
         if (TRANSITIONS[state] !== undefined) {
             var from = currentState;
             currentState = state;
-            if (window.SmartBEventBus) {
-                SmartBEventBus.emit('interaction:transition', {
+            if (window.SmartCodeEventBus) {
+                SmartCodeEventBus.emit('interaction:transition', {
                     from: from,
                     to: state,
                     event: 'force',
@@ -142,7 +142,7 @@
     }
 
     // ── Public API ──
-    window.SmartBInteraction = {
+    window.SmartCodeInteraction = {
         getState: getState,
         getSelection: getSelection,
         transition: transition,

@@ -1,6 +1,6 @@
 /**
- * SmartB Annotations Panel -- Panel rendering and navigation for flags.
- * Extracted from annotations.js. Exposed as window.SmartBAnnotationsPanel.
+ * SmartCode Annotations Panel -- Panel rendering and navigation for flags.
+ * Extracted from annotations.js. Exposed as window.SmartCodeAnnotationsPanel.
  * Dependencies: diagram-dom.js, pan-zoom.js
  */
 (function () {
@@ -18,7 +18,7 @@
         if (state.flags.size === 0) {
             var emptyDiv = document.createElement('div');
             emptyDiv.className = 'flag-panel-empty';
-            emptyDiv.textContent = 'Nenhuma flag ativa. Ative o Flag Mode (F) e clique em um nodo para sinalizar.';
+            emptyDiv.textContent = 'No active flags. Enable Flag Mode (F) and click on a node to flag.';
             list.textContent = '';
             list.appendChild(emptyDiv);
             return;
@@ -51,9 +51,9 @@
 
             var btnDelete = document.createElement('button');
             btnDelete.className = 'flag-panel-item-delete';
-            btnDelete.title = 'Remover flag';
-            /* safe: SmartBIcons contains static trusted SVG strings */
-            btnDelete.innerHTML = SmartBIcons.close;
+            btnDelete.title = 'Remove flag';
+            /* safe: SmartCodeIcons contains static trusted SVG strings */
+            btnDelete.innerHTML = SmartCodeIcons.close;
             btnDelete.addEventListener('click', (function(nid) {
                 return function(e) {
                     e.stopPropagation();
@@ -70,7 +70,7 @@
                 msgDiv.textContent = message;
             } else {
                 msgDiv.style.fontStyle = 'italic';
-                msgDiv.textContent = '(sem nota)';
+                msgDiv.textContent = '(no note)';
             }
             item.appendChild(msgDiv);
             item.addEventListener('click', (function(nid) {
@@ -85,17 +85,17 @@
         if (!el) { var svg = DiagramDOM.getSVG(); if (svg) el = svg.querySelector('[id="' + CSS.escape(nodeId) + '"]'); }
         if (!el) return;
         // Pan to center the node in the viewport
-        if (window.SmartBPanZoom) {
+        if (window.SmartCodePanZoom) {
             var container = document.getElementById('preview-container');
             if (container) {
                 var rect = el.getBoundingClientRect();
                 var containerRect = container.getBoundingClientRect();
-                var pan = SmartBPanZoom.getPan();
+                var pan = SmartCodePanZoom.getPan();
                 var centerX = containerRect.width / 2;
                 var centerY = containerRect.height / 2;
                 var elCenterX = rect.left + rect.width / 2 - containerRect.left;
                 var elCenterY = rect.top + rect.height / 2 - containerRect.top;
-                SmartBPanZoom.setPan(pan.panX + (centerX - elCenterX), pan.panY + (centerY - elCenterY));
+                SmartCodePanZoom.setPan(pan.panX + (centerX - elCenterX), pan.panY + (centerY - elCenterY));
             }
         }
         flashElement(el);
@@ -123,7 +123,7 @@
         if (window.zoomFit) setTimeout(window.zoomFit, 100);
     }
 
-    window.SmartBAnnotationsPanel = {
+    window.SmartCodeAnnotationsPanel = {
         renderPanel: renderPanel,
         scrollToNode: scrollToNode,
         flashElement: flashElement,

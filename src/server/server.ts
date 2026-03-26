@@ -293,7 +293,7 @@ export async function startServer(options: ServerOptions): Promise<void> {
   const mmdFiles = await service.listFiles();
   if (mmdFiles.length === 0) {
     log.warn('No .mmd files found in ' + projectDir);
-    log.warn("Run 'smartb init' to create a sample diagram, or create a .mmd file manually.");
+    log.warn("Run 'smartcode init' to create a sample diagram, or create a .mmd file manually.");
   }
 
   httpServer.listen(actualPort, () => {

@@ -1,16 +1,16 @@
 /**
- * SmartB Custom Renderer -- orchestrates the custom SVG rendering pipeline.
+ * SmartCode Custom Renderer -- orchestrates the custom SVG rendering pipeline.
  * Fetches graph data from /api/graph/, runs dagre layout, builds SVG,
  * and inserts into the preview container.
  *
- * Dependencies: dagre-layout.js (SmartBDagreLayout), svg-renderer.js (SmartBSvgRenderer),
- *               renderer.js (SmartBRenderer), event-bus.js (SmartBEventBus),
+ * Dependencies: dagre-layout.js (SmartCodeDagreLayout), svg-renderer.js (SmartCodeSvgRenderer),
+ *               renderer.js (SmartCodeRenderer), event-bus.js (SmartCodeEventBus),
  *               pan-zoom.js (applyTransform, zoomFit)
  * Dependents: app-init.js (called via renderWithType)
  *
  * Usage:
- *   SmartBCustomRenderer.render(graphModel);
- *   SmartBCustomRenderer.fetchAndRender(filePath);
+ *   SmartCodeCustomRenderer.render(graphModel);
+ *   SmartCodeCustomRenderer.fetchAndRender(filePath);
  */
 (function() {
     'use strict';
@@ -124,10 +124,10 @@
         await document.fonts.ready;
 
         // Compute layout via dagre — throws if NaN detected
-        var layout = SmartBDagreLayout.computeLayout(graphModel);
+        var layout = SmartCodeDagreLayout.computeLayout(graphModel);
 
         // Build SVG DOM
-        var svg = SmartBSvgRenderer.createSVG(layout);
+        var svg = SmartCodeSvgRenderer.createSVG(layout);
 
         // Insert into preview, clearing previous content
         var preview = document.getElementById('preview');
@@ -141,34 +141,34 @@
         if (window.applyTransform) window.applyTransform();
 
         // Auto-fit on initial render
-        if (window.SmartBRenderer && SmartBRenderer.getInitialRender()) {
+        if (window.SmartCodeRenderer && SmartCodeRenderer.getInitialRender()) {
             requestAnimationFrame(function() {
                 if (window.zoomFit) window.zoomFit();
             });
-            SmartBRenderer.setInitialRender(false);
+            SmartCodeRenderer.setInitialRender(false);
         } else {
             if (window.applyTransform) window.applyTransform();
         }
 
         // Apply flag indicators after SVG is in the DOM
-        if (window.SmartBAnnotations) SmartBAnnotations.applyFlagsToSVG();
+        if (window.SmartCodeAnnotations) SmartCodeAnnotations.applyFlagsToSVG();
 
         // Apply status colors from graph model (overrides nodeStyles for flagged nodes)
         applyStatusColors(graphModel);
 
         // Re-apply heatmap risk overlay if active (heatmap overrides status colors)
-        if (window.SmartBHeatmap && SmartBHeatmap.isActive()) {
-            SmartBHeatmap.applyRiskOverlay();
+        if (window.SmartCodeHeatmap && SmartCodeHeatmap.isActive()) {
+            SmartCodeHeatmap.applyRiskOverlay();
         }
 
         // Apply collapse overlays if available
-        if (window.SmartBCollapseUI && SmartBCollapseUI.applyOverlays) {
-            SmartBCollapseUI.applyOverlays();
+        if (window.SmartCodeCollapseUI && SmartCodeCollapseUI.applyOverlays) {
+            SmartCodeCollapseUI.applyOverlays();
         }
 
         // Emit rendered event
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('diagram:rendered', {
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('diagram:rendered', {
                 svg: svg.outerHTML,
                 renderer: 'custom'
             });
@@ -182,7 +182,7 @@
     async function fetchAndRender(filePath) {
         if (!filePath) return;
 
-        var resp = await fetch((window.SmartBBaseUrl || '') + '/api/graph/' + encodeURIComponent(filePath));
+        var resp = await fetch((window.SmartCodeBaseUrl || '') + '/api/graph/' + encodeURIComponent(filePath));
         if (!resp.ok) {
             throw new Error('Failed to fetch graph model: ' + resp.status + ' ' + resp.statusText);
         }
@@ -192,7 +192,7 @@
     }
 
     // ── Public API ──
-    window.SmartBCustomRenderer = {
+    window.SmartCodeCustomRenderer = {
         render: render,
         fetchAndRender: fetchAndRender,
         getLastGraphModel: function() { return lastGraphModel; },

@@ -1,13 +1,13 @@
 /**
- * SmartB Modal -- reusable prompt/confirm replacement.
+ * SmartCode Modal -- reusable prompt/confirm replacement.
  * Replaces native prompt() and confirm() with styled modals.
  *
  * Dependencies: modal.css
  *
  * Usage:
- *   SmartBModal.prompt({ title, placeholder, defaultValue, onConfirm });
- *   SmartBModal.confirm({ title, message, danger, onConfirm });
- *   SmartBModal.close();
+ *   SmartCodeModal.prompt({ title, placeholder, defaultValue, onConfirm });
+ *   SmartCodeModal.confirm({ title, message, danger, onConfirm });
+ *   SmartCodeModal.close();
  */
 (function() {
     'use strict';
@@ -29,7 +29,7 @@
     function createBackdrop() {
         close();
         var el = document.createElement('div');
-        el.className = 'smartb-modal-backdrop';
+        el.className = 'smartcode-modal-backdrop';
         document.body.appendChild(el);
         backdrop = el;
 
@@ -46,10 +46,10 @@
 
     function createCard(titleText) {
         var card = document.createElement('div');
-        card.className = 'smartb-modal-card';
+        card.className = 'smartcode-modal-card';
 
         var title = document.createElement('div');
-        title.className = 'smartb-modal-title';
+        title.className = 'smartcode-modal-title';
         title.textContent = titleText || '';
         card.appendChild(title);
 
@@ -58,13 +58,13 @@
 
     function createActions() {
         var actions = document.createElement('div');
-        actions.className = 'smartb-modal-actions';
+        actions.className = 'smartcode-modal-actions';
         return actions;
     }
 
     function createButton(text, variant) {
         var btn = document.createElement('button');
-        btn.className = 'smartb-modal-btn smartb-modal-btn--' + variant;
+        btn.className = 'smartcode-modal-btn smartcode-modal-btn--' + variant;
         btn.textContent = text;
         return btn;
     }
@@ -81,7 +81,7 @@
         var card = createCard(title);
 
         var input = document.createElement('input');
-        input.className = 'smartb-modal-input';
+        input.className = 'smartcode-modal-input';
         input.type = 'text';
         input.placeholder = placeholder;
         input.value = defaultValue;
@@ -129,7 +129,7 @@
 
         if (message) {
             var msg = document.createElement('div');
-            msg.className = 'smartb-modal-message';
+            msg.className = 'smartcode-modal-message';
             msg.textContent = message;
             card.appendChild(msg);
         }
@@ -163,7 +163,7 @@
 
     // ── Public API ──
 
-    window.SmartBModal = {
+    window.SmartCodeModal = {
         prompt: showPrompt,
         confirm: showConfirm,
         close: close,

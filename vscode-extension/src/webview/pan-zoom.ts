@@ -1,5 +1,5 @@
 /**
- * Pan/Zoom module for the SmartB VS Code webview.
+ * Pan/Zoom module for the SmartCode VS Code webview.
  * Provides scroll-wheel zoom, drag-to-pan, and zoom controls.
  */
 

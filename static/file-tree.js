@@ -1,26 +1,26 @@
 /**
- * SmartB File Tree -- file tree rendering, CRUD operations, file loading.
+ * SmartCode File Tree -- file tree rendering, CRUD operations, file loading.
  * Extracted from live.html (Phase 9 Plan 03).
  *
- * Dependencies: renderer.js (SmartBRenderer), event-bus.js (SmartBEventBus)
+ * Dependencies: renderer.js (SmartCodeRenderer), event-bus.js (SmartCodeEventBus)
  * Dependents: app-init.js, editor-panel.js, annotations.js
  *
  * Note: innerHTML usage is safe here -- all dynamic values pass through
- * SmartBRenderer.escapeHtml() before interpolation, preventing XSS.
+ * SmartCodeRenderer.escapeHtml() before interpolation, preventing XSS.
  *
  * Usage:
- *   SmartBFileTree.refreshFileList();
- *   SmartBFileTree.loadFile(path);
- *   SmartBFileTree.syncFile();
- *   SmartBFileTree.getCurrentFile();
- *   SmartBFileTree.setCurrentFile(path);
- *   SmartBFileTree.getLastContent();
- *   SmartBFileTree.setLastContent(v);
- *   SmartBFileTree.saveCurrentFile();
- *   SmartBFileTree.createNewFile();
- *   SmartBFileTree.createNewFolder();
- *   SmartBFileTree.deleteFile(path);
- *   SmartBFileTree.renameFile(path);
+ *   SmartCodeFileTree.refreshFileList();
+ *   SmartCodeFileTree.loadFile(path);
+ *   SmartCodeFileTree.syncFile();
+ *   SmartCodeFileTree.getCurrentFile();
+ *   SmartCodeFileTree.setCurrentFile(path);
+ *   SmartCodeFileTree.getLastContent();
+ *   SmartCodeFileTree.setLastContent(v);
+ *   SmartCodeFileTree.saveCurrentFile();
+ *   SmartCodeFileTree.createNewFile();
+ *   SmartCodeFileTree.createNewFolder();
+ *   SmartCodeFileTree.deleteFile(path);
+ *   SmartCodeFileTree.renameFile(path);
  */
 (function() {
     'use strict';
@@ -30,7 +30,7 @@
     var lastContent = '';
     var treeData = [];
     var initialLoadDone = false;
-    var collapsedFolders = new Set(JSON.parse(localStorage.getItem('smartb-collapsed') || '[]'));
+    var collapsedFolders = new Set(JSON.parse(localStorage.getItem('smartcode-collapsed') || '[]'));
 
     // Centralized setter -- keeps window.currentFile in sync
     function setFile(path) {
@@ -52,7 +52,7 @@
     }
 
     function saveCollapsed() {
-        localStorage.setItem('smartb-collapsed', JSON.stringify([...collapsedFolders]));
+        localStorage.setItem('smartcode-collapsed', JSON.stringify([...collapsedFolders]));
     }
 
     // ── Display helpers ──
@@ -71,7 +71,7 @@
     }
 
     // ── URL helper ──
-    function bUrl(path) { return (window.SmartBBaseUrl || '') + path; }
+    function bUrl(path) { return (window.SmartCodeBaseUrl || '') + path; }
 
     // ── Tree rendering ──
     function refreshFileList() {
@@ -101,7 +101,7 @@
 
     function renderTree() {
         // Skip rendering if MCP Sessions view is active
-        if (window.SmartBMcpSessions && SmartBMcpSessions.getViewMode() === 'sessions') return;
+        if (window.SmartCodeMcpSessions && SmartCodeMcpSessions.getViewMode() === 'sessions') return;
         var container = document.getElementById('fileTree');
         // Safe: all dynamic values pass through escapeHtml() — see renderNodes()
         if (container) container.innerHTML = renderNodes(treeData, 0);
@@ -115,13 +115,13 @@
                 var pad = 8 + depth * 16;
                 return '<div class="tree-folder">' +
                     '<div class="tree-folder-header" style="padding-left:' + pad + 'px" data-action="toggle-folder" data-folder="' + escapeHtml(n.name) + '">' +
-                        '<span class="tree-chevron ' + (isOpen ? 'open' : '') + '">' + SmartBIcons.chevronRight + '</span>' +
-                        '<span class="tree-folder-icon">' + (isOpen ? SmartBIcons.folderOpen : SmartBIcons.folder) + '</span>' +
+                        '<span class="tree-chevron ' + (isOpen ? 'open' : '') + '">' + SmartCodeIcons.chevronRight + '</span>' +
+                        '<span class="tree-folder-icon">' + (isOpen ? SmartCodeIcons.folderOpen : SmartCodeIcons.folder) + '</span>' +
                         '<span class="tree-folder-name">' + escapeHtml(prettyFolder(n.name)) + '</span>' +
                         '<span class="tree-folder-count">' + count + '</span>' +
                         '<span class="tree-folder-actions">' +
-                            '<button class="rename-btn" data-action="rename-folder" data-folder="' + escapeHtml(n.name) + '" title="Rename Folder">' + SmartBIcons.edit + '</button>' +
-                            '<button class="delete-btn" data-action="delete-folder" data-folder="' + escapeHtml(n.name) + '" title="Delete Folder">' + SmartBIcons.trash + '</button>' +
+                            '<button class="rename-btn" data-action="rename-folder" data-folder="' + escapeHtml(n.name) + '" title="Rename Folder">' + SmartCodeIcons.edit + '</button>' +
+                            '<button class="delete-btn" data-action="delete-folder" data-folder="' + escapeHtml(n.name) + '" title="Delete Folder">' + SmartCodeIcons.trash + '</button>' +
                         '</span>' +
                     '</div>' +
                     '<div class="tree-children ' + (isOpen ? '' : 'collapsed') + '">' +
@@ -133,11 +133,11 @@
                 var filePath = n.path;
                 var isActive = filePath === currentFile;
                 return '<div class="tree-file ' + (isActive ? 'active' : '') + '" style="padding-left:' + filePad + 'px" data-action="load-file" data-path="' + escapeHtml(filePath) + '">' +
-                    '<span class="tree-file-icon">' + SmartBIcons.file + '</span>' +
+                    '<span class="tree-file-icon">' + SmartCodeIcons.file + '</span>' +
                     '<span class="tree-file-name" title="' + escapeHtml(filePath) + '">' + escapeHtml(prettyName(n.name)) + '</span>' +
                     '<span class="tree-file-actions">' +
-                        '<button class="rename-btn" data-action="rename-file" data-path="' + escapeHtml(filePath) + '" title="Rename">' + SmartBIcons.edit + '</button>' +
-                        '<button class="delete-btn" data-action="delete-file" data-path="' + escapeHtml(filePath) + '" title="Delete">' + SmartBIcons.trash + '</button>' +
+                        '<button class="rename-btn" data-action="rename-file" data-path="' + escapeHtml(filePath) + '" title="Rename">' + SmartCodeIcons.edit + '</button>' +
+                        '<button class="delete-btn" data-action="delete-file" data-path="' + escapeHtml(filePath) + '" title="Delete">' + SmartCodeIcons.trash + '</button>' +
                     '</span>' +
                 '</div>';
             }
@@ -187,36 +187,36 @@
     // ── File loading ──
     function loadFile(path) {
         // Clear undo/redo history when switching files
-        if (window.SmartBCommandHistory) SmartBCommandHistory.clear();
+        if (window.SmartCodeCommandHistory) SmartCodeCommandHistory.clear();
         setFile(path);
         document.getElementById('currentFileName').textContent = prettyName(path);
         lastContent = '';
-        SmartBRenderer.setInitialRender(true);
+        SmartCodeRenderer.setInitialRender(true);
         syncFile();
         renderTree();
 
         // Reset ghost path user-hide tracking on file switch
-        if (window.SmartBGhostPaths) SmartBGhostPaths.resetUserHide();
+        if (window.SmartCodeGhostPaths) SmartCodeGhostPaths.resetUserHide();
 
         // Flush and reset interaction tracker for new file
-        if (window.SmartBInteractionTracker) SmartBInteractionTracker.resetForFile();
+        if (window.SmartCodeInteractionTracker) SmartCodeInteractionTracker.resetForFile();
 
         // Fetch overlay data for the new file (ghost paths, heatmap, sessions)
         var encoded = encodeURIComponent(path);
-        if (window.SmartBGhostPaths) {
+        if (window.SmartCodeGhostPaths) {
             fetch(bUrl('/api/ghost-paths/' + encoded))
                 .then(function(r) { return r.ok ? r.json() : null; })
-                .then(function(d) { if (d) SmartBGhostPaths.updateGhostPaths(path, d.ghostPaths || []); })
+                .then(function(d) { if (d) SmartCodeGhostPaths.updateGhostPaths(path, d.ghostPaths || []); })
                 .catch(function() {});
         }
-        if (window.SmartBHeatmap) {
+        if (window.SmartCodeHeatmap) {
             fetch(bUrl('/api/heatmap/' + encoded))
                 .then(function(r) { return r.ok ? r.json() : null; })
-                .then(function(d) { if (d) SmartBHeatmap.updateVisitCounts(d); })
+                .then(function(d) { if (d) SmartCodeHeatmap.updateVisitCounts(d); })
                 .catch(function() {});
         }
-        if (window.SmartBSessionPlayer) {
-            SmartBSessionPlayer.fetchSessionList(path);
+        if (window.SmartCodeSessionPlayer) {
+            SmartCodeSessionPlayer.fetchSessionList(path);
         }
     }
 
@@ -231,16 +231,16 @@
             .then(function(text) {
                 if (text !== lastContent) {
                     // Merge: preserve user flags when Claude edits arrive
-                    if (window.SmartBAnnotations && SmartBAnnotations.getState().flags.size > 0) {
-                        text = SmartBAnnotations.mergeIncomingContent(text);
-                    } else if (window.SmartBAnnotations) {
-                        var incoming = SmartBAnnotations.parseAnnotations(text);
-                        SmartBAnnotations.getState().flags = incoming.flags;
-                        SmartBAnnotations.getState().statuses = incoming.statuses;
-                        SmartBAnnotations.getState().ghosts = incoming.ghosts || [];
-                        if (window.SmartBGhostPaths) SmartBGhostPaths.updateGhostPaths(currentFile, incoming.ghosts || []);
-                        SmartBAnnotations.renderPanel();
-                        SmartBAnnotations.updateBadge();
+                    if (window.SmartCodeAnnotations && SmartCodeAnnotations.getState().flags.size > 0) {
+                        text = SmartCodeAnnotations.mergeIncomingContent(text);
+                    } else if (window.SmartCodeAnnotations) {
+                        var incoming = SmartCodeAnnotations.parseAnnotations(text);
+                        SmartCodeAnnotations.getState().flags = incoming.flags;
+                        SmartCodeAnnotations.getState().statuses = incoming.statuses;
+                        SmartCodeAnnotations.getState().ghosts = incoming.ghosts || [];
+                        if (window.SmartCodeGhostPaths) SmartCodeGhostPaths.updateGhostPaths(currentFile, incoming.ghosts || []);
+                        SmartCodeAnnotations.renderPanel();
+                        SmartCodeAnnotations.updateBadge();
                     }
                     lastContent = text;
                     editor.value = text;
@@ -253,7 +253,7 @@
 
     // ── File CRUD ──
     function createNewFile() {
-        SmartBModal.prompt({
+        SmartCodeModal.prompt({
             title: 'New Diagram',
             placeholder: 'diagram-name (use folder/name for subfolders)',
             onConfirm: function(name) {
@@ -270,7 +270,7 @@
     }
 
     function createNewFolder() {
-        SmartBModal.prompt({
+        SmartCodeModal.prompt({
             title: 'New Folder',
             placeholder: 'folder-name',
             onConfirm: function(name) {
@@ -300,8 +300,8 @@
                 if (window.toast) toast('Saved: ' + currentFile);
                 lastContent = content;
                 refreshFileList();
-                if (window.SmartBEventBus) {
-                    SmartBEventBus.emit('file:saved', { path: currentFile });
+                if (window.SmartCodeEventBus) {
+                    SmartCodeEventBus.emit('file:saved', { path: currentFile });
                 }
             } else {
                 if (window.toast) toast('Error saving');
@@ -312,7 +312,7 @@
     }
 
     function deleteFile(fpath) {
-        SmartBModal.confirm({
+        SmartCodeModal.confirm({
             title: 'Delete Diagram',
             message: 'Delete ' + prettyName(fpath) + '?',
             danger: true,
@@ -342,7 +342,7 @@
         var parts = oldPath.split('/');
         var base = parts.pop().replace('.mmd', '');
         var folder = parts.join('/');
-        SmartBModal.prompt({
+        SmartCodeModal.prompt({
             title: 'Rename Diagram',
             placeholder: 'New name',
             defaultValue: base,
@@ -368,7 +368,7 @@
 
     function renameFolder(oldName) {
         var displayName = prettyFolder(oldName);
-        SmartBModal.prompt({
+        SmartCodeModal.prompt({
             title: 'Rename Folder',
             placeholder: 'New folder name',
             defaultValue: displayName,
@@ -416,7 +416,7 @@
         if (count > 0) msg += ' with ' + count + ' file' + (count > 1 ? 's' : '') + '.';
         else msg += ' (empty).';
         msg += '\nThis action cannot be undone.';
-        SmartBModal.confirm({
+        SmartCodeModal.confirm({
             title: 'Delete Folder',
             message: msg,
             danger: true,
@@ -444,7 +444,7 @@
     }
 
     // ── Public API ──
-    window.SmartBFileTree = {
+    window.SmartCodeFileTree = {
         refreshFileList: refreshFileList,
         loadFile: loadFile,
         syncFile: syncFile,

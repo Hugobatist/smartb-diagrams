@@ -7,13 +7,13 @@ import { mkdtempSync } from 'node:fs';
 /**
  * Tests for workspace-registry.ts core logic.
  *
- * The real module reads/writes ~/.smartb/workspaces.json using homedir().
+ * The real module reads/writes ~/.smartcode/workspaces.json using homedir().
  * To avoid touching the real registry, we test the core data logic
  * (serialization, filtering, deduplication) in isolation using a temp dir.
  */
 
 let tmpDir: string;
-let smartbDir: string;
+let smartcodeDir: string;
 let registryPath: string;
 
 /** Simulate readRegistry: parse JSON file, return [] on any error */
@@ -44,10 +44,10 @@ function filterAlive(entries: Array<{ name: string; dir: string; port: number; p
 }
 
 beforeEach(async () => {
-  tmpDir = mkdtempSync(join(tmpdir(), 'smartb-registry-test-'));
-  smartbDir = join(tmpDir, '.smartb');
-  registryPath = join(smartbDir, 'workspaces.json');
-  await mkdir(smartbDir, { recursive: true });
+  tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-registry-test-'));
+  smartcodeDir = join(tmpDir, '.smartcode');
+  registryPath = join(smartcodeDir, 'workspaces.json');
+  await mkdir(smartcodeDir, { recursive: true });
 });
 
 afterEach(async () => {
@@ -90,7 +90,7 @@ describe('workspace-registry', () => {
   });
 
   it('missing file returns empty array', async () => {
-    const parsed = await readRegistry(join(smartbDir, 'nonexistent.json'));
+    const parsed = await readRegistry(join(smartcodeDir, 'nonexistent.json'));
     expect(parsed).toEqual([]);
   });
 
@@ -144,7 +144,7 @@ describe('workspace-registry', () => {
 
   it('workspace name is derived from directory basename', () => {
     expect(basename('/Users/dev/my-project')).toBe('my-project');
-    expect(basename('/tmp/smartb-test')).toBe('smartb-test');
+    expect(basename('/tmp/smartcode-test')).toBe('smartcode-test');
     // Empty path edge case: basename returns the directory itself
     expect(basename('/') || '/').toBe('/');
   });

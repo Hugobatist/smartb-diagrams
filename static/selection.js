@@ -1,18 +1,18 @@
 /**
- * SmartB Selection -- node/edge selection, visual SVG indicators, keyboard shortcuts.
+ * SmartCode Selection -- node/edge selection, visual SVG indicators, keyboard shortcuts.
  * Manages the selection lifecycle: select, deselect, re-apply after re-render.
  *
  * Dependencies:
- *   - interaction-state.js (SmartBInteraction)
+ *   - interaction-state.js (SmartCodeInteraction)
  *   - diagram-dom.js (DiagramDOM)
- *   - event-bus.js (SmartBEventBus)
+ *   - event-bus.js (SmartCodeEventBus)
  *   - diagram-editor.js (MmdEditor)
  *
  * Usage:
- *   SmartBSelection.init();
- *   SmartBSelection.selectNode('A');
- *   SmartBSelection.deselectAll();
- *   SmartBSelection.getSelected(); // { id: 'A', type: 'node' } or null
+ *   SmartCodeSelection.init();
+ *   SmartCodeSelection.selectNode('A');
+ *   SmartCodeSelection.deselectAll();
+ *   SmartCodeSelection.getSelected(); // { id: 'A', type: 'node' } or null
  */
 (function() {
     'use strict';
@@ -127,18 +127,18 @@
         // Update state
         selectedNodeId = nodeId;
         selectedType = 'node';
-        if (window.SmartBInteraction) {
-            SmartBInteraction.select(nodeId, 'node');
+        if (window.SmartCodeInteraction) {
+            SmartCodeInteraction.select(nodeId, 'node');
         }
 
         // Emit event
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('selection:changed', { id: nodeId, type: 'node' });
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('selection:changed', { id: nodeId, type: 'node' });
         }
 
         // Track click for heatmap frequency data
-        if (window.SmartBInteractionTracker) {
-            SmartBInteractionTracker.trackClick(nodeId);
+        if (window.SmartCodeInteractionTracker) {
+            SmartCodeInteractionTracker.trackClick(nodeId);
         }
     }
 
@@ -157,13 +157,13 @@
         // Update state
         selectedNodeId = edgeId;
         selectedType = 'edge';
-        if (window.SmartBInteraction) {
-            SmartBInteraction.select(edgeId, 'edge');
+        if (window.SmartCodeInteraction) {
+            SmartCodeInteraction.select(edgeId, 'edge');
         }
 
         // Emit event
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('selection:changed', { id: edgeId, type: 'edge' });
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('selection:changed', { id: edgeId, type: 'edge' });
         }
     }
 
@@ -180,11 +180,11 @@
         clearIndicator();
         selectedNodeId = null;
         selectedType = null;
-        if (window.SmartBInteraction) {
-            SmartBInteraction.clearSelection();
+        if (window.SmartCodeInteraction) {
+            SmartCodeInteraction.clearSelection();
         }
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('selection:changed', null);
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('selection:changed', null);
         }
     }
 
@@ -207,8 +207,8 @@
                 selectNode(savedId);
             } else {
                 deselectAll();
-                if (window.SmartBInteraction && SmartBInteraction.getState() === 'selected') {
-                    SmartBInteraction.forceState('idle');
+                if (window.SmartCodeInteraction && SmartCodeInteraction.getState() === 'selected') {
+                    SmartCodeInteraction.forceState('idle');
                 }
             }
         } else if (selectedType === 'edge') {
@@ -221,8 +221,8 @@
                 selectEdge(savedEdgeId);
             } else {
                 deselectAll();
-                if (window.SmartBInteraction && SmartBInteraction.getState() === 'selected') {
-                    SmartBInteraction.forceState('idle');
+                if (window.SmartCodeInteraction && SmartCodeInteraction.getState() === 'selected') {
+                    SmartCodeInteraction.forceState('idle');
                 }
             }
         }
@@ -232,10 +232,10 @@
 
     function handleClick(e) {
         // Check FSM blocking states
-        if (window.SmartBInteraction && SmartBInteraction.isBlocking()) return;
+        if (window.SmartCodeInteraction && SmartCodeInteraction.isBlocking()) return;
 
         // Don't handle in modes that have their own click handlers
-        var fsmState = window.SmartBInteraction ? SmartBInteraction.getState() : 'idle';
+        var fsmState = window.SmartCodeInteraction ? SmartCodeInteraction.getState() : 'idle';
         if (fsmState === 'flagging' || fsmState === 'add-node' || fsmState === 'add-edge') return;
 
         // Skip UI controls and overlays
@@ -250,19 +250,19 @@
 
         if (nodeInfo && nodeInfo.type === 'node') {
             selectNode(nodeInfo.id);
-            if (window.SmartBInteraction) SmartBInteraction.transition('click_node', nodeInfo);
+            if (window.SmartCodeInteraction) SmartCodeInteraction.transition('click_node', nodeInfo);
         } else if (nodeInfo && nodeInfo.type === 'edge') {
             selectEdge(nodeInfo.id);
-            if (window.SmartBInteraction) SmartBInteraction.transition('click_edge', nodeInfo);
+            if (window.SmartCodeInteraction) SmartCodeInteraction.transition('click_edge', nodeInfo);
         } else if (nodeInfo && nodeInfo.type === 'subgraph') {
             // Treat subgraph like a node for selection
             selectNode(nodeInfo.id);
-            if (window.SmartBInteraction) SmartBInteraction.transition('click_node', nodeInfo);
+            if (window.SmartCodeInteraction) SmartCodeInteraction.transition('click_node', nodeInfo);
         } else {
             // Empty space click
             if (selectedNodeId) {
                 deselectAll();
-                if (window.SmartBInteraction) SmartBInteraction.transition('click_empty');
+                if (window.SmartCodeInteraction) SmartCodeInteraction.transition('click_empty');
             }
         }
     }
@@ -278,9 +278,9 @@
             e.target.getAttribute('contenteditable')) return;
 
         // Don't handle if inline edit is active
-        if (window.SmartBInlineEdit && SmartBInlineEdit.isActive()) return;
+        if (window.SmartCodeInlineEdit && SmartCodeInlineEdit.isActive()) return;
 
-        var fsmState = window.SmartBInteraction ? SmartBInteraction.getState() : 'idle';
+        var fsmState = window.SmartCodeInteraction ? SmartCodeInteraction.getState() : 'idle';
 
         if (fsmState === 'selected' && selectedNodeId) {
             if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -295,7 +295,7 @@
                         deselectAll();
                         MmdEditor.doRemoveNode(nodeToRemove);
                     }
-                    if (window.SmartBInteraction) SmartBInteraction.transition('delete_node');
+                    if (window.SmartCodeInteraction) SmartCodeInteraction.transition('delete_node');
                 } else {
                     // First press: show confirmation toast
                     deleteConfirmNodeId = selectedNodeId;
@@ -311,7 +311,7 @@
                 deleteConfirmTimer = null;
                 deleteConfirmNodeId = null;
                 deselectAll();
-                if (window.SmartBInteraction) SmartBInteraction.transition('escape');
+                if (window.SmartCodeInteraction) SmartCodeInteraction.transition('escape');
             }
         }
     }
@@ -327,8 +327,8 @@
         document.addEventListener('keydown', handleKeydown);
 
         // Re-apply selection after SVG re-render
-        if (window.SmartBEventBus) {
-            SmartBEventBus.on('diagram:rendered', reapplySelection);
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.on('diagram:rendered', reapplySelection);
         }
     }
 
@@ -342,7 +342,7 @@
     }
 
     // ── Public API ──
-    window.SmartBSelection = {
+    window.SmartCodeSelection = {
         init: init,
         selectNode: selectNode,
         selectEdge: selectEdge,

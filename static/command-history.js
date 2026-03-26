@@ -1,8 +1,8 @@
 /**
- * SmartB Diagrams -- Command History (Undo/Redo)
+ * SmartCode -- Command History (Undo/Redo)
  * Implements the Command pattern with capped undo/redo stacks.
  * Each command is { before: string, after: string, description: string }.
- * Dependencies: event-bus.js (SmartBEventBus, optional)
+ * Dependencies: event-bus.js (SmartCodeEventBus, optional)
  */
 (function () {
     'use strict';
@@ -12,8 +12,8 @@
     var MAX_HISTORY = 100;
 
     function emitChanged() {
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('history:changed', {
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('history:changed', {
                 canUndo: undoStack.length > 0,
                 canRedo: redoStack.length > 0,
                 undoCount: undoStack.length,
@@ -76,7 +76,7 @@
     /** @returns {number} Number of commands in the redo stack */
     function getRedoCount() { return redoStack.length; }
 
-    window.SmartBCommandHistory = {
+    window.SmartCodeCommandHistory = {
         execute: execute,
         undo: undo,
         redo: redo,

@@ -1,8 +1,8 @@
 /**
- * SmartB Diagrams -- Visual Diagram Editor
+ * SmartCode -- Visual Diagram Editor
  * Manipulates .mmd content: add/remove/edit nodes and edges.
- * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartBEventBus),
- *   command-history.js (SmartBCommandHistory), editor-popovers.js (SmartBEditorPopovers)
+ * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartCodeEventBus),
+ *   command-history.js (SmartCodeCommandHistory), editor-popovers.js (SmartCodeEditorPopovers)
  */
 (function () {
     'use strict';
@@ -181,17 +181,17 @@
         if (btnEdge) btnEdge.classList.toggle('active', mode === 'addEdge');
 
         // Disable flag mode if entering edit mode
-        if (mode && window.SmartBAnnotations) {
-            var s = SmartBAnnotations.getState();
-            if (s.flagMode) SmartBAnnotations.toggleFlagMode();
+        if (mode && window.SmartCodeAnnotations) {
+            var s = SmartCodeAnnotations.getState();
+            if (s.flagMode) SmartCodeAnnotations.toggleFlagMode();
         }
 
         if (window.toast) {
             var msgs = {
-                addNode: 'Modo Nodo -- clique no espaco vazio do diagrama',
-                addEdge: 'Modo Seta -- clique no nodo de ORIGEM',
+                addNode: 'Node Mode -- click on empty space in the diagram',
+                addEdge: 'Edge Mode -- click on the SOURCE node',
             };
-            window.toast(msgs[mode] || 'Modo edicao desativado');
+            window.toast(msgs[mode] || 'Edit mode disabled');
         }
     }
 
@@ -202,15 +202,15 @@
         if (!editorState.mode) return;
         if (e.target.closest('.zoom-controls') || e.target.closest('.flag-popover') || e.target.closest('.editor-popover')) return;
 
-        // Use DiagramDOM.extractNodeId instead of SmartBAnnotations.extractNodeId
+        // Use DiagramDOM.extractNodeId instead of SmartCodeAnnotations.extractNodeId
         var nodeInfo = DiagramDOM.extractNodeId(e.target);
 
         if (editorState.mode === 'addNode') {
             if (nodeInfo) return; // Clicked an existing node, ignore
             e.preventDefault();
             e.stopPropagation();
-            if (window.SmartBEditorPopovers) {
-                SmartBEditorPopovers.showAddNodePopover(e.clientX, e.clientY);
+            if (window.SmartCodeEditorPopovers) {
+                SmartCodeEditorPopovers.showAddNodePopover(e.clientX, e.clientY);
             }
         }
 
@@ -221,13 +221,13 @@
             if (!editorState.edgeSource) {
                 editorState.edgeSource = nodeInfo.id;
                 DiagramDOM.highlightNode(nodeInfo.id, true);
-                if (window.toast) window.toast('Origem: ' + nodeInfo.id + ' -- agora clique no DESTINO');
+                if (window.toast) window.toast('Source: ' + nodeInfo.id + ' -- now click the TARGET');
             } else {
                 var from = editorState.edgeSource;
                 var to = nodeInfo.id;
                 if (from === to) return;
-                if (window.SmartBEditorPopovers) {
-                    SmartBEditorPopovers.showAddEdgePopover(e.clientX, e.clientY, from, to);
+                if (window.SmartCodeEditorPopovers) {
+                    SmartCodeEditorPopovers.showAddEdgePopover(e.clientX, e.clientY, from, to);
                 }
             }
         }
@@ -235,10 +235,10 @@
 
     function doRemoveNode(nodeId) {
         applyEdit(function(c) { return removeNode(c, nodeId); });
-        if (window.SmartBAnnotations) {
-            SmartBAnnotations.getState().flags.delete(nodeId);
-            SmartBAnnotations.renderPanel();
-            SmartBAnnotations.updateBadge();
+        if (window.SmartCodeAnnotations) {
+            SmartCodeAnnotations.getState().flags.delete(nodeId);
+            SmartCodeAnnotations.renderPanel();
+            SmartCodeAnnotations.updateBadge();
         }
     }
 
@@ -249,49 +249,55 @@
     function doEditNodeText(nodeId) {
         var editor = editorHooks.getEditor();
         var currentText = getNodeText(editor.value, nodeId);
-        var newText = prompt('Novo texto para ' + nodeId + ':', currentText);
-        if (newText === null || newText === currentText) return;
-        applyEdit(function(c) { return editNodeText(c, nodeId, newText); });
+        SmartCodeModal.prompt({
+            title: 'Edit Node: ' + nodeId,
+            placeholder: 'Node text',
+            defaultValue: currentText,
+            onConfirm: function(newText) {
+                if (newText === currentText) return;
+                applyEdit(function(c) { return editNodeText(c, nodeId, newText); });
+            },
+        });
     }
 
     function startConnectFrom(nodeId) {
-        if (window.SmartBAnnotations) SmartBAnnotations.closePopover();
+        if (window.SmartCodeAnnotations) SmartCodeAnnotations.closePopover();
         setMode('addEdge');
         editorState.edgeSource = nodeId;
         DiagramDOM.highlightNode(nodeId, true);
-        if (window.toast) window.toast('Origem: ' + nodeId + ' -- clique no DESTINO');
+        if (window.toast) window.toast('Source: ' + nodeId + ' -- click the TARGET');
     }
 
-    /** Undo the last edit via SmartBCommandHistory */
+    /** Undo the last edit via SmartCodeCommandHistory */
     async function undo() {
-        if (!window.SmartBCommandHistory || !SmartBCommandHistory.canUndo()) {
-            if (window.toast) window.toast('Nada para desfazer');
+        if (!window.SmartCodeCommandHistory || !SmartCodeCommandHistory.canUndo()) {
+            if (window.toast) window.toast('Nothing to undo');
             return;
         }
-        var content = SmartBCommandHistory.undo();
+        var content = SmartCodeCommandHistory.undo();
         var editor = editorHooks.getEditor();
         if (!editor || content === null) return;
         editor.value = content;
         editorHooks.setLastContent(content);
         if (editorHooks.saveFile) await editorHooks.saveFile();
         if (editorHooks.renderDiagram) await editorHooks.renderDiagram(content);
-        if (window.toast) window.toast('Desfeito (' + SmartBCommandHistory.getUndoCount() + ' restantes)');
+        if (window.toast) window.toast('Undone (' + SmartCodeCommandHistory.getUndoCount() + ' remaining)');
     }
 
-    /** Redo the last undone edit via SmartBCommandHistory */
+    /** Redo the last undone edit via SmartCodeCommandHistory */
     async function redo() {
-        if (!window.SmartBCommandHistory || !SmartBCommandHistory.canRedo()) {
-            if (window.toast) window.toast('Nada para refazer');
+        if (!window.SmartCodeCommandHistory || !SmartCodeCommandHistory.canRedo()) {
+            if (window.toast) window.toast('Nothing to redo');
             return;
         }
-        var content = SmartBCommandHistory.redo();
+        var content = SmartCodeCommandHistory.redo();
         var editor = editorHooks.getEditor();
         if (!editor || content === null) return;
         editor.value = content;
         editorHooks.setLastContent(content);
         if (editorHooks.saveFile) await editorHooks.saveFile();
         if (editorHooks.renderDiagram) await editorHooks.renderDiagram(content);
-        if (window.toast) window.toast('Refeito (' + SmartBCommandHistory.getRedoCount() + ' restantes)');
+        if (window.toast) window.toast('Redone (' + SmartCodeCommandHistory.getRedoCount() + ' remaining)');
     }
 
     async function applyEdit(editFn) {
@@ -302,7 +308,7 @@
         var beforeContent = editor.value;
 
         // Strip annotations, apply edit, re-inject annotations
-        var annotations = window.SmartBAnnotations;
+        var annotations = window.SmartCodeAnnotations;
         var content = editor.value;
         var flags = new Map();
         if (annotations) {
@@ -315,8 +321,8 @@
         editorHooks.setLastContent(content);
 
         // Push command to history AFTER edit is applied
-        if (window.SmartBCommandHistory) {
-            SmartBCommandHistory.execute({
+        if (window.SmartCodeCommandHistory) {
+            SmartCodeCommandHistory.execute({
                 before: beforeContent,
                 after: content,
                 description: 'edit',
@@ -327,8 +333,8 @@
         if (editorHooks.renderDiagram) await editorHooks.renderDiagram(content);
 
         // Emit diagram:edited event via event bus
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('diagram:edited', { source: 'diagram-editor' });
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('diagram:edited', { source: 'diagram-editor' });
         }
     }
 
@@ -338,8 +344,8 @@
         if (container) container.addEventListener('click', handleClick);
 
         // Subscribe to event bus: re-init after diagram render if needed
-        if (window.SmartBEventBus) {
-            SmartBEventBus.on('diagram:rendered', function() {
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.on('diagram:rendered', function() {
                 // Clear edge source highlight after re-render (SVG is replaced)
                 editorState.edgeSource = null;
             });
@@ -357,6 +363,6 @@
         doEditNodeText: doEditNodeText, startConnectFrom: startConnectFrom,
         applyEdit: applyEdit,
         getState: function() { return editorState; },
-        closeEditorPopover: function() { if (window.SmartBEditorPopovers) SmartBEditorPopovers.closePopover(); },
+        closeEditorPopover: function() { if (window.SmartCodeEditorPopovers) SmartCodeEditorPopovers.closePopover(); },
     };
 })();

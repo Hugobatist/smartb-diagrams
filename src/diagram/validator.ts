@@ -7,7 +7,7 @@ import { KNOWN_DIAGRAM_TYPES } from './constants.js';
  *
  * The @mermaid-js/parser package (v0.6) only supports a limited set of diagram types
  * (info, packet, pie, architecture, gitGraph, radar) and does NOT support flowchart,
- * which is the primary diagram type for SmartB. We use a heuristic validator that
+ * which is the primary diagram type for SmartCode. We use a heuristic validator that
  * catches obvious syntax errors. Browser-side Mermaid.js catches the rest at render time.
  */
 export function validateMermaidSyntax(content: string): ValidationResult {

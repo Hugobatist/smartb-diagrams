@@ -1,18 +1,18 @@
 /**
- * SmartB Breakpoints -- visual breakpoint indicators on SVG nodes,
+ * SmartCode Breakpoints -- visual breakpoint indicators on SVG nodes,
  * notification bar for breakpoint:hit events, REST toggle/continue/remove.
  *
  * Dependencies:
  *   - diagram-dom.js (DiagramDOM)
- *   - event-bus.js (SmartBEventBus)
- *   - file-tree.js (SmartBFileTree) — for currentFile
+ *   - event-bus.js (SmartCodeEventBus)
+ *   - file-tree.js (SmartCodeFileTree) — for currentFile
  *
  * Usage:
- *   SmartBBreakpoints.init();
- *   SmartBBreakpoints.updateBreakpoints(breakpointSet);
- *   SmartBBreakpoints.toggleBreakpoint(nodeId);
- *   SmartBBreakpoints.showNotification(nodeId);
- *   SmartBBreakpoints.hideNotification();
+ *   SmartCodeBreakpoints.init();
+ *   SmartCodeBreakpoints.updateBreakpoints(breakpointSet);
+ *   SmartCodeBreakpoints.toggleBreakpoint(nodeId);
+ *   SmartCodeBreakpoints.showNotification(nodeId);
+ *   SmartCodeBreakpoints.hideNotification();
  */
 (function() {
     'use strict';
@@ -26,7 +26,7 @@
     // ── Helpers ──
 
     function getCurrentFile() {
-        if (window.SmartBFileTree) return SmartBFileTree.getCurrentFile();
+        if (window.SmartCodeFileTree) return SmartCodeFileTree.getCurrentFile();
         return window.currentFile || '';
     }
 
@@ -124,7 +124,7 @@
         var file = getCurrentFile();
         if (!file) return;
         var action = breakpoints.has(nodeId) ? 'remove' : 'set';
-        fetch((window.SmartBBaseUrl || '') + '/api/breakpoints/' + encodeURIComponent(file), {
+        fetch((window.SmartCodeBaseUrl || '') + '/api/breakpoints/' + encodeURIComponent(file), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nodeId: nodeId, action: action })
@@ -144,7 +144,7 @@
     function continueBreakpoint(nodeId) {
         var file = getCurrentFile();
         if (!file) return;
-        fetch((window.SmartBBaseUrl || '') + '/api/breakpoints/' + encodeURIComponent(file) + '/continue', {
+        fetch((window.SmartCodeBaseUrl || '') + '/api/breakpoints/' + encodeURIComponent(file) + '/continue', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nodeId: nodeId })
@@ -157,7 +157,7 @@
     function removeBreakpoint(nodeId) {
         var file = getCurrentFile();
         if (!file) return;
-        fetch((window.SmartBBaseUrl || '') + '/api/breakpoints/' + encodeURIComponent(file), {
+        fetch((window.SmartCodeBaseUrl || '') + '/api/breakpoints/' + encodeURIComponent(file), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nodeId: nodeId, action: 'remove' })
@@ -175,15 +175,15 @@
 
     function init() {
         // Re-apply indicators after each diagram render
-        if (window.SmartBEventBus) {
-            SmartBEventBus.on('diagram:rendered', applyBreakpointIndicators);
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.on('diagram:rendered', applyBreakpointIndicators);
         }
         // Apply indicators if SVG already exists
         applyBreakpointIndicators();
     }
 
     // ── Public API ──
-    window.SmartBBreakpoints = {
+    window.SmartCodeBreakpoints = {
         init: init,
         updateBreakpoints: updateBreakpoints,
         applyBreakpointIndicators: applyBreakpointIndicators,

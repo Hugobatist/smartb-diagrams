@@ -50,7 +50,7 @@ describe('Breakpoint Routes', { timeout: 10_000 }, () => {
   let port: number;
 
   beforeAll(async () => {
-    tmpDir = mkdtempSync(path.join(tmpdir(), 'smartb-bp-routes-'));
+    tmpDir = mkdtempSync(path.join(tmpdir(), 'smartcode-bp-routes-'));
     writeFileSync(path.join(tmpDir, 'test.mmd'), DIAGRAM_CONTENT, 'utf-8');
 
     instance = createHttpServer(tmpDir);

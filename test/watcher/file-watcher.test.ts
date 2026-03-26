@@ -28,7 +28,7 @@ describe('FileWatcher', () => {
   });
 
   function createTmpDir(): string {
-    const dir = mkdtempSync(join(tmpdir(), 'smartb-watcher-'));
+    const dir = mkdtempSync(join(tmpdir(), 'smartcode-watcher-'));
     tmpDirs.push(dir);
     return dir;
   }

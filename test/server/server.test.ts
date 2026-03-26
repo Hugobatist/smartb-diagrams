@@ -110,7 +110,7 @@ describe('HTTP Server Integration', { timeout: 10_000 }, () => {
   it('GET / returns live.html', async () => {
     const res = await httpRequest(port, 'GET', '/');
     expect(res.status).toBe(200);
-    expect(res.body).toContain('SmartB');
+    expect(res.body).toContain('SmartCode');
   });
 
   it('GET /tree.json returns file tree', async () => {

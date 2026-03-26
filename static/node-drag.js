@@ -1,16 +1,16 @@
 /**
- * SmartB Node Drag -- drag selected nodes to reposition them on the canvas.
+ * SmartCode Node Drag -- drag selected nodes to reposition them on the canvas.
  * Moves nodes visually by updating SVG transform. Positions reset on re-render
  * (layout is still computed by dagre). This provides immediate visual feedback.
  *
  * Dependencies:
- *   - interaction-state.js (SmartBInteraction)
- *   - selection.js (SmartBSelection)
+ *   - interaction-state.js (SmartCodeInteraction)
+ *   - selection.js (SmartCodeSelection)
  *   - diagram-dom.js (DiagramDOM)
- *   - pan-zoom.js (SmartBPanZoom)
+ *   - pan-zoom.js (SmartCodePanZoom)
  *
  * Usage:
- *   SmartBNodeDrag.init();
+ *   SmartCodeNodeDrag.init();
  */
 (function() {
     'use strict';
@@ -39,7 +39,7 @@
      * accounting for current zoom and pan.
      */
     function screenToGraph(screenX, screenY) {
-        var pan = window.SmartBPanZoom ? SmartBPanZoom.getPan() : { panX: 0, panY: 0, zoom: 1 };
+        var pan = window.SmartCodePanZoom ? SmartCodePanZoom.getPan() : { panX: 0, panY: 0, zoom: 1 };
         return {
             x: (screenX - pan.panX) / pan.zoom,
             y: (screenY - pan.panY) / pan.zoom
@@ -136,11 +136,11 @@
         if (e.button !== 0) return;
 
         // Only drag when a node is selected
-        if (!window.SmartBInteraction) return;
-        var fsmState = SmartBInteraction.getState();
+        if (!window.SmartCodeInteraction) return;
+        var fsmState = SmartCodeInteraction.getState();
         if (fsmState !== 'selected') return;
 
-        var sel = window.SmartBSelection ? SmartBSelection.getSelected() : null;
+        var sel = window.SmartCodeSelection ? SmartCodeSelection.getSelected() : null;
         if (!sel || sel.type !== 'node') return;
 
         // Check if click is on the selected node
@@ -178,7 +178,7 @@
             if (Math.abs(dx) <= DRAG_THRESHOLD && Math.abs(dy) <= DRAG_THRESHOLD) return;
             dragStarted = true;
             // Notify FSM
-            if (window.SmartBInteraction) SmartBInteraction.transition('drag_start');
+            if (window.SmartCodeInteraction) SmartCodeInteraction.transition('drag_start');
             document.body.style.cursor = 'grabbing';
 
             // Store original edge paths for connected edges
@@ -186,7 +186,7 @@
         }
 
         // Convert screen delta to graph delta (account for zoom)
-        var pan = window.SmartBPanZoom ? SmartBPanZoom.getPan() : { zoom: 1 };
+        var pan = window.SmartCodePanZoom ? SmartCodePanZoom.getPan() : { zoom: 1 };
         var graphDx = dx / pan.zoom;
         var graphDy = dy / pan.zoom;
 
@@ -216,11 +216,11 @@
             cleanupEdgeCustomProps(dragNodeId);
 
             // Notify FSM
-            if (window.SmartBInteraction) SmartBInteraction.transition('drag_end');
+            if (window.SmartCodeInteraction) SmartCodeInteraction.transition('drag_end');
             document.body.style.cursor = '';
 
             if (window.toast) {
-                window.toast('Nodo reposicionado (posicao visual, reseta ao re-renderizar)');
+                window.toast('Node repositioned (visual only, resets on re-render)');
             }
         }
 
@@ -279,13 +279,13 @@
         document.addEventListener('mouseup', handleMouseUp);
 
         // Clear position overrides on re-render
-        if (window.SmartBEventBus) {
-            SmartBEventBus.on('diagram:rendered', reapplyPositions);
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.on('diagram:rendered', reapplyPositions);
         }
     }
 
     // ── Public API ──
-    window.SmartBNodeDrag = {
+    window.SmartCodeNodeDrag = {
         init: init,
         isDragging: function() { return dragStarted; },
         getPositionOverrides: function() { return positionOverrides; },

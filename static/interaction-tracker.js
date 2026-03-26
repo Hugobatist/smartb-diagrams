@@ -1,14 +1,14 @@
 /**
- * SmartB Interaction Tracker -- batches node clicks and flushes to server.
+ * SmartCode Interaction Tracker -- batches node clicks and flushes to server.
  * Provides automatic frequency data for the heatmap without MCP session setup.
  *
- * Dependencies: file-tree.js (SmartBFileTree), event-bus.js (SmartBEventBus)
+ * Dependencies: file-tree.js (SmartCodeFileTree), event-bus.js (SmartCodeEventBus)
  *
  * Usage:
- *   SmartBInteractionTracker.init();
- *   SmartBInteractionTracker.trackClick('nodeId');
- *   SmartBInteractionTracker.flush();       // manual flush
- *   SmartBInteractionTracker.resetForFile(); // on file switch
+ *   SmartCodeInteractionTracker.init();
+ *   SmartCodeInteractionTracker.trackClick('nodeId');
+ *   SmartCodeInteractionTracker.flush();       // manual flush
+ *   SmartCodeInteractionTracker.resetForFile(); // on file switch
  */
 (function() {
     'use strict';
@@ -35,7 +35,7 @@
         var keys = Object.keys(pendingCounts);
         if (keys.length === 0) return;
 
-        var currentFile = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : '';
+        var currentFile = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : '';
         if (!currentFile) {
             pendingCounts = {};
             return;
@@ -44,7 +44,7 @@
         var counts = pendingCounts;
         pendingCounts = {};
 
-        var baseUrl = window.SmartBBaseUrl || '';
+        var baseUrl = window.SmartCodeBaseUrl || '';
         var url = baseUrl + '/api/heatmap/' + encodeURIComponent(currentFile) + '/increment';
 
         fetch(url, {
@@ -84,7 +84,7 @@
     }
 
     // ── Public API ──
-    window.SmartBInteractionTracker = {
+    window.SmartCodeInteractionTracker = {
         init: init,
         trackClick: trackClick,
         flush: flush,

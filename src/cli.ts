@@ -5,7 +5,7 @@ import { getVersion } from './utils/version.js';
 const program = new Command();
 
 program
-  .name('smartb')
+  .name('smartcode')
   .description('AI observability diagrams -- see what your AI is thinking')
   .version(getVersion());
 
@@ -26,7 +26,7 @@ program
 
 program
   .command('init')
-  .description('Initialize a SmartB Diagrams project')
+  .description('Initialize a SmartCode project')
   .option('-d, --dir <path>', 'project directory', '.')
   .option('-f, --force', 'overwrite existing config')
   .action(async (options: { dir: string; force?: boolean }) => {
@@ -36,7 +36,7 @@ program
 
 program
   .command('status')
-  .description('Show status of the running SmartB server')
+  .description('Show status of the running SmartCode server')
   .option('-p, --port <number>', 'server port to check', '3333')
   .action(async (options: { port: string }) => {
     const { showStatus } = await import('./cli/status.js');

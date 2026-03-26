@@ -1,9 +1,9 @@
 /**
- * SmartBSessionPlayer -- timeline scrubber, play/pause/speed controls,
+ * SmartCodeSessionPlayer -- timeline scrubber, play/pause/speed controls,
  * diff highlighting for session replay.
  * Precomputes cumulative diagram states for O(1) seeking.
  */
-var SmartBSessionPlayer = (function() {
+var SmartCodeSessionPlayer = (function() {
     'use strict';
 
     var state = {
@@ -237,7 +237,7 @@ var SmartBSessionPlayer = (function() {
     // ── Session Loading ──
 
     function loadSession(sessionId) {
-        return fetch((window.SmartBBaseUrl || '') + '/api/session/' + encodeURIComponent(sessionId))
+        return fetch((window.SmartCodeBaseUrl || '') + '/api/session/' + encodeURIComponent(sessionId))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!data.events || data.events.length === 0) return;
@@ -272,7 +272,7 @@ var SmartBSessionPlayer = (function() {
 
     function fetchSessionList(file) {
         if (!file) return Promise.resolve([]);
-        return fetch((window.SmartBBaseUrl || '') + '/api/sessions/' + encodeURIComponent(file))
+        return fetch((window.SmartCodeBaseUrl || '') + '/api/sessions/' + encodeURIComponent(file))
             .then(function(r) { return r.ok ? r.json() : { sessions: [] }; })
             .then(function(data) {
                 renderSessionList(data.sessions || []);
@@ -312,7 +312,7 @@ var SmartBSessionPlayer = (function() {
         var shouldShow = typeof forceState === 'boolean' ? forceState : dd.classList.contains('hidden');
         if (shouldShow) {
             dd.classList.remove('hidden');
-            var file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : null;
+            var file = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : null;
             fetchSessionList(file);
         } else {
             dd.classList.add('hidden');

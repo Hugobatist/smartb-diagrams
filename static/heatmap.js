@@ -1,10 +1,10 @@
 /**
- * SmartB Heatmap -- risk overlay coloring and execution frequency heatmap.
+ * SmartCode Heatmap -- risk overlay coloring and execution frequency heatmap.
  * Colors nodes by risk level (red/yellow/green) or frequency (cold blue to hot red).
  * Supports mode toggle (risk/frequency), incremental merges, and empty state guidance.
  * Dependencies: diagram-dom.js, event-bus.js, file-tree.js
  */
-var SmartBHeatmap = (function() {
+var SmartCodeHeatmap = (function() {
     'use strict';
 
     var RISK_COLORS = {
@@ -282,12 +282,12 @@ var SmartBHeatmap = (function() {
     }
 
     function init() {
-        if (window.SmartBEventBus) {
-            SmartBEventBus.on('diagram:rendered', onDiagramRendered);
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.on('diagram:rendered', onDiagramRendered);
         }
-        var file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : '';
+        var file = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : '';
         if (file) {
-            fetch((window.SmartBBaseUrl || '') + '/api/heatmap/' + encodeURIComponent(file))
+            fetch((window.SmartCodeBaseUrl || '') + '/api/heatmap/' + encodeURIComponent(file))
                 .then(function(r) { return r.ok ? r.json() : null; })
                 .then(function(data) { if (data) updateVisitCounts(data); })
                 .catch(function() {});

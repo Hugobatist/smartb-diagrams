@@ -1,4 +1,4 @@
-# Instrucoes para o Claude - SmartB Diagrams
+# Instrucoes para o Claude - SmartCode
 
 ---
 
@@ -55,7 +55,7 @@ npm run typecheck  # Checagem de tipos
 
 ```
 src/
-  cli.ts           # Entry point CLI (comando smartb)
+  cli.ts           # Entry point CLI (comando smartcode)
   index.ts         # Exports publicos do pacote
   diagram/         # Parsing .mmd, anotacoes, validacao, tipos
   server/          # HTTP server, rotas REST, WebSocket, static assets

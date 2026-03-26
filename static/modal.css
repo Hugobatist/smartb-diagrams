@@ -1,0 +1,109 @@
+/* SmartCode Modal -- reusable prompt/confirm replacement */
+
+.smartcode-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: smartcode-modal-fade 150ms ease;
+}
+
+.smartcode-modal-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    max-width: 420px;
+    width: 90%;
+    padding: 20px;
+    animation: smartcode-modal-pop 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.smartcode-modal-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+}
+
+.smartcode-modal-input {
+    width: 100%;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 12px;
+    padding: 7px 10px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.smartcode-modal-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-muted);
+}
+
+.smartcode-modal-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+.smartcode-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.smartcode-modal-btn {
+    padding: 6px 14px;
+    border-radius: var(--radius-lg);
+    border: none;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 120ms ease, opacity 120ms ease;
+}
+
+.smartcode-modal-btn--primary {
+    background: var(--accent);
+    color: #fff;
+}
+.smartcode-modal-btn--primary:hover {
+    background: var(--accent-hover);
+}
+
+.smartcode-modal-btn--danger {
+    background: var(--status-problem);
+    color: #fff;
+}
+.smartcode-modal-btn--danger:hover {
+    background: var(--status-problem-stroke);
+}
+
+.smartcode-modal-btn--secondary {
+    background: var(--surface-3);
+    color: var(--text-secondary);
+}
+.smartcode-modal-btn--secondary:hover {
+    background: var(--surface-4);
+    color: var(--text-primary);
+}
+
+@keyframes smartcode-modal-pop {
+    from { transform: scale(0.92); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes smartcode-modal-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}

@@ -1,10 +1,10 @@
 /**
- * Flag interaction UI for the SmartB Diagrams webview.
+ * Flag interaction UI for the SmartCode webview.
  * Provides click-to-flag functionality on Mermaid SVG nodes.
  *
  * When a user clicks a node in the rendered diagram, an inline input
  * appears for entering a flag message. Submitting sends an addFlag
- * message to the extension host, which POSTs to the SmartB server.
+ * message to the extension host, which POSTs to the SmartCode server.
  */
 
 /** VS Code API interface (subset used by flag UI). */

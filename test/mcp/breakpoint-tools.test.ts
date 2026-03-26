@@ -19,14 +19,14 @@ describe('check_breakpoints', () => {
     '    A["Start"] --> B["Process"]',
     '    B --> C["End"]',
     '',
-    '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---',
+    '%% --- ANNOTATIONS (auto-managed by SmartCode) ---',
     '%% @breakpoint B',
     '%% --- END ANNOTATIONS ---',
     '',
   ].join('\n');
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'smartb-bp-test-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-bp-test-'));
     service = new DiagramService(tmpDir);
   });
 
@@ -73,7 +73,7 @@ describe('DiagramService ghost CRUD', () => {
   const SIMPLE_DIAGRAM = 'flowchart LR\n    A --> B --> C\n';
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'smartb-ghost-crud-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-ghost-crud-'));
     service = new DiagramService(tmpDir);
     writeFileSync(join(tmpDir, 'diagram.mmd'), SIMPLE_DIAGRAM, 'utf-8');
   });

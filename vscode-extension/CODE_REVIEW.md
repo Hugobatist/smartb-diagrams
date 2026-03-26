@@ -1,4 +1,4 @@
-# Code Review: SmartB VS Code Extension — Sidebar to Editor Panel Migration
+# Code Review: SmartCode VS Code Extension — Sidebar to Editor Panel Migration
 
 **Date**: 2026-02-15
 **Reviewer**: Claude Opus 4.6
@@ -175,7 +175,7 @@ provider.onWebviewMessage = (msg: unknown) => {
 ```json
 "keybindings": [
   {
-    "command": "smartb.showDiagram",
+    "command": "smartcode.showDiagram",
     "key": "ctrl+shift+d",
     "mac": "cmd+shift+d"
   }
@@ -254,7 +254,7 @@ onStatus: (status) => {
 },
 ```
 
-Or better, add a `smartb.autoShowPanel` configuration option.
+Or better, add a `smartcode.autoShowPanel` configuration option.
 
 ---
 
@@ -382,7 +382,7 @@ This would bring `extension.ts` down to ~220 lines and improve testability.
 
 ```ts
 /**
- * Webview script for the SmartB Diagrams sidebar panel.
+ * Webview script for the SmartCode sidebar panel.
  */
 ```
 
@@ -510,12 +510,12 @@ The panel keeps its DOM alive when hidden behind other tabs. This is appropriate
 ### N-2: The `activationEvents` array is correct
 
 ```json
-"activationEvents": ["onWebviewPanel:smartb.diagramPanel"]
+"activationEvents": ["onWebviewPanel:smartcode.diagramPanel"]
 ```
 
 This ensures the extension activates when VS Code needs to restore a serialized panel (e.g., after reload). Combined with `autoConnect: true` and the `*` activation from having commands, this is sufficient.
 
-However, note that `onWebviewPanel:smartb.diagramPanel` alone is **not** enough to activate the extension on VS Code startup if no panel was previously open. The extension relies on the user running `smartb.showDiagram` or on the `autoConnect` configuration. Since `autoConnect` triggers the WebSocket which then calls `provider.show()`, the activation flow depends on commands being registered. VS Code activates extensions when their commands are invoked, so this works. If you wanted the extension to activate on startup regardless, you'd add `"onStartupFinished"` to `activationEvents`.
+However, note that `onWebviewPanel:smartcode.diagramPanel` alone is **not** enough to activate the extension on VS Code startup if no panel was previously open. The extension relies on the user running `smartcode.showDiagram` or on the `autoConnect` configuration. Since `autoConnect` triggers the WebSocket which then calls `provider.show()`, the activation flow depends on commands being registered. VS Code activates extensions when their commands are invoked, so this works. If you wanted the extension to activate on startup regardless, you'd add `"onStartupFinished"` to `activationEvents`.
 
 ---
 
@@ -541,7 +541,7 @@ export function getHttpBaseUrl(wsUrl: string): string {
 }
 ```
 
-This converts `wss://` to `http://` rather than `https://`. Since the SmartB server is local-only (`localhost`), this is fine. But if the tool ever supports remote servers over TLS, this would need to map `wss://` to `https://`.
+This converts `wss://` to `http://` rather than `https://`. Since the SmartCode server is local-only (`localhost`), this is fine. But if the tool ever supports remote servers over TLS, this would need to map `wss://` to `https://`.
 
 ---
 

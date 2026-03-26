@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 /**
- * Manages the status bar item that shows the SmartB server connection state.
+ * Manages the status bar item that shows the SmartCode server connection state.
  * Displays an icon with colored background reflecting connected/disconnected/reconnecting.
  */
 export class StatusBarManager {
@@ -9,12 +9,12 @@ export class StatusBarManager {
 
   constructor() {
     this.item = vscode.window.createStatusBarItem(
-      'smartb.connectionStatus',
+      'smartcode.connectionStatus',
       vscode.StatusBarAlignment.Right,
       100,
     );
-    this.item.name = 'SmartB Connection';
-    this.item.command = 'smartb.reconnect';
+    this.item.name = 'SmartCode Connection';
+    this.item.command = 'smartcode.reconnect';
     this.setStatus('disconnected');
     this.item.show();
   }
@@ -23,18 +23,18 @@ export class StatusBarManager {
   setStatus(status: 'connected' | 'disconnected' | 'reconnecting'): void {
     switch (status) {
       case 'connected':
-        this.item.text = '$(check) SmartB';
-        this.item.tooltip = 'SmartB: Connected to server';
+        this.item.text = '$(check) SmartCode';
+        this.item.tooltip = 'SmartCode: Connected to server';
         this.item.backgroundColor = undefined;
         break;
       case 'disconnected':
-        this.item.text = '$(error) SmartB';
-        this.item.tooltip = 'SmartB: Disconnected (click to reconnect)';
+        this.item.text = '$(error) SmartCode';
+        this.item.tooltip = 'SmartCode: Disconnected (click to reconnect)';
         this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
         break;
       case 'reconnecting':
-        this.item.text = '$(sync~spin) SmartB';
-        this.item.tooltip = 'SmartB: Reconnecting...';
+        this.item.text = '$(sync~spin) SmartCode';
+        this.item.tooltip = 'SmartCode: Reconnecting...';
         this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
         break;
     }

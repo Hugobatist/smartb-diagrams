@@ -1,5 +1,5 @@
 /**
- * SmartB Diagrams - Graph Edge Parser Helpers
+ * SmartCode - Graph Edge Parser Helpers
  * Extracts edge definitions and node ID references from Mermaid lines.
  * Used by graph-parser.ts as part of the multi-pass pipeline.
  */

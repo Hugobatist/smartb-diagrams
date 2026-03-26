@@ -7,11 +7,11 @@ export interface WsClientCallbacks {
 
 /**
  * Reconnecting WebSocket client for the extension host (Node.js context).
- * Connects to a running SmartB server and relays messages to the extension.
+ * Connects to a running SmartCode server and relays messages to the extension.
  *
  * Mirrors the logic in static/ws-client.js but adapted for Node.js with the `ws` library.
  */
-export class SmartBWsClient {
+export class SmartCodeWsClient {
   private ws: WebSocket | null = null;
   private attempt = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -25,7 +25,7 @@ export class SmartBWsClient {
     private callbacks: WsClientCallbacks,
   ) {}
 
-  /** Open a WebSocket connection to the SmartB server. */
+  /** Open a WebSocket connection to the SmartCode server. */
   connect(): void {
     if (this.disposed) return;
     // Guard: don't create a new connection if one is already open or connecting
@@ -105,8 +105,8 @@ export class SmartBWsClient {
     if (this.disposed) return;
 
     const delay = Math.min(
-      SmartBWsClient.BASE_DELAY * Math.pow(2, this.attempt),
-      SmartBWsClient.MAX_DELAY,
+      SmartCodeWsClient.BASE_DELAY * Math.pow(2, this.attempt),
+      SmartCodeWsClient.MAX_DELAY,
     );
     // Jitter: 50-100% of delay
     const jitter = delay * (0.5 + Math.random() * 0.5);

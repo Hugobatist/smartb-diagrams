@@ -8,17 +8,17 @@ describe('initProject', () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(tmpdir(), 'smartb-init-'));
+    tempDir = await mkdtemp(path.join(tmpdir(), 'smartcode-init-'));
   });
 
   afterEach(async () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it('creates .smartb.json and reasoning.mmd in target directory', async () => {
+  it('creates .smartcode.json and reasoning.mmd in target directory', async () => {
     await initProject(tempDir);
 
-    const configPath = path.join(tempDir, '.smartb.json');
+    const configPath = path.join(tempDir, '.smartcode.json');
     const diagramPath = path.join(tempDir, 'reasoning.mmd');
 
     const configRaw = await readFile(configPath, 'utf-8');
@@ -28,10 +28,10 @@ describe('initProject', () => {
     expect(diagramRaw).toBeTruthy();
   });
 
-  it('.smartb.json has correct JSON structure', async () => {
+  it('.smartcode.json has correct JSON structure', async () => {
     await initProject(tempDir);
 
-    const configPath = path.join(tempDir, '.smartb.json');
+    const configPath = path.join(tempDir, '.smartcode.json');
     const config = JSON.parse(await readFile(configPath, 'utf-8'));
 
     expect(config).toEqual({
@@ -51,22 +51,22 @@ describe('initProject', () => {
     expect(content).toContain('-->');
   });
 
-  it('throws error when .smartb.json already exists (without --force)', async () => {
+  it('throws error when .smartcode.json already exists (without --force)', async () => {
     // Create existing config
-    await writeFile(path.join(tempDir, '.smartb.json'), '{}', 'utf-8');
+    await writeFile(path.join(tempDir, '.smartcode.json'), '{}', 'utf-8');
 
     await expect(initProject(tempDir)).rejects.toThrow(
-      'Already initialized: .smartb.json exists. Use --force to reinitialize.',
+      'Already initialized: .smartcode.json exists. Use --force to reinitialize.',
     );
   });
 
-  it('succeeds with --force flag when .smartb.json already exists', async () => {
+  it('succeeds with --force flag when .smartcode.json already exists', async () => {
     // Create existing config with different content
-    await writeFile(path.join(tempDir, '.smartb.json'), '{"old": true}', 'utf-8');
+    await writeFile(path.join(tempDir, '.smartcode.json'), '{"old": true}', 'utf-8');
 
     await initProject(tempDir, true);
 
-    const configPath = path.join(tempDir, '.smartb.json');
+    const configPath = path.join(tempDir, '.smartcode.json');
     const config = JSON.parse(await readFile(configPath, 'utf-8'));
 
     expect(config).toEqual({

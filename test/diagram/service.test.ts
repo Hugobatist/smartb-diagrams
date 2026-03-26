@@ -40,7 +40,7 @@ describe('DiagramService', () => {
     let service: DiagramService;
 
     beforeEach(() => {
-      tmpDir = mkdtempSync(join(tmpdir(), 'smartb-test-'));
+      tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-test-'));
       service = new DiagramService(tmpDir);
     });
 
@@ -75,7 +75,7 @@ describe('DiagramService', () => {
     let service: DiagramService;
 
     beforeEach(() => {
-      tmpDir = mkdtempSync(join(tmpdir(), 'smartb-test-'));
+      tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-test-'));
       service = new DiagramService(tmpDir);
       // Copy a fixture to the tmp dir for modification
       cpSync(join(fixturesDir, 'valid-flowchart.mmd'), join(tmpDir, 'test.mmd'));
@@ -107,7 +107,7 @@ describe('DiagramService', () => {
     let service: DiagramService;
 
     beforeEach(() => {
-      tmpDir = mkdtempSync(join(tmpdir(), 'smartb-test-'));
+      tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-test-'));
       service = new DiagramService(tmpDir);
       cpSync(join(fixturesDir, 'with-flags.mmd'), join(tmpDir, 'test.mmd'));
     });

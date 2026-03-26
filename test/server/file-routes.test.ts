@@ -43,7 +43,7 @@ describe('File Routes', { timeout: 10_000 }, () => {
   let port: number;
 
   beforeAll(async () => {
-    tmpDir = mkdtempSync(path.join(tmpdir(), 'smartb-file-routes-'));
+    tmpDir = mkdtempSync(path.join(tmpdir(), 'smartcode-file-routes-'));
     // Create a seed diagram
     writeFileSync(path.join(tmpDir, 'existing.mmd'), 'flowchart LR\n    A --> B\n', 'utf-8');
 

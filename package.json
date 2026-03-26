@@ -1,17 +1,17 @@
 {
-  "name": "smartb-diagrams",
+  "name": "smartcode",
   "version": "0.1.0",
   "description": "Visual debugger for AI reasoning -- see what your AI is thinking, set breakpoints, flag mistakes, replay sessions",
   "type": "module",
   "license": "MIT",
   "author": "Hugobatist",
-  "homepage": "https://github.com/Hugobatist/smartb-diagrams#readme",
+  "homepage": "https://github.com/Hugobatist/smartcode#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Hugobatist/smartb-diagrams.git"
+    "url": "git+https://github.com/Hugobatist/smartcode.git"
   },
   "bugs": {
-    "url": "https://github.com/Hugobatist/smartb-diagrams/issues"
+    "url": "https://github.com/Hugobatist/smartcode/issues"
   },
   "keywords": [
     "ai",
@@ -30,7 +30,7 @@
     "model-context-protocol"
   ],
   "bin": {
-    "smartb": "dist/cli.js"
+    "smartcode": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

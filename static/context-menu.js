@@ -1,18 +1,18 @@
 /**
- * SmartB Context Menu -- right-click context menu for diagram nodes and edges.
+ * SmartCode Context Menu -- right-click context menu for diagram nodes and edges.
  * Shows action items: Edit, Delete, Duplicate, Flag, Connect (nodes) or Delete, Flag (edges).
  *
  * Dependencies:
- *   - interaction-state.js (SmartBInteraction)
+ *   - interaction-state.js (SmartCodeInteraction)
  *   - diagram-dom.js (DiagramDOM)
  *   - diagram-editor.js (MmdEditor)
- *   - annotations.js (SmartBAnnotations)
- *   - selection.js (SmartBSelection)
+ *   - annotations.js (SmartCodeAnnotations)
+ *   - selection.js (SmartCodeSelection)
  *
  * Usage:
- *   SmartBContextMenu.init();
- *   SmartBContextMenu.show(x, y, nodeInfo);
- *   SmartBContextMenu.close();
+ *   SmartCodeContextMenu.init();
+ *   SmartCodeContextMenu.show(x, y, nodeInfo);
+ *   SmartCodeContextMenu.close();
  */
 (function() {
     'use strict';
@@ -51,12 +51,12 @@
     // ── Flag Helper ──
 
     function doFlag() {
-        if (window.SmartBInteraction) {
-            SmartBInteraction.forceState('flagging');
+        if (window.SmartCodeInteraction) {
+            SmartCodeInteraction.forceState('flagging');
         }
-        if (window.SmartBAnnotations) {
-            var s = SmartBAnnotations.getState();
-            if (!s.flagMode) SmartBAnnotations.toggleFlagMode();
+        if (window.SmartCodeAnnotations) {
+            var s = SmartCodeAnnotations.getState();
+            if (!s.flagMode) SmartCodeAnnotations.toggleFlagMode();
         }
         if (window.toast) toast('Flag Mode enabled -- click on a node to flag');
     }
@@ -89,26 +89,26 @@
         var from = ghostPathSource;
         var to = nodeInfo.id;
         ghostPathSource = null;
-        SmartBModal.prompt({
+        SmartCodeModal.prompt({
             title: 'Ghost Path: ' + from + ' → ' + to,
             placeholder: 'Reason (optional)',
             allowEmpty: true,
             onConfirm: function(label) {
-                if (window.SmartBGhostPaths) SmartBGhostPaths.createGhostPath(from, to, label || undefined);
+                if (window.SmartCodeGhostPaths) SmartCodeGhostPaths.createGhostPath(from, to, label || undefined);
             },
         });
     }
 
     // ── Risk Level Helper ──
 
-    function bUrl(path) { return (window.SmartBBaseUrl || '') + path; }
+    function bUrl(path) { return (window.SmartCodeBaseUrl || '') + path; }
 
     function setRisk(nodeId, level) {
-        SmartBModal.prompt({
+        SmartCodeModal.prompt({
             title: 'Risk: ' + level.charAt(0).toUpperCase() + level.slice(1),
             placeholder: 'Reason for ' + level + ' risk...',
             onConfirm: function(reason) {
-                var file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : null;
+                var file = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : null;
                 if (!file) return;
                 fetch(bUrl('/api/annotations/' + encodeURIComponent(file) + '/risk'), {
                     method: 'POST',
@@ -125,7 +125,7 @@
     }
 
     function removeRisk(nodeId) {
-        var file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : null;
+        var file = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : null;
         if (!file) return;
         fetch(bUrl('/api/annotations/' + encodeURIComponent(file) + '/risk'), {
             method: 'DELETE',
@@ -168,9 +168,9 @@
         if (nodeInfo.type === 'node' || nodeInfo.type === 'subgraph') {
             // Node context menu: 5 items
             menu.appendChild(createMenuItem('Edit Text', '', function() {
-                if (window.SmartBInlineEdit) {
-                    if (window.SmartBInteraction) SmartBInteraction.transition('edit_action');
-                    SmartBInlineEdit.open(nodeInfo.id);
+                if (window.SmartCodeInlineEdit) {
+                    if (window.SmartCodeInteraction) SmartCodeInteraction.transition('edit_action');
+                    SmartCodeInlineEdit.open(nodeInfo.id);
                 } else if (window.MmdEditor) {
                     MmdEditor.doEditNodeText(nodeInfo.id);
                 }
@@ -191,7 +191,7 @@
             }));
 
             menu.appendChild(createMenuItem('Toggle Breakpoint', '', function() {
-                if (window.SmartBBreakpoints) SmartBBreakpoints.toggleBreakpoint(nodeInfo.id);
+                if (window.SmartCodeBreakpoints) SmartCodeBreakpoints.toggleBreakpoint(nodeInfo.id);
             }));
 
             menu.appendChild(createMenuItem('New Edge', '', function() {
@@ -263,8 +263,8 @@
             outsideHandler = null;
         }
         // Transition FSM back to idle if in context-menu state
-        if (window.SmartBInteraction && SmartBInteraction.getState() === 'context-menu') {
-            SmartBInteraction.transition('close');
+        if (window.SmartCodeInteraction && SmartCodeInteraction.getState() === 'context-menu') {
+            SmartCodeInteraction.transition('close');
         }
     }
 
@@ -272,10 +272,10 @@
 
     function handleContextMenu(e) {
         // Check FSM blocking states
-        if (window.SmartBInteraction && SmartBInteraction.isBlocking()) return;
+        if (window.SmartCodeInteraction && SmartCodeInteraction.isBlocking()) return;
 
         // Don't show custom menu if in special modes
-        var fsmState = window.SmartBInteraction ? SmartBInteraction.getState() : 'idle';
+        var fsmState = window.SmartCodeInteraction ? SmartCodeInteraction.getState() : 'idle';
         if (fsmState === 'flagging' || fsmState === 'add-node' || fsmState === 'add-edge') return;
 
         // Skip UI controls
@@ -290,17 +290,17 @@
         e.preventDefault();
 
         // Select the node/edge first
-        if (window.SmartBSelection) {
+        if (window.SmartCodeSelection) {
             if (nodeInfo.type === 'node' || nodeInfo.type === 'subgraph') {
-                SmartBSelection.selectNode(nodeInfo.id);
+                SmartCodeSelection.selectNode(nodeInfo.id);
             } else if (nodeInfo.type === 'edge') {
-                SmartBSelection.selectEdge(nodeInfo.id);
+                SmartCodeSelection.selectEdge(nodeInfo.id);
             }
         }
 
         // Transition FSM to context-menu state
-        if (window.SmartBInteraction) {
-            SmartBInteraction.transition('right_click', nodeInfo);
+        if (window.SmartCodeInteraction) {
+            SmartCodeInteraction.transition('right_click', nodeInfo);
         }
 
         showContextMenu(e.clientX, e.clientY, nodeInfo);
@@ -309,8 +309,8 @@
     // ── Escape Handler ──
 
     function handleEscapeKey(e) {
-        if (e.key === 'Escape' && window.SmartBInteraction &&
-            SmartBInteraction.getState() === 'context-menu') {
+        if (e.key === 'Escape' && window.SmartCodeInteraction &&
+            SmartCodeInteraction.getState() === 'context-menu') {
             closeContextMenu();
         }
     }
@@ -326,7 +326,7 @@
     }
 
     // ── Public API ──
-    window.SmartBContextMenu = {
+    window.SmartCodeContextMenu = {
         init: init,
         close: closeContextMenu,
         show: showContextMenu,

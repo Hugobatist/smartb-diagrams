@@ -1,10 +1,10 @@
 /**
- * SmartB Diagrams — Collapse UI
+ * SmartCode — Collapse UI
  * Browser-side collapse/expand interaction handlers.
  * Handles click events on collapsed nodes and subgraph headers.
- * Exposed as window.SmartBCollapseUI
+ * Exposed as window.SmartCodeCollapseUI
  *
- * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartBEventBus)
+ * Dependencies: diagram-dom.js (DiagramDOM), event-bus.js (SmartCodeEventBus)
  */
 (function() {
   'use strict';
@@ -12,7 +12,7 @@
   // Private state -- not exposed on the public object
   var _state = { collapsed: new Set() };
 
-  var SmartBCollapseUI = {
+  var SmartCodeCollapseUI = {
     autoCollapsed: [],
     breadcrumbs: [],
     focusedSubgraph: null,
@@ -28,9 +28,9 @@
       this.attachClickHandlers();
 
       // Subscribe to event bus: re-apply overlays after diagram render
-      if (window.SmartBEventBus) {
+      if (window.SmartCodeEventBus) {
         var self = this;
-        SmartBEventBus.on('diagram:rendered', function() {
+        SmartCodeEventBus.on('diagram:rendered', function() {
           if (typeof self.applyOverlays === 'function') {
             self.applyOverlays();
           }
@@ -78,15 +78,15 @@
 
       diagram.addEventListener('click', function(e) {
         // Respect FSM states — don't interfere with editing or context menu
-        if (window.SmartBInteraction) {
-          var st = SmartBInteraction.getState();
+        if (window.SmartCodeInteraction) {
+          var st = SmartCodeInteraction.getState();
           if (st === 'editing' || st === 'context-menu') return;
         }
         // Don't interfere with zoom controls
         if (e.target.closest('.zoom-controls')) return;
         if (e.target.closest('.flag-popover')) return;
 
-        var target = e.target.closest('.node') || e.target.closest('.smartb-node');
+        var target = e.target.closest('.node') || e.target.closest('.smartcode-node');
         if (target) {
           var nodeId = self.extractNodeId(target);
           if (nodeId && nodeId.startsWith('__collapsed__')) {
@@ -98,10 +98,10 @@
           }
         }
 
-        // Click on cluster label to collapse (Mermaid .cluster or custom .smartb-subgraph)
+        // Click on cluster label to collapse (Mermaid .cluster or custom .smartcode-subgraph)
         var clusterLabel = e.target.closest('.cluster-label');
         if (clusterLabel) {
-          var cluster = clusterLabel.closest('.cluster') || clusterLabel.closest('.smartb-subgraph');
+          var cluster = clusterLabel.closest('.cluster') || clusterLabel.closest('.smartcode-subgraph');
           if (cluster) {
             var clusterId = self.extractClusterId(cluster);
             if (clusterId) {
@@ -122,11 +122,11 @@
       // Double-click to enter focus mode
       diagram.addEventListener('dblclick', function(e) {
         // Respect FSM states — don't enter focus mode when editing or a node is selected
-        if (window.SmartBInteraction) {
-          var st = SmartBInteraction.getState();
+        if (window.SmartCodeInteraction) {
+          var st = SmartCodeInteraction.getState();
           if (st === 'editing' || st === 'selected') return;
         }
-        var node = e.target.closest('.node') || e.target.closest('.smartb-node');
+        var node = e.target.closest('.node') || e.target.closest('.smartcode-node');
         if (!node) return;
 
         var nodeId = self.extractNodeId(node);
@@ -233,8 +233,8 @@
 
       var icon = document.createElement('span');
       icon.className = 'notice-icon';
-      // Safe: SmartBIcons.chart is a static trusted SVG string
-      icon.innerHTML = SmartBIcons.chart;
+      // Safe: SmartCodeIcons.chart is a static trusted SVG string
+      icon.innerHTML = SmartCodeIcons.chart;
       notice.appendChild(icon);
 
       var text = document.createElement('span');
@@ -257,8 +257,8 @@
       var dismissBtn = document.createElement('button');
       dismissBtn.className = 'notice-dismiss';
       dismissBtn.title = 'Dismiss';
-      // Safe: SmartBIcons.close is a static trusted SVG string
-      dismissBtn.innerHTML = SmartBIcons.close;
+      // Safe: SmartCodeIcons.close is a static trusted SVG string
+      dismissBtn.innerHTML = SmartCodeIcons.close;
       dismissBtn.addEventListener('click', function() {
         notice.remove();
       });
@@ -309,8 +309,8 @@
       if (this.focusedSubgraph) {
         var exitBtn = document.createElement('button');
         exitBtn.className = 'breadcrumb-exit';
-        // Safe: SmartBIcons.close is a static trusted SVG string
-        exitBtn.innerHTML = SmartBIcons.close + ' Exit Focus';
+        // Safe: SmartCodeIcons.close is a static trusted SVG string
+        exitBtn.innerHTML = SmartCodeIcons.close + ' Exit Focus';
         exitBtn.title = 'Exit focus mode (Esc)';
         exitBtn.addEventListener('click', function() { self.exitFocusMode(); });
         bar.appendChild(exitBtn);
@@ -321,5 +321,5 @@
     }
   };
 
-  window.SmartBCollapseUI = SmartBCollapseUI;
+  window.SmartCodeCollapseUI = SmartCodeCollapseUI;
 })();

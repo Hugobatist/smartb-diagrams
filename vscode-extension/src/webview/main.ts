@@ -1,5 +1,5 @@
 /**
- * Webview script for the SmartB Diagrams sidebar panel.
+ * Webview script for the SmartCode sidebar panel.
  * Runs inside the VS Code webview context (browser sandbox).
  *
  * Renders Mermaid diagrams via the globally loaded mermaid.min.js,
@@ -52,7 +52,7 @@ import { initFileList, updateFileList, setActiveFile, hideFileList } from './fil
 import { initPanZoom, zoomFit } from './pan-zoom.js';
 
 /**
- * Strip SmartB annotation blocks from raw .mmd content.
+ * Strip SmartCode annotation blocks from raw .mmd content.
  */
 function stripAnnotations(content: string): string {
   const startMarker = '%% --- ANNOTATIONS';
@@ -190,9 +190,9 @@ function stripAnnotations(content: string): string {
           statusEl.textContent = labels[status] || status;
           statusEl.className = `connection-status ${status}`;
           statusEl.title = status === 'connected'
-            ? 'Conectado ao servidor SmartB via WebSocket'
+            ? 'Conectado ao servidor SmartCode via WebSocket'
             : status === 'disconnected'
-              ? 'Sem conexao com o servidor. Execute: smartb serve'
+              ? 'Sem conexao com o servidor. Execute: smartcode serve'
               : 'Tentando reconectar...';
         }
         break;

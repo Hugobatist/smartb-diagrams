@@ -1,5 +1,5 @@
 /**
- * SmartB ViewportTransform -- screen/graph coordinate conversion and zoom.
+ * SmartCode ViewportTransform -- screen/graph coordinate conversion and zoom.
  * Standalone class for managing a 2D viewport with pan and zoom.
  *
  * Dependencies: none

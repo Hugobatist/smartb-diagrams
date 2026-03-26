@@ -1,13 +1,13 @@
 {
-  "name": "smartb-diagrams-vscode",
-  "displayName": "SmartB Diagrams",
+  "name": "smartcode-vscode",
+  "displayName": "SmartCode",
   "description": "Live AI reasoning diagrams in VS Code",
   "version": "0.1.0",
-  "publisher": "smartb",
+  "publisher": "smartcode",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/smartb/smartb-diagrams"
+    "url": "https://github.com/Hugobatist/smartcode"
   },
   "engines": {
     "vscode": "^1.85.0"
@@ -17,41 +17,41 @@
     "Visualization",
     "Other"
   ],
-  "activationEvents": ["onWebviewPanel:smartb.diagramPanel"],
+  "activationEvents": ["onWebviewPanel:smartcode.diagramPanel"],
   "contributes": {
     "configuration": {
-      "title": "SmartB Diagrams",
+      "title": "SmartCode",
       "properties": {
-        "smartb.serverUrl": {
+        "smartcode.serverUrl": {
           "type": "string",
           "default": "ws://localhost:3333/ws",
-          "description": "WebSocket URL of the SmartB server"
+          "description": "WebSocket URL of the SmartCode server"
         },
-        "smartb.autoConnect": {
+        "smartcode.autoConnect": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically connect to SmartB server on startup"
+          "description": "Automatically connect to SmartCode server on startup"
         }
       }
     },
     "commands": [
       {
-        "command": "smartb.reconnect",
-        "title": "SmartB: Reconnect to Server"
+        "command": "smartcode.reconnect",
+        "title": "SmartCode: Reconnect to Server"
       },
       {
-        "command": "smartb.openBrowser",
-        "title": "SmartB: Open in Browser"
+        "command": "smartcode.openBrowser",
+        "title": "SmartCode: Open in Browser"
       },
       {
-        "command": "smartb.showDiagram",
-        "title": "SmartB: Show Diagram Panel",
+        "command": "smartcode.showDiagram",
+        "title": "SmartCode: Show Diagram Panel",
         "icon": "$(preview)"
       }
     ],
     "keybindings": [
       {
-        "command": "smartb.showDiagram",
+        "command": "smartcode.showDiagram",
         "key": "ctrl+alt+m",
         "mac": "cmd+alt+m"
       }

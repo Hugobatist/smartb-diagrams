@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   SmartB Diagrams — Annotations / Flag System
+   SmartCode — Annotations / Flag System
    ═══════════════════════════════════════════════ */
 
 /* ── Flag Mode Cursor ── */
@@ -19,13 +19,13 @@
 /* ── Edges easier to click in flag mode ── */
 .flag-mode #preview .edgePath path.flowchart-link,
 .flag-mode #preview path.flowchart-link,
-.flag-mode #preview .smartb-edge path {
+.flag-mode #preview .smartcode-edge path {
     stroke-width: 6px !important;
     transition: stroke 0.15s;
 }
 .flag-mode #preview .edgePath:hover path.flowchart-link,
 .flag-mode #preview path.flowchart-link:hover,
-.flag-mode #preview .smartb-edge:hover path {
+.flag-mode #preview .smartcode-edge:hover path {
     stroke: var(--status-problem) !important;
     cursor: crosshair;
 }
@@ -333,9 +333,9 @@
 .mode-addEdge #preview .node:hover rect,
 .mode-addEdge #preview .node:hover circle,
 .mode-addEdge #preview .node:hover polygon,
-.mode-addEdge #preview .smartb-node:hover rect,
-.mode-addEdge #preview .smartb-node:hover circle,
-.mode-addEdge #preview .smartb-node:hover polygon {
+.mode-addEdge #preview .smartcode-node:hover rect,
+.mode-addEdge #preview .smartcode-node:hover circle,
+.mode-addEdge #preview .smartcode-node:hover polygon {
     stroke: var(--accent) !important;
     stroke-width: 3px !important;
     filter: drop-shadow(0 0 6px var(--accent-muted));

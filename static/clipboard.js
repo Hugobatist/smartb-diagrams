@@ -1,18 +1,18 @@
 /**
- * SmartB Diagrams -- Clipboard (Copy/Paste/Duplicate)
+ * SmartCode -- Clipboard (Copy/Paste/Duplicate)
  * Internal clipboard buffer for node copy/paste/duplicate operations.
  * Uses internal JS buffer (NOT browser Clipboard API -- localhost is not HTTPS).
  *
  * Dependencies:
- *   - selection.js (SmartBSelection)
+ *   - selection.js (SmartCodeSelection)
  *   - diagram-editor.js (MmdEditor)
  *
  * Usage:
- *   SmartBClipboard.copy();       // copies selected node to buffer
- *   SmartBClipboard.paste();      // pastes node from buffer with new ID
- *   SmartBClipboard.duplicate();  // duplicates selected node in place
- *   SmartBClipboard.hasContent(); // true if buffer has content
- *   SmartBClipboard.clear();      // clears the buffer
+ *   SmartCodeClipboard.copy();       // copies selected node to buffer
+ *   SmartCodeClipboard.paste();      // pastes node from buffer with new ID
+ *   SmartCodeClipboard.duplicate();  // duplicates selected node in place
+ *   SmartCodeClipboard.hasContent(); // true if buffer has content
+ *   SmartCodeClipboard.clear();      // clears the buffer
  */
 (function () {
     'use strict';
@@ -24,8 +24,8 @@
      * @returns {boolean} true if a node was copied, false otherwise
      */
     function copy() {
-        if (!window.SmartBSelection) return false;
-        var sel = SmartBSelection.getSelected();
+        if (!window.SmartCodeSelection) return false;
+        var sel = SmartCodeSelection.getSelected();
         if (!sel || sel.type !== 'node') return false;
 
         if (!window.MmdEditor) return false;
@@ -58,8 +58,8 @@
      * @returns {boolean} true if duplication was performed, false otherwise
      */
     function duplicate() {
-        if (!window.SmartBSelection) return false;
-        var sel = SmartBSelection.getSelected();
+        if (!window.SmartCodeSelection) return false;
+        var sel = SmartCodeSelection.getSelected();
         if (!sel || sel.type !== 'node') return false;
 
         if (!window.MmdEditor) return false;
@@ -84,7 +84,7 @@
         buffer = null;
     }
 
-    window.SmartBClipboard = {
+    window.SmartCodeClipboard = {
         copy: copy,
         paste: paste,
         duplicate: duplicate,

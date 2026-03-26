@@ -1,5 +1,5 @@
 /**
- * File list dropdown component for the SmartB webview.
+ * File list dropdown component for the SmartCode webview.
  * Provides file navigation between multiple .mmd diagrams.
  */
 

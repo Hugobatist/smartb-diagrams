@@ -1,16 +1,16 @@
 /**
- * SmartB Pan/Zoom -- viewport transformation, scroll zoom, drag pan.
+ * SmartCode Pan/Zoom -- viewport transformation, scroll zoom, drag pan.
  * Extracted from live.html (Phase 9 Plan 02).
  *
- * Dependencies: interaction-state.js (SmartBInteraction, optional)
+ * Dependencies: interaction-state.js (SmartCodeInteraction, optional)
  * Dependents: renderer.js (calls zoomFit/applyTransform via window globals)
  *
  * Usage:
- *   SmartBPanZoom.zoomIn();
- *   SmartBPanZoom.zoomOut();
- *   SmartBPanZoom.zoomFit();
- *   SmartBPanZoom.getPan();  // { panX, panY, zoom }
- *   SmartBPanZoom.setPan(px, py);
+ *   SmartCodePanZoom.zoomIn();
+ *   SmartCodePanZoom.zoomOut();
+ *   SmartCodePanZoom.zoomFit();
+ *   SmartCodePanZoom.getPan();  // { panX, panY, zoom }
+ *   SmartCodePanZoom.setPan(px, py);
  */
 (function() {
     'use strict';
@@ -62,32 +62,32 @@
         if (e.button !== 0) return;
 
         // Auto-recover: if FSM says we're in a blocking state but no actual overlay exists, reset
-        if (window.SmartBInteraction) {
-            var fsmState = SmartBInteraction.getState();
-            if (fsmState === 'editing' && !(window.SmartBInlineEdit && SmartBInlineEdit.isActive())) {
-                SmartBInteraction.forceState('idle');
+        if (window.SmartCodeInteraction) {
+            var fsmState = SmartCodeInteraction.getState();
+            if (fsmState === 'editing' && !(window.SmartCodeInlineEdit && SmartCodeInlineEdit.isActive())) {
+                SmartCodeInteraction.forceState('idle');
             }
             if (fsmState === 'context-menu' && !document.querySelector('.context-menu')) {
-                SmartBInteraction.forceState('idle');
+                SmartCodeInteraction.forceState('idle');
             }
-            if (fsmState === 'dragging' && !(window.SmartBNodeDrag && SmartBNodeDrag.isDragging())) {
-                SmartBInteraction.forceState('idle');
+            if (fsmState === 'dragging' && !(window.SmartCodeNodeDrag && SmartCodeNodeDrag.isDragging())) {
+                SmartCodeInteraction.forceState('idle');
             }
         }
 
         // Check FSM blocking states (editing, context-menu)
-        if (window.SmartBInteraction && SmartBInteraction.isBlocking()) return;
-        if (window.SmartBInteraction && SmartBInteraction.getState() === 'dragging') return;
+        if (window.SmartCodeInteraction && SmartCodeInteraction.isBlocking()) return;
+        if (window.SmartCodeInteraction && SmartCodeInteraction.getState() === 'dragging') return;
         // Don't pan if clicking on a selected node (node-drag handles this)
-        if (window.SmartBInteraction && SmartBInteraction.getState() === 'selected') {
-            var sel = window.SmartBSelection ? SmartBSelection.getSelected() : null;
+        if (window.SmartCodeInteraction && SmartCodeInteraction.getState() === 'selected') {
+            var sel = window.SmartCodeSelection ? SmartCodeSelection.getSelected() : null;
             if (sel && sel.type === 'node') {
                 var clickedNode = window.DiagramDOM ? DiagramDOM.extractNodeId(e.target) : null;
                 if (clickedNode && clickedNode.id === sel.id) return; // Let node-drag handle it
             }
         }
         // Keep existing checks for backward compat without FSM
-        if (window.SmartBAnnotations && SmartBAnnotations.getState().flagMode) return;
+        if (window.SmartCodeAnnotations && SmartCodeAnnotations.getState().flagMode) return;
         if (window.MmdEditor && MmdEditor.getState().mode) return;
         isPanning = true;
         panStarted = false;
@@ -109,7 +109,7 @@
             panStarted = true;
             previewPanel.classList.add('grabbing');
             // Notify FSM
-            if (window.SmartBInteraction) SmartBInteraction.transition('pan_start');
+            if (window.SmartCodeInteraction) SmartCodeInteraction.transition('pan_start');
         }
 
         panX = panStartPanX + (e.clientX - panStartX);
@@ -120,9 +120,9 @@
     document.addEventListener('mouseup', function() {
         if (isPanning && panStarted) {
             // Notify FSM that pan ended
-            if (window.SmartBInteraction) {
-                var sel = SmartBInteraction.getSelection();
-                SmartBInteraction.transition(sel.id ? 'pan_end_selected' : 'pan_end');
+            if (window.SmartCodeInteraction) {
+                var sel = SmartCodeInteraction.getSelection();
+                SmartCodeInteraction.transition(sel.id ? 'pan_end_selected' : 'pan_end');
             }
             previewPanel.classList.remove('grabbing');
         }
@@ -181,7 +181,7 @@
     }
 
     // ── Public API ──
-    window.SmartBPanZoom = {
+    window.SmartCodePanZoom = {
         getZoom: function() { return zoom; },
         getPan: function() { return { panX: panX, panY: panY, zoom: zoom }; },
         setPan: function(px, py) { panX = px; panY = py; applyTransform(); },

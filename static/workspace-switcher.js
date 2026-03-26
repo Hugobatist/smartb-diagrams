@@ -1,10 +1,10 @@
 /**
- * SmartB Workspace Switcher -- dropdown to switch between multiple
- * SmartB server instances running on different ports.
+ * SmartCode Workspace Switcher -- dropdown to switch between multiple
+ * SmartCode server instances running on different ports.
  *
  * Reads the workspace registry via GET /api/workspaces and renders
  * a dropdown in the topbar. When the user switches workspace, sets
- * window.SmartBBaseUrl and triggers WS reconnect + file tree reload.
+ * window.SmartCodeBaseUrl and triggers WS reconnect + file tree reload.
  *
  * Dependencies: ws-client.js (createReconnectingWebSocket), file-tree.js
  * Loaded before app-init.js.
@@ -13,7 +13,7 @@
     'use strict';
 
     var POLL_INTERVAL = 10000; // 10s
-    var LS_KEY = 'smartb-workspace-selection';
+    var LS_KEY = 'smartcode-workspace-selection';
 
     // ── State ──
     var workspaces = [];
@@ -21,7 +21,7 @@
     var pollTimer = null;
 
     // ── Global base URL: empty string = current server (relative URLs) ──
-    window.SmartBBaseUrl = '';
+    window.SmartCodeBaseUrl = '';
 
     // ── Helpers ──
 
@@ -63,19 +63,16 @@
     function reconcileSelection() {
         var localPort = getLocalPort();
 
-        // If no current workspace, try to restore from localStorage
+        // If no current workspace, default to the server we're connected to.
+        // Don't auto-restore a different port from localStorage — the user
+        // navigated to this port intentionally; cross-port restore causes
+        // 404s because the file tree shows local files but requests go elsewhere.
         if (!currentWorkspace) {
-            var saved = loadSelection();
-            if (saved) {
-                var match = workspaces.find(function(w) { return w.port === saved.port; });
-                if (match) {
-                    currentWorkspace = match;
-                    // If the saved workspace is not the current server, switch to it
-                    if (match.port !== localPort) {
-                        applyBaseUrl(match);
-                    }
-                    return;
-                }
+            var local = workspaces.find(function(w) { return w.port === localPort; });
+            if (local) {
+                currentWorkspace = local;
+                saveSelection(local);
+                return;
             }
         }
 
@@ -100,9 +97,9 @@
     function applyBaseUrl(ws) {
         var localPort = getLocalPort();
         if (ws.port === localPort) {
-            window.SmartBBaseUrl = '';
+            window.SmartCodeBaseUrl = '';
         } else {
-            window.SmartBBaseUrl = 'http://localhost:' + ws.port;
+            window.SmartCodeBaseUrl = 'http://localhost:' + ws.port;
         }
     }
 
@@ -113,13 +110,13 @@
         applyBaseUrl(ws);
 
         // Reconnect WebSocket to the new server
-        if (window.SmartBWsReconnect) {
-            window.SmartBWsReconnect(window.SmartBBaseUrl);
+        if (window.SmartCodeWsReconnect) {
+            window.SmartCodeWsReconnect(window.SmartCodeBaseUrl);
         }
 
         // Reload file tree from new server
-        if (window.SmartBFileTree) {
-            SmartBFileTree.refreshFileList();
+        if (window.SmartCodeFileTree) {
+            SmartCodeFileTree.refreshFileList();
         }
 
         renderDropdown();
@@ -195,7 +192,7 @@
     }
 
     // ── Public API ──
-    window.SmartBWorkspaceSwitcher = {
+    window.SmartCodeWorkspaceSwitcher = {
         init: init,
         destroy: destroy,
         getWorkspaces: function() { return workspaces; },

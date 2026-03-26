@@ -1,5 +1,5 @@
 /**
- * SmartB Diagrams -- Editor Popovers
+ * SmartCode -- Editor Popovers
  * Add-node and add-edge popover UI, extracted from diagram-editor.js.
  * Dependencies: diagram-editor.js (MmdEditor), diagram-dom.js (DiagramDOM)
  */
@@ -47,13 +47,13 @@
         var titleDiv = document.createElement('div');
         titleDiv.className = 'flag-popover-title';
         var titleSpan = document.createElement('span');
-        titleSpan.textContent = 'Novo Nodo';
+        titleSpan.textContent = 'New Node';
         titleDiv.appendChild(titleSpan);
         pop.appendChild(titleDiv);
 
         var idLabel = document.createElement('label');
         idLabel.style.cssText = 'font-size:11px;color:var(--text-secondary);margin-bottom:2px;display:block';
-        idLabel.textContent = 'ID (sem espacos)';
+        idLabel.textContent = 'ID (no spaces)';
         pop.appendChild(idLabel);
 
         var idInput = document.createElement('input');
@@ -65,13 +65,13 @@
 
         var labelLabel = document.createElement('label');
         labelLabel.style.cssText = 'font-size:11px;color:var(--text-secondary);margin-bottom:2px;display:block';
-        labelLabel.textContent = 'Texto';
+        labelLabel.textContent = 'Label';
         pop.appendChild(labelLabel);
 
         var labelInput = document.createElement('input');
         labelInput.className = 'ep-input ep-label';
         labelInput.type = 'text';
-        labelInput.placeholder = 'Texto do nodo...';
+        labelInput.placeholder = 'Node label...';
         pop.appendChild(labelInput);
 
         var actionsDiv = document.createElement('div');
@@ -80,14 +80,14 @@
 
         var btnCancel = document.createElement('button');
         btnCancel.className = 'btn-flag secondary';
-        btnCancel.textContent = 'Cancelar';
+        btnCancel.textContent = 'Cancel';
         btnCancel.addEventListener('click', closeEditorPopover);
         actionsDiv.appendChild(btnCancel);
 
         var btnCreate = document.createElement('button');
         btnCreate.className = 'btn-flag primary';
         btnCreate.style.background = 'var(--accent)';
-        btnCreate.textContent = 'Criar Nodo';
+        btnCreate.textContent = 'Create Node';
         actionsDiv.appendChild(btnCreate);
         pop.appendChild(actionsDiv);
 
@@ -115,7 +115,7 @@
         var titleDiv = document.createElement('div');
         titleDiv.className = 'flag-popover-title';
         var titleSpan = document.createElement('span');
-        titleSpan.textContent = 'Nova Conexao';
+        titleSpan.textContent = 'New Edge';
         titleDiv.appendChild(titleSpan);
         var edgeIdSpan = document.createElement('span');
         edgeIdSpan.className = 'node-id';
@@ -125,13 +125,13 @@
 
         var labelLabel = document.createElement('label');
         labelLabel.style.cssText = 'font-size:11px;color:var(--text-secondary);margin-bottom:2px;display:block';
-        labelLabel.textContent = 'Label (opcional)';
+        labelLabel.textContent = 'Label (optional)';
         pop.appendChild(labelLabel);
 
         var labelInput = document.createElement('input');
         labelInput.className = 'ep-input ep-label';
         labelInput.type = 'text';
-        labelInput.placeholder = 'Texto da seta...';
+        labelInput.placeholder = 'Edge label...';
         pop.appendChild(labelInput);
 
         var actionsDiv = document.createElement('div');
@@ -140,7 +140,7 @@
 
         var btnCancel = document.createElement('button');
         btnCancel.className = 'btn-flag secondary';
-        btnCancel.textContent = 'Cancelar';
+        btnCancel.textContent = 'Cancel';
         btnCancel.addEventListener('click', function () {
             closeEditorPopover();
             DiagramDOM.highlightNode(fromId, false);
@@ -152,7 +152,7 @@
         var btnCreate = document.createElement('button');
         btnCreate.className = 'btn-flag primary';
         btnCreate.style.background = 'var(--accent)';
-        btnCreate.textContent = 'Criar Seta';
+        btnCreate.textContent = 'Create Edge';
         actionsDiv.appendChild(btnCreate);
         pop.appendChild(actionsDiv);
 
@@ -179,7 +179,7 @@
         btnCreate.addEventListener('click', doCreate);
     }
 
-    window.SmartBEditorPopovers = {
+    window.SmartCodeEditorPopovers = {
         showAddNodePopover: showAddNodePopover,
         showAddEdgePopover: showAddEdgePopover,
         closePopover: closeEditorPopover,

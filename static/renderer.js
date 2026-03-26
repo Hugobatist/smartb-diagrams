@@ -1,15 +1,15 @@
 /**
- * SmartB Renderer -- Mermaid rendering pipeline, error panel, status injection.
+ * SmartCode Renderer -- Mermaid rendering pipeline, error panel, status injection.
  * Extracted from live.html (Phase 9 Plan 02).
  *
- * Dependencies: mermaid (CDN), event-bus.js (SmartBEventBus)
+ * Dependencies: mermaid (CDN), event-bus.js (SmartCodeEventBus)
  * Dependents: pan-zoom.js, export.js, annotations.js, collapse-ui.js
  *
  * Usage:
- *   SmartBRenderer.render(code);      // async
- *   SmartBRenderer.escapeHtml(text);
- *   SmartBRenderer.injectStatusStyles(cleanCode);
- *   SmartBRenderer.MERMAID_CONFIG;     // shared config for export.js
+ *   SmartCodeRenderer.render(code);      // async
+ *   SmartCodeRenderer.escapeHtml(text);
+ *   SmartCodeRenderer.injectStatusStyles(cleanCode);
+ *   SmartCodeRenderer.MERMAID_CONFIG;     // shared config for export.js
  */
 (function() {
     'use strict';
@@ -68,8 +68,8 @@
     };
 
     function injectStatusStyles(cleanCode) {
-        if (!window.SmartBAnnotations) return cleanCode;
-        var statusMap = SmartBAnnotations.getStatusMap();
+        if (!window.SmartCodeAnnotations) return cleanCode;
+        var statusMap = SmartCodeAnnotations.getStatusMap();
         if (!statusMap || statusMap.size === 0) return cleanCode;
 
         var classDefs = [
@@ -222,8 +222,8 @@
     async function render(code) {
         if (!code || !code.trim()) return;
         // Strip annotations before rendering (Mermaid doesn't understand %% @flag / @status)
-        var cleanCode = window.SmartBAnnotations
-            ? SmartBAnnotations.getCleanContent(code)
+        var cleanCode = window.SmartCodeAnnotations
+            ? SmartCodeAnnotations.getCleanContent(code)
             : code;
         // Inject status classDef styles before rendering
         var styledCode = injectStatusStyles(cleanCode);
@@ -236,9 +236,9 @@
             // Apply transform (from pan-zoom module, loaded later but called after all scripts)
             if (window.applyTransform) window.applyTransform();
             // Apply flag indicators after SVG is in the DOM
-            if (window.SmartBAnnotations) SmartBAnnotations.applyFlagsToSVG();
+            if (window.SmartCodeAnnotations) SmartCodeAnnotations.applyFlagsToSVG();
             // Apply collapse overlays if available
-            if (window.SmartBCollapseUI && SmartBCollapseUI.applyOverlays) SmartBCollapseUI.applyOverlays();
+            if (window.SmartCodeCollapseUI && SmartCodeCollapseUI.applyOverlays) SmartCodeCollapseUI.applyOverlays();
             // Only auto-fit on initial render or file navigation; preserve zoom on live updates
             if (isInitialRender) {
                 requestAnimationFrame(function() {
@@ -249,22 +249,22 @@
                 if (window.applyTransform) window.applyTransform();
             }
             // Emit rendered event
-            if (window.SmartBEventBus) {
-                SmartBEventBus.emit('diagram:rendered', { svg: result.svg });
+            if (window.SmartCodeEventBus) {
+                SmartCodeEventBus.emit('diagram:rendered', { svg: result.svg });
             }
         } catch (e) {
             // Show structured error panel with line numbers using cleanCode (user's source)
             preview.textContent = '';
             preview.appendChild(buildErrorPanel(e, cleanCode));
             // Emit error event
-            if (window.SmartBEventBus) {
-                SmartBEventBus.emit('diagram:error', { error: e });
+            if (window.SmartCodeEventBus) {
+                SmartCodeEventBus.emit('diagram:error', { error: e });
             }
         }
     }
 
     // ── Public API ──
-    window.SmartBRenderer = {
+    window.SmartCodeRenderer = {
         render: render,
         escapeHtml: escapeHtml,
         injectStatusStyles: injectStatusStyles,

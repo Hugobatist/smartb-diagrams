@@ -28,7 +28,7 @@ interface StatusResponse {
 }
 
 /**
- * Query the running SmartB server and display its status.
+ * Query the running SmartCode server and display its status.
  *
  * @param port - Port to query (default: 3333)
  */
@@ -54,7 +54,7 @@ export async function showStatus(port: number): Promise<void> {
   } catch {
     log.info(pc.red('Server is not running'));
     log.info(`  Tried port: ${port}`);
-    log.info(`  Run ${pc.cyan('smartb serve')} to start the server`);
+    log.info(`  Run ${pc.cyan('smartcode serve')} to start the server`);
   }
 }
 

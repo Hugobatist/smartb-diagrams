@@ -1,19 +1,19 @@
 /**
- * SmartB Inline Edit -- double-click contenteditable overlay for label editing.
+ * SmartCode Inline Edit -- double-click contenteditable overlay for label editing.
  * Opens an HTML overlay positioned over the SVG text element for in-place editing.
  *
  * Dependencies:
- *   - interaction-state.js (SmartBInteraction)
+ *   - interaction-state.js (SmartCodeInteraction)
  *   - diagram-dom.js (DiagramDOM)
  *   - diagram-editor.js (MmdEditor)
- *   - event-bus.js (SmartBEventBus)
+ *   - event-bus.js (SmartCodeEventBus)
  *
  * Usage:
- *   SmartBInlineEdit.init();
- *   SmartBInlineEdit.open('nodeId');
- *   SmartBInlineEdit.confirm();
- *   SmartBInlineEdit.cancel();
- *   SmartBInlineEdit.isActive();
+ *   SmartCodeInlineEdit.init();
+ *   SmartCodeInlineEdit.open('nodeId');
+ *   SmartCodeInlineEdit.confirm();
+ *   SmartCodeInlineEdit.cancel();
+ *   SmartCodeInlineEdit.isActive();
  */
 (function() {
     'use strict';
@@ -110,8 +110,8 @@
         overlay.addEventListener('blur', handleOverlayBlur);
 
         // Emit event
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('edit:started', { nodeId: nodeId });
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('edit:started', { nodeId: nodeId });
         }
     }
 
@@ -142,13 +142,13 @@
         isCommitting = false;
 
         // Transition FSM
-        if (window.SmartBInteraction) {
-            SmartBInteraction.transition('confirm');
+        if (window.SmartCodeInteraction) {
+            SmartCodeInteraction.transition('confirm');
         }
 
         // Emit event
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('edit:completed', {
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('edit:completed', {
                 nodeId: nodeId,
                 oldLabel: oldLabel,
                 newLabel: newText,
@@ -172,13 +172,13 @@
         closeOverlay();
 
         // Transition FSM
-        if (window.SmartBInteraction) {
-            SmartBInteraction.transition('cancel');
+        if (window.SmartCodeInteraction) {
+            SmartCodeInteraction.transition('cancel');
         }
 
         // Emit event
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('edit:cancelled', { nodeId: nodeId });
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('edit:cancelled', { nodeId: nodeId });
         }
     }
 
@@ -228,10 +228,10 @@
 
     function handleDblClick(e) {
         // Check FSM blocking states
-        if (window.SmartBInteraction && SmartBInteraction.isBlocking()) return;
+        if (window.SmartCodeInteraction && SmartCodeInteraction.isBlocking()) return;
 
         // Don't handle in special modes
-        var fsmState = window.SmartBInteraction ? SmartBInteraction.getState() : 'idle';
+        var fsmState = window.SmartCodeInteraction ? SmartCodeInteraction.getState() : 'idle';
         if (fsmState === 'flagging' || fsmState === 'add-node' || fsmState === 'add-edge') return;
 
         // Skip UI controls
@@ -252,8 +252,8 @@
         if (nodeInfo.id.startsWith('__collapsed__')) return;
 
         // Transition FSM to editing
-        if (window.SmartBInteraction) {
-            SmartBInteraction.transition('dbl_click', nodeInfo);
+        if (window.SmartCodeInteraction) {
+            SmartCodeInteraction.transition('dbl_click', nodeInfo);
         }
 
         open(nodeInfo.id);
@@ -277,13 +277,13 @@
         }
 
         // Subscribe to diagram:rendered to auto-commit active edits
-        if (window.SmartBEventBus) {
-            SmartBEventBus.on('diagram:rendered', handleDiagramRendered);
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.on('diagram:rendered', handleDiagramRendered);
         }
     }
 
     // ── Public API ──
-    window.SmartBInlineEdit = {
+    window.SmartCodeInlineEdit = {
         init: init,
         open: open,
         close: closeOverlay,

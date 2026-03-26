@@ -1,4 +1,4 @@
-# SmartB Diagrams
+# SmartCode
 
 Live AI reasoning diagrams in your VS Code sidebar.
 
@@ -12,26 +12,26 @@ Live AI reasoning diagrams in your VS Code sidebar.
 
 ## Requirements
 
-- A running SmartB server (`npx smartb-diagrams serve`)
+- A running SmartCode server (`npx smartcode serve`)
 - Node.js 22 or later
 
 ## Getting Started
 
 1. Install the extension
-2. Start SmartB server: `npx smartb-diagrams serve`
-3. Open the SmartB sidebar (click the icon in the activity bar)
+2. Start SmartCode server: `npx smartcode serve`
+3. Open the SmartCode sidebar (click the icon in the activity bar)
 4. The diagram appears automatically
 
 ## Configuration
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| `smartb.serverUrl` | WebSocket URL of the SmartB server | `ws://localhost:3333/ws` |
-| `smartb.autoConnect` | Auto-connect to server on startup | `true` |
+| `smartcode.serverUrl` | WebSocket URL of the SmartCode server | `ws://localhost:3333/ws` |
+| `smartcode.autoConnect` | Auto-connect to server on startup | `true` |
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `SmartB: Reconnect to Server` | Manually reconnect to the SmartB server |
-| `SmartB: Open in Browser` | Open the SmartB UI in your default browser |
+| `SmartCode: Reconnect to Server` | Manually reconnect to the SmartCode server |
+| `SmartCode: Open in Browser` | Open the SmartCode UI in your default browser |

@@ -1,12 +1,12 @@
 /**
- * SmartB Annotations -- Flag, Status, Breakpoint, Risk annotation system.
+ * SmartCode Annotations -- Flag, Status, Breakpoint, Risk annotation system.
  * Dependencies: diagram-dom.js, event-bus.js, annotations-svg.js, annotations-panel.js.
- * Exposed as window.SmartBAnnotations
+ * Exposed as window.SmartCodeAnnotations
  */
 (function () {
     'use strict';
 
-    var ANNOTATION_START = '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---';
+    var ANNOTATION_START = '%% --- ANNOTATIONS (auto-managed by SmartCode) ---';
     var ANNOTATION_END = '%% --- END ANNOTATIONS ---';
     var FLAG_REGEX = /^%%\s*@flag\s+(\S+)\s+"([^"]*)"$/;
     var STATUS_REGEX = /^%%\s*@status\s+(\S+)\s+(\S+)$/;
@@ -94,24 +94,24 @@
 
     function getCleanContent(content) { return stripAnnotations(content); }
 
-    // ── SVG Post-processing (delegates to SmartBAnnotationsSVG) ──
+    // ── SVG Post-processing (delegates to SmartCodeAnnotationsSVG) ──
 
     function applyFlagsToSVG() {
-        SmartBAnnotationsSVG.applyFlagsToSVG(state.flags);
+        SmartCodeAnnotationsSVG.applyFlagsToSVG(state.flags);
     }
 
-    // ── Panel rendering (delegates to SmartBAnnotationsPanel) ──
+    // ── Panel rendering (delegates to SmartCodeAnnotationsPanel) ──
 
     function renderPanel() {
-        SmartBAnnotationsPanel.renderPanel(state, hooks, removeFlag);
+        SmartCodeAnnotationsPanel.renderPanel(state, hooks, removeFlag);
     }
 
     function updateBadge() {
-        SmartBAnnotationsPanel.updateBadge(state.flags.size);
+        SmartCodeAnnotationsPanel.updateBadge(state.flags.size);
     }
 
     function togglePanel() {
-        SmartBAnnotationsPanel.togglePanel(state);
+        SmartCodeAnnotationsPanel.togglePanel(state);
     }
 
     // ── Popover ──
@@ -175,7 +175,7 @@
                 btnConnect.className = 'btn-correction';
                 btnConnect.dataset.action = 'connect-from';
                 btnConnect.title = 'Create new edge from this node';
-                btnConnect.innerHTML = 'New Edge ' + SmartBIcons.arrowRight;
+                btnConnect.innerHTML = 'New Edge ' + SmartCodeIcons.arrowRight;
                 btnsDiv.appendChild(btnConnect);
             }
             var btnDelete = document.createElement('button');
@@ -264,8 +264,8 @@
         applyFlagsToSVG();
         renderPanel();
         updateBadge();
-        if (window.SmartBEventBus) {
-            SmartBEventBus.emit('flags:changed', { flags: state.flags, statuses: state.statuses });
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.emit('flags:changed', { flags: state.flags, statuses: state.statuses });
         }
     }
 
@@ -280,16 +280,16 @@
         for (var sEntry of state.statuses) mergedStatuses.set(sEntry[0], sEntry[1]);
         state.statuses = mergedStatuses;
         state.breakpoints = new Set([...incoming.breakpoints, ...state.breakpoints]);
-        if (window.SmartBBreakpoints) SmartBBreakpoints.updateBreakpoints(state.breakpoints);
+        if (window.SmartCodeBreakpoints) SmartCodeBreakpoints.updateBreakpoints(state.breakpoints);
         var mergedRisks = new Map(incoming.risks);
         for (var rEntry of state.risks) mergedRisks.set(rEntry[0], rEntry[1]);
         state.risks = mergedRisks;
-        if (window.SmartBHeatmap) SmartBHeatmap.updateRisks(state.risks);
+        if (window.SmartCodeHeatmap) SmartCodeHeatmap.updateRisks(state.risks);
         // Ghosts from file take precedence (file is source of truth)
         state.ghosts = incoming.ghosts || [];
-        if (window.SmartBGhostPaths) {
-            var file = window.SmartBFileTree ? SmartBFileTree.getCurrentFile() : null;
-            if (file) SmartBGhostPaths.updateGhostPaths(file, state.ghosts);
+        if (window.SmartCodeGhostPaths) {
+            var file = window.SmartCodeFileTree ? SmartCodeFileTree.getCurrentFile() : null;
+            if (file) SmartCodeGhostPaths.updateGhostPaths(file, state.ghosts);
         }
         var cleanIncoming = stripAnnotations(incomingContent);
         return injectAnnotations(cleanIncoming, mergedFlags, mergedStatuses);
@@ -330,16 +330,16 @@
             state.breakpoints = parsed.breakpoints;
             state.risks = parsed.risks;
             state.ghosts = parsed.ghosts || [];
-            if (window.SmartBBreakpoints) SmartBBreakpoints.updateBreakpoints(parsed.breakpoints);
-            if (window.SmartBHeatmap) SmartBHeatmap.updateRisks(parsed.risks);
+            if (window.SmartCodeBreakpoints) SmartCodeBreakpoints.updateBreakpoints(parsed.breakpoints);
+            if (window.SmartCodeHeatmap) SmartCodeHeatmap.updateRisks(parsed.risks);
         }
         var container = document.getElementById('preview-container');
         if (container) container.addEventListener('click', handlePreviewClick);
         renderPanel();
         updateBadge();
 
-        if (window.SmartBEventBus) {
-            SmartBEventBus.on('diagram:rendered', function() {
+        if (window.SmartCodeEventBus) {
+            SmartCodeEventBus.on('diagram:rendered', function() {
                 applyFlagsToSVG();
             });
         }
@@ -353,7 +353,7 @@
 
     // ── Public API ──
 
-    window.SmartBAnnotations = {
+    window.SmartCodeAnnotations = {
         init: init, getState: function() { return state; },
         parseAnnotations: parseAnnotations, stripAnnotations: stripAnnotations,
         injectAnnotations: injectAnnotations, getCleanContent: getCleanContent,

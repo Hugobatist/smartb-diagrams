@@ -1,6 +1,6 @@
 /**
- * Workspace Registry -- shared JSON file at ~/.smartb/workspaces.json
- * that tracks all running SmartB server instances.
+ * Workspace Registry -- shared JSON file at ~/.smartcode/workspaces.json
+ * that tracks all running SmartCode server instances.
  *
  * Each instance registers on startup and deregisters on shutdown.
  * The browser reads this registry to build the workspace switcher dropdown.
@@ -22,8 +22,8 @@ export interface WorkspaceEntry {
   pid: number;
 }
 
-const SMARTB_DIR = join(homedir(), '.smartb');
-const REGISTRY_PATH = join(SMARTB_DIR, 'workspaces.json');
+const SMARTCODE_DIR = join(homedir(), '.smartcode');
+const REGISTRY_PATH = join(SMARTCODE_DIR, 'workspaces.json');
 
 /** Read the registry file, returning an empty array on any error */
 async function readRegistry(): Promise<WorkspaceEntry[]> {
@@ -38,8 +38,8 @@ async function readRegistry(): Promise<WorkspaceEntry[]> {
 
 /** Atomically write the registry (write to temp + rename) */
 async function writeRegistry(entries: WorkspaceEntry[]): Promise<void> {
-  await mkdir(SMARTB_DIR, { recursive: true });
-  const tempPath = join(tmpdir(), `smartb-registry-${randomBytes(4).toString('hex')}.json`);
+  await mkdir(SMARTCODE_DIR, { recursive: true });
+  const tempPath = join(tmpdir(), `smartcode-registry-${randomBytes(4).toString('hex')}.json`);
   await writeFile(tempPath, JSON.stringify(entries, null, 2), 'utf-8');
   try {
     await rename(tempPath, REGISTRY_PATH);

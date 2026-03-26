@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { SessionEvent, SessionMeta, SessionSummary } from './session-types.js';
 
 /**
- * SessionStore -- persists session events as JSONL files in .smartb/sessions/.
+ * SessionStore -- persists session events as JSONL files in .smartcode/sessions/.
  * Each session is a single .jsonl file with one JSON object per line.
  * Uses per-session write locks to prevent concurrent JSONL corruption.
  */
@@ -14,7 +14,7 @@ export class SessionStore {
   private readonly writeLocks = new Map<string, Promise<void>>();
 
   constructor(projectRoot: string) {
-    this.sessionsDir = join(projectRoot, '.smartb', 'sessions');
+    this.sessionsDir = join(projectRoot, '.smartcode', 'sessions');
   }
 
   /** Valid session ID pattern (UUID format) */

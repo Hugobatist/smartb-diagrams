@@ -1,18 +1,18 @@
-# SmartB Diagrams
+# SmartCode
 
 **See what your AI is thinking.** A visual debugger for AI reasoning — watch your AI agent think in real-time, set breakpoints, flag mistakes, and replay sessions.
 
-[![npm version](https://img.shields.io/npm/v/smartb-diagrams.svg)](https://www.npmjs.com/package/smartb-diagrams)
+[![npm version](https://img.shields.io/npm/v/smartcode.svg)](https://www.npmjs.com/package/smartcode)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.17-brightgreen.svg)](https://nodejs.org/)
 
 ---
 
-## Why SmartB Diagrams?
+## Why SmartCode?
 
 AI coding tools are **black boxes**. You give Cursor, Claude Code, or Copilot a task and wait. If it goes down a wrong path, you only find out when it's done — after wasted time and tokens.
 
-SmartB Diagrams makes AI reasoning **visible and controllable**:
+SmartCode makes AI reasoning **visible and controllable**:
 
 - **See** the AI's reasoning as a live flowchart that updates in real-time
 - **Intervene** by flagging nodes mid-execution — the AI reads your feedback and course-corrects
@@ -25,9 +25,9 @@ It's the **Datadog for AI reasoning** — not another AI tool, but a plugin that
 ## Quick Start
 
 ```bash
-npm install -g smartb-diagrams
-smartb init
-smartb serve
+npm install -g smartcode
+smartcode init
+smartcode serve
 ```
 
 Your browser opens with a live diagram viewer. Edit any `.mmd` file and see changes instantly.
@@ -68,12 +68,12 @@ Color-coded progress: green (ok), yellow (in-progress), red (problem), gray (dis
 
 ## CLI Reference
 
-### `smartb init`
+### `smartcode init`
 
-Initialize a SmartB project.
+Initialize a SmartCode project.
 
 ```bash
-smartb init [--dir <path>] [--force]
+smartcode init [--dir <path>] [--force]
 ```
 
 | Option | Default | Description |
@@ -81,12 +81,12 @@ smartb init [--dir <path>] [--force]
 | `--dir <path>` | `.` | Project directory |
 | `--force` | `false` | Overwrite existing config |
 
-### `smartb serve`
+### `smartcode serve`
 
 Start the diagram viewer server.
 
 ```bash
-smartb serve [--port <number>] [--dir <path>] [--no-open]
+smartcode serve [--port <number>] [--dir <path>] [--no-open]
 ```
 
 | Option | Default | Description |
@@ -95,22 +95,22 @@ smartb serve [--port <number>] [--dir <path>] [--no-open]
 | `--dir <path>` | `.` | Project directory |
 | `--no-open` | `false` | Don't open browser automatically |
 
-### `smartb status`
+### `smartcode status`
 
 Check server health.
 
 ```bash
-smartb status [--port <number>]
+smartcode status [--port <number>]
 ```
 
 Shows uptime, diagram count, connected clients, and active flags.
 
-### `smartb mcp`
+### `smartcode mcp`
 
 Start the MCP server for AI tool integration.
 
 ```bash
-smartb mcp [--dir <path>] [--serve] [--port <number>]
+smartcode mcp [--dir <path>] [--serve] [--port <number>]
 ```
 
 | Option | Default | Description |
@@ -126,7 +126,7 @@ smartb mcp [--dir <path>] [--serve] [--port <number>]
 One command:
 
 ```bash
-claude mcp add --transport stdio smartb -- npx -y smartb-diagrams mcp --dir .
+claude mcp add --transport stdio smartcode -- npx -y smartcode mcp --dir .
 ```
 
 Or add a `.mcp.json` to your project root:
@@ -134,9 +134,9 @@ Or add a `.mcp.json` to your project root:
 ```json
 {
   "mcpServers": {
-    "smartb": {
+    "smartcode": {
       "command": "npx",
-      "args": ["-y", "smartb-diagrams", "mcp", "--dir", "."]
+      "args": ["-y", "smartcode", "mcp", "--dir", "."]
     }
   }
 }
@@ -149,9 +149,9 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "smartb-diagrams": {
+    "smartcode": {
       "command": "npx",
-      "args": ["-y", "smartb-diagrams", "mcp", "--dir", "/path/to/project"]
+      "args": ["-y", "smartcode", "mcp", "--dir", "/path/to/project"]
     }
   }
 }
@@ -162,14 +162,14 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 Run MCP and browser viewer in a single process:
 
 ```bash
-smartb mcp --dir . --serve --port 3333
+smartcode mcp --dir . --serve --port 3333
 ```
 
 AI tool calls and browser updates share the same `DiagramService` — zero-latency sync.
 
 ## MCP Tools
 
-SmartB exposes 11 tools via the Model Context Protocol:
+SmartCode exposes 11 tools via the Model Context Protocol:
 
 | Tool | Description |
 |------|-------------|
@@ -231,7 +231,7 @@ SmartB exposes 11 tools via the Model Context Protocol:
 Add to your project's `CLAUDE.md`:
 
 ```markdown
-## SmartB Diagrams
+## SmartCode
 
 - Use `update_diagram` to create/update .mmd reasoning diagrams
 - Use `flowchart TD` for sequential steps, node IDs lowercase-hyphenated
@@ -245,7 +245,7 @@ Add to your project's `CLAUDE.md`:
 ```
 Developer's Machine (single process)
 +-----------------------------------------------+
-|  smartb serve / smartb mcp --serve             |
+|  smartcode serve / smartcode mcp --serve             |
 |                                                |
 |  +------------------+  +-------------------+   |
 |  | MCP Server       |  | HTTP Server       |   |
@@ -280,8 +280,8 @@ Developer's Machine (single process)
 Contributions are welcome! Please open an issue first to discuss what you'd like to change.
 
 ```bash
-git clone https://github.com/Hugobatist/smartb-diagrams.git
-cd smartb-diagrams
+git clone https://github.com/Hugobatist/smartcode.git
+cd smartcode
 npm install
 npm run build
 npm test

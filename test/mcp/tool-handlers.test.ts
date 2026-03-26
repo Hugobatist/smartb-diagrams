@@ -44,7 +44,7 @@ const FLAGGED_DIAGRAM = [
   '    A["Load data"] --> B["Process"]',
   '    B --> C["Save results"]',
   '',
-  '%% --- ANNOTATIONS (auto-managed by SmartB Diagrams) ---',
+  '%% --- ANNOTATIONS (auto-managed by SmartCode) ---',
   '%% @flag B "This step is too slow, consider batching"',
   '%% @status A ok',
   '%% @breakpoint B',
@@ -63,7 +63,7 @@ describe('MCP tool handlers', () => {
   let tools: Map<string, ToolHandler>;
 
   beforeEach(async () => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'smartb-tool-handlers-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'smartcode-tool-handlers-'));
     service = new DiagramService(tmpDir);
     sessionStore = new SessionStore(tmpDir);
 
