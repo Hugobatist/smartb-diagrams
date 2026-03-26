@@ -1,6 +1,6 @@
 {
   "name": "@hugobatist/smartcode",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Visual debugger for AI reasoning -- see what your AI is thinking, set breakpoints, flag mistakes, replay sessions",
   "type": "module",
   "license": "MIT",
@@ -56,6 +56,7 @@
     "verify-pack": "npm pack --dry-run"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^3.0.0",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "commander": "^14.0.3",
     "detect-port": "^2.1.0",
